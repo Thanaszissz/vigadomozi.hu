@@ -1,0 +1,129 @@
+<div class="page">
+  <header class="topbar">
+    <div class="brand">
+      <img class="brand-logo" src="assets/vigado_logo_beige.png" alt="Vigadó Mozi" />
+    </div>
+    <div class="header-right">
+      <div class="search">
+        <input type="text" placeholder="keresd meg. nézd meg. műsor keresése" />
+        <button class="search-btn">🔍</button>
+      </div>
+      <nav class="nav-links">
+        <a routerLink="/">Műsor</a>
+        <a routerLink="/schedule">Műsorlista</a>
+        <a routerLink="/movies" class="active">Jegyvásárlás</a>
+        <a routerLink="/prices">Jegyárak</a>
+        <a routerLink="/">Médiaajánlat</a>
+        <a routerLink="/admin/login" class="admin-link">🔐 Admin</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="content">
+    <div *ngIf="loading" class="state loading">
+      <p>Foglalás betöltése...</p>
+    </div>
+
+    <div *ngIf="error" class="state error">
+      <p>{{ error }}</p>
+    </div>
+
+    <div *ngIf="!loading && reservation" class="checkout-container">
+      <div class="checkout-card">
+        <h1>✅ Foglalás rögzítve</h1>
+
+        <div class="success-message">
+          <p>A foglalás sikeresen rögzítve!</p>
+          <p>Az admin felületen véglegesíthető a fizetés.</p>
+        </div>
+
+        <div class="reservation-summary">
+          <h2>Foglalás adatai</h2>
+
+          <div class="summary-row">
+            <span>Foglalás azonosító:</span>
+            <strong>#{{ reservation.id }}</strong>
+          </div>
+
+          <div class="summary-row">
+            <span>Film:</span>
+            <strong>{{ reservation.showtime?.movie?.title }}</strong>
+          </div>
+
+          <div class="summary-row">
+            <span>Dátum &amp; Idő:</span>
+            <strong>{{ reservation.showtime?.starts_at | date: 'yyyy.MM.dd. HH:mm' }}</strong>
+          </div>
+
+          <div class="summary-row">
+            <span>Terem:</span>
+            <strong>{{ reservation.showtime?.auditorium?.name }}</strong>
+          </div>
+
+          <div class="summary-row">
+            <span>Név:</span>
+            <strong>{{ reservation.customer_name }}</strong>
+          </div>
+
+          <div class="summary-row">
+            <span>Email:</span>
+            <strong>{{ reservation.customer_email }}</strong>
+          </div>
+
+          <div class="summary-row">
+            <span>Telefon:</span>
+            <strong>{{ reservation.customer_phone }}</strong>
+          </div>
+
+          <div class="divider"></div>
+
+          <h3>Kiválasztott székek:</h3>
+          <div class="seats-list">
+            <div *ngFor="let item of reservation.items" class="seat-item">
+              <span>{{ item.row_label }}-{{ item.seat_number }} szék</span>
+              <span class="price">{{ item.price_amount }} Ft</span>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="total-row">
+            <span>Összesen fizetendő:</span>
+            <strong class="total-amount">{{ reservation.total_amount }} Ft</strong>
+          </div>
+        </div>
+
+        <div class="info-box">
+          <p><strong>📋 Fontos információk:</strong></p>
+          <ul>
+            <li>A foglalás <strong>nincs lejárati idővel</strong> - amíg nem fizeti ki, a székek foglaltak maradnak</li>
+            <li>A fizetést az <strong>admin felületen</strong> lehet véglegesíteni készpénzzel vagy kártyával</li>
+            <li>Foglalási azonosító: <strong>#{{ reservation.id }}</strong></li>
+          </ul>
+        </div>
+
+        <button routerLink="/" class="btn btn-secondary btn-large">
+          Vissza a főoldalra
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="footer-col">
+      <h4>Információk</h4>
+      <a href="#">Házirend</a>
+      <a href="#">Fizetési tájékoztató</a>
+      <a href="#">Adatkezelési tájékoztató</a>
+    </div>
+    <div class="footer-col">
+      <h4>Elérhetőség</h4>
+      <p>📞 +36 1 234 5678</p>
+      <p>📧 info&#64;vigadomozi.hu</p>
+    </div>
+    <div class="footer-col">
+      <h4>Nyitvatartás</h4>
+      <p>Hétfő-Vasárnap: 10:00-22:00</p>
+    </div>
+  </footer>
+</div>

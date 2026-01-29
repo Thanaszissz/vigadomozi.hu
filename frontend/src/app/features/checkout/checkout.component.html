@@ -1,0 +1,112 @@
+<div class="page">
+  <header class="topbar">
+    <div class="brand">
+      <img class="brand-logo" src="assets/vigado_logo_beige.png" alt="Vigadó Mozi" />
+    </div>
+    <div class="header-right">
+      <div class="search">
+        <input type="text" placeholder="keresd meg. nézd meg. műsor keresése" />
+        <button class="search-btn">🔍</button>
+      </div>
+      <nav class="nav-links">
+        <a routerLink="/">Műsor</a>
+        <a routerLink="/schedule">Műsorlista</a>
+        <a routerLink="/movies" class="active">Jegyvásárlás</a>
+        <a routerLink="/prices">Jegyárak</a>
+        <a routerLink="/">Médiaajánlat</a>
+        <a routerLink="/admin/login" class="admin-link">🔐 Admin</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="content">
+    <div *ngIf="loading" class="state loading">
+      <p>Fizetési oldal betöltése...</p>
+    </div>
+
+    <div *ngIf="error" class="state error">
+      <p>{{ error }}</p>
+    </div>
+
+    <div *ngIf="!loading && reservation && !isProcessing" class="checkout-container">
+      <div class="checkout-card">
+        <h1>Fizetés</h1>
+
+        <div class="reservation-summary">
+          <h2>Foglalás adatai</h2>
+
+          <div class="summary-row">
+            <span>Film:</span>
+            <strong>{{ reservation.showtime?.movie?.title }}</strong>
+          </div>
+
+          <div class="summary-row">
+            <span>Dátum &amp; Idő:</span>
+            <strong>{{ reservation.showtime?.starts_at | date: 'yyyy.MM.dd. HH:mm' }}</strong>
+          </div>
+
+          <div class="summary-row">
+            <span>Terem:</span>
+            <strong>{{ reservation.showtime?.auditorium?.name }}</strong>
+          </div>
+
+          <div class="summary-row">
+            <span>Email:</span>
+            <strong>{{ reservation.customer_email }}</strong>
+          </div>
+
+          <div class="divider"></div>
+
+          <h3>Kiválasztott székek:</h3>
+          <div class="seats-list">
+            <div *ngFor="let item of reservation.items" class="seat-item">
+              <span>{{ item.row_label }}-{{ item.seat_number }} szék</span>
+              <span class="price">{{ item.price_amount }} Ft</span>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="total-row">
+            <span>Összesen fizetendő:</span>
+            <strong class="total-amount">{{ reservation.total_amount }} Ft</strong>
+          </div>
+        </div>
+
+        <button (click)="initiatePayment()" [disabled]="isProcessingPayment" class="btn btn-primary btn-large">
+          <span *ngIf="!isProcessingPayment">Fizetés Stripe-pel</span>
+          <span *ngIf="isProcessingPayment">Feldolgozás...</span>
+        </button>
+
+        <p class="payment-note">💳 A fizetést a Stripe-pal végezzük. Bankkártya szükséges.</p>
+
+        <div *ngIf="paymentError" class="error-message">{{ paymentError }}</div>
+      </div>
+    </div>
+
+    <div *ngIf="!loading && isProcessing" class="processing">
+      <div class="spinner"></div>
+      <p>Fizetés feldolgozása folyamatban...</p>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="footer-col">
+      <h4>Információk</h4>
+      <a href="#">Házirend</a>
+      <a href="#">Fizetési tájékoztató</a>
+      <a href="#">Adatkezelési tájékoztató</a>
+    </div>
+    <div class="footer-col">
+      <h4>Kapcsolat</h4>
+      <p>Vigadó Mozi • Film és Színház</p>
+      <p>5310 Kisújszállás Szabadság Tér 7.</p>
+      <p>+36-59-328-083</p>
+      <p>info&#64;vigadomozi.hu</p>
+    </div>
+    <div class="footer-col">
+      <h4>Impresszum</h4>
+      <p>Kisújszállási Művelődési Központ és Könyvtár</p>
+    </div>
+  </footer>
+</div>

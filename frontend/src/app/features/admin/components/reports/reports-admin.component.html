@@ -1,0 +1,187 @@
+<div class="admin-container">
+  <div class="header">
+    <h1>📊 Napi Zárás</h1>
+    <button (click)="goBack()" class="btn-back">← Vissza a dashboardra</button>
+  </div>
+
+  <div class="date-selector">
+    <label for="reportDate">Dátum:</label>
+    <input 
+      type="date" 
+      id="reportDate" 
+      [(ngModel)]="selectedDate" 
+      (change)="loadReport()"
+      class="date-input"
+    />
+    <button (click)="loadReport()" class="btn-refresh">🔄 Frissítés</button>
+    <button (click)="exportPDF()" class="btn-export" *ngIf="!loading && !error && summary">📄 PDF exportálás</button>
+  </div>
+
+  <div *ngIf="loading" class="loading">
+    Riport betöltése...
+  </div>
+
+  <div *ngIf="error" class="error-message">
+    {{ error }}
+  </div>
+
+  <div *ngIf="!loading && !error && summary" class="report-content">
+    <!-- Összesítés -->
+    <div class="summary-cards">
+      <div class="summary-card">
+        <div class="card-icon">🎫</div>
+        <div class="card-value">{{ summary.total_reservations }}</div>
+        <div class="card-label">Foglalások</div>
+      </div>
+      <div class="summary-card">
+        <div class="card-icon">🪑</div>
+        <div class="card-value">{{ summary.total_tickets }}</div>
+        <div class="card-label">Jegyek</div>
+      </div>
+      <div class="summary-card highlight">
+        <div class="card-icon">💰</div>
+        <div class="card-value">{{ summary.total_amount | number:'1.0-0' }} Ft</div>
+        <div class="card-label">Bevétel</div>
+      </div>
+    </div>
+
+    <!-- Adminisztrátorónkénti bontás -->
+    <div class="report-section" *ngIf="summary.by_admin?.length">
+      <h2>👨‍💼 Adminisztrátorónkénti bontás</h2>
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>Adminisztrátor neve</th>
+            <th>Email</th>
+            <th>Foglalások</th>
+            <th>Jegyek</th>
+            <th>Bevétel</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of summary.by_admin">
+            <td>{{ item.admin_name }}</td>
+            <td>{{ item.admin_email }}</td>
+            <td>{{ item.reservations_count }}</td>
+            <td>{{ item.tickets_count }}</td>
+            <td class="amount">{{ item.total_amount | number:'1.0-0' }} Ft</td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr class="total-row">
+            <td colspan="2"><strong>ÖSSZESEN</strong></td>
+            <td><strong>{{ summary.total_reservations }}</strong></td>
+            <td><strong>{{ summary.total_tickets }}</strong></td>
+            <td class="amount"><strong>{{ summary.total_amount | number:'1.0-0' }} Ft</strong></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <!-- Előadások szerinti bevétel -->
+    <div class="report-section" *ngIf="summary.by_showtime?.length">
+      <h2>🎟️ Előadások szerinti bevétel</h2>
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>Film</th>
+            <th>Előadás időpont</th>
+            <th>Terem</th>
+            <th>Foglalások</th>
+            <th>Jegyek</th>
+            <th>Bevétel</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of summary.by_showtime">
+            <td>{{ item.movie_title }}</td>
+            <td>{{ item.starts_at | date:'yyyy-MM-dd HH:mm' }}</td>
+            <td>{{ item.auditorium_name }}</td>
+            <td>{{ item.reservations_count }}</td>
+            <td>{{ item.tickets_count }}</td>
+            <td class="amount">{{ item.total_amount | number:'1.0-0' }} Ft</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Fizetési módok -->
+    <div class="report-section" *ngIf="summary.by_payment_method?.length">
+      <h2>💳 Fizetési módok</h2>
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>Fizetési mód</th>
+            <th>Tranzakciók</th>
+            <th>Összeg</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of summary.by_payment_method">
+            <td>
+              <span *ngIf="item.method === 'cash'">💵 Készpénz</span>
+              <span *ngIf="item.method === 'card'">💳 Kártya</span>
+              <span *ngIf="item.method !== 'cash' && item.method !== 'card'">{{ item.method }}</span>
+            </td>
+            <td>{{ item.count }}</td>
+            <td class="amount">{{ item.amount | number:'1.0-0' }} Ft</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Óránkénti bontás -->
+    <div class="report-section" *ngIf="summary.hourly?.length">
+      <h2>⏰ Óránkénti forgalom</h2>
+      <div class="hourly-chart">
+        <div *ngFor="let item of summary.hourly" class="hourly-bar">
+          <div class="bar-label">{{ item.hour }}:00</div>
+          <div class="bar-container">
+            <div 
+              class="bar-fill" 
+              [style.width]="(item.amount / summary.total_amount * 100) + '%'"
+            ></div>
+          </div>
+          <div class="bar-value">{{ item.count }} db / {{ item.amount | number:'1.0-0' }} Ft</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Részletes lista -->
+    <div class="report-section" *ngIf="reservations?.length">
+      <h2>📋 Részletes lista</h2>
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Időpont</th>
+            <th>Film</th>
+            <th>Ügyfél</th>
+            <th>Jegyek</th>
+            <th>Összeg</th>
+            <th>Fizetés</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let reservation of reservations">
+            <td>#{{ reservation.id }}</td>
+            <td>{{ reservation.created_at | date:'HH:mm' }}</td>
+            <td>{{ reservation.showtime?.movie?.title || 'N/A' }}</td>
+            <td>{{ reservation.customer_name || 'N/A' }}</td>
+            <td>{{ reservation.items?.length || 0 }}</td>
+            <td class="amount">{{ reservation.total_amount | number:'1.0-0' }} Ft</td>
+            <td>
+              <span *ngIf="reservation.payment_provider === 'cash'" class="payment-badge cash">💵 KP</span>
+              <span *ngIf="reservation.payment_provider === 'card'" class="payment-badge card">💳 Kártya</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Nincs adat -->
+    <div *ngIf="!reservations?.length" class="empty-state">
+      📭 Ezen a napon nem történt foglalás.
+    </div>
+  </div>
+</div>

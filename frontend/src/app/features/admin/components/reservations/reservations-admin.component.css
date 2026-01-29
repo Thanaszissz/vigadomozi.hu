@@ -1,0 +1,275 @@
+.admin-container {
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+h1 {
+  margin: 0;
+  color: #e8d5b7;
+}
+
+.btn-back {
+  padding: 10px 20px;
+  background: #d4a574;
+  color: #e8d5b7;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.btn-back:hover {
+  background: #5568d3;
+  transform: translateX(-3px);
+}
+
+.reservations-table {
+  width: 100%;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  border-collapse: collapse;
+}
+
+.group-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.group-card {
+  background: #2c1810;
+  border: 1px solid #5c3d2e;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  color: #f7efe3;
+  cursor: pointer;
+  user-select: none;
+}
+
+.group-header h2 {
+  margin: 0 0 6px;
+  font-size: 18px;
+  color: #fdf7ed;
+}
+
+.group-meta {
+  font-size: 13px;
+  color: #f1e3cc;
+}
+
+.group-count {
+  background: #d4a574;
+  color: #2c1810;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.group-toggle {
+  font-size: 14px;
+  color: #d4a574;
+  margin-left: 12px;
+}
+
+.reservations-table thead {
+  background: linear-gradient(135deg, #d4a574 0%, #a08060 100%);
+  color: #e8d5b7;
+}
+
+.reservations-table th {
+  padding: 15px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.reservations-table tbody tr {
+  border-bottom: 1px solid #e0e0e0;
+  transition: background-color 0.2s;
+}
+
+.reservations-table tbody tr:hover {
+  background-color: #f5f5f5;
+}
+
+.reservations-table td {
+  padding: 12px 15px;
+  font-size: 14px;
+}
+
+.reservations-table td small {
+  color: #d4a574;
+  font-size: 12px;
+}
+
+.seat-badge {
+  background: #e3f2fd;
+  color: #1976d2;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.price {
+  font-weight: 600;
+  color: #2e7d32;
+}
+
+.status-badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.status-badge.paid {
+  background: #c8e6c9;
+  color: #2e7d32;
+}
+
+.status-badge.pending {
+  background: #fff9c4;
+  color: #f57f17;
+}
+
+.status-badge.cancelled {
+  background: #ffcdd2;
+  color: #c62828;
+}
+
+.status-badge.expired {
+  background: #e0e0e0;
+  color: #616161;
+}
+
+.payment-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.btn-pay {
+  border: none;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.btn-card {
+  background: #2bb0e4;
+  color: #0b2430;
+}
+
+.btn-cash {
+  background: #7fd3ff;
+  color: #0b2430;
+}
+
+.paid-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  color: #5c3d2e;
+  text-transform: uppercase;
+}
+
+.btn-receipt {
+  background: #d4a574;
+  color: #2c1810;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 2000;
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2001;
+  padding: 20px;
+}
+
+.modal-content {
+  background: #2c1810;
+  border: 1px solid #5c3d2e;
+  border-radius: 12px;
+  padding: 24px;
+  width: 100%;
+  max-width: 420px;
+  color: #f7efe3;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+}
+
+.modal-content h3 {
+  margin: 0 0 10px;
+  font-size: 18px;
+  color: #ffffff;
+}
+
+.modal-content p {
+  margin: 0 0 20px;
+  color: #f1e3cc;
+}
+
+.modal-error {
+  background: #5a2c2c;
+  color: #ff9999;
+  border: 1px solid #ff6b6b;
+  padding: 10px 12px;
+  border-radius: 6px;
+  margin-bottom: 14px;
+  font-size: 13px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.loading, .empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #d4a574;
+  font-size: 18px;
+}
+
+.error-message {
+  background: #ffebee;
+  color: #c62828;
+  padding: 15px;
+  border-radius: 6px;
+  margin-top: 20px;
+}
+

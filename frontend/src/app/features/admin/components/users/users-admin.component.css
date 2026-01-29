@@ -1,0 +1,262 @@
+.admin-container {
+  background: #3d2817;
+  color: #e8d5b7;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #5c3d2e;
+}
+
+.header h1 {
+  color: #e8d5b7;
+  font-size: 28px;
+  margin: 0;
+}
+
+.header-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-add,
+.btn-back {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s;
+  font-size: 13px;
+}
+
+.btn-add {
+  background: #22c55e;
+  color: white;
+}
+
+.btn-add:hover {
+  background: #16a34a;
+}
+
+.btn-back {
+  background: #8b6f47;
+  color: #fff;
+}
+
+.btn-back:hover {
+  background: #a0825f;
+}
+
+.success-message {
+  background: #1f5f3f;
+  border: 1px solid #22c55e;
+  color: #86efac;
+  padding: 12px;
+  border-radius: 4px;
+  margin-bottom: 16px;
+}
+
+.error-message {
+  background: #5f1f1f;
+  border: 1px solid #ef4444;
+  color: #fca5a5;
+  padding: 12px;
+  border-radius: 4px;
+  margin-bottom: 16px;
+}
+
+.form-panel {
+  background: #5c3d2e;
+  padding: 20px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  border: 1px solid #d4a574;
+}
+
+.form-panel h3 {
+  color: #e8d5b7;
+  margin-top: 0;
+  margin-bottom: 16px;
+  font-size: 16px;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  color: #e8d5b7;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.optional {
+  font-size: 11px;
+  color: #a08060;
+  font-weight: normal;
+}
+
+.form-control {
+  width: 100%;
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid #d4a574;
+  background: #3d2817;
+  color: #e8d5b7;
+  font-size: 13px;
+  box-sizing: border-box;
+}
+
+.form-control::placeholder {
+  color: #a08060;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: #8b6f47;
+  box-shadow: 0 0 4px rgba(139, 111, 71, 0.3);
+}
+
+.form-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
+.btn-save,
+.btn-cancel {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s;
+  font-size: 13px;
+}
+
+.btn-save {
+  background: #8b6f47;
+  color: white;
+}
+
+.btn-save:hover {
+  background: #a0825f;
+}
+
+.btn-save:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-cancel {
+  background: #d4a574;
+  color: #2c1810;
+}
+
+.btn-cancel:hover {
+  background: #c29563;
+}
+
+.btn-cancel:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.users-table {
+  background: #5c3d2e;
+  border: 1px solid #d4a574;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+thead {
+  background: #3d2817;
+}
+
+th {
+  color: #e8d5b7;
+  padding: 12px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+td {
+  color: #e8d5b7;
+  padding: 12px;
+  border-top: 1px solid #3d2817;
+  font-size: 13px;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-edit,
+.btn-delete {
+  padding: 6px 10px;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+.btn-edit {
+  background: #3b82f6;
+  color: white;
+}
+
+.btn-edit:hover {
+  background: #2563eb;
+}
+
+.btn-delete {
+  background: #ef4444;
+  color: white;
+}
+
+.btn-delete:hover {
+  background: #dc2626;
+}
+
+.btn-delete:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.loading {
+  text-align: center;
+  color: #a08060;
+  padding: 40px 20px;
+  font-size: 14px;
+}
+
+.empty-state {
+  text-align: center;
+  color: #a08060;
+  padding: 40px 20px;
+  background: #5c3d2e;
+  border: 1px solid #d4a574;
+  border-radius: 6px;
+  font-size: 14px;
+}

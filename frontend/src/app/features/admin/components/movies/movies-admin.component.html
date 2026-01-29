@@ -1,0 +1,154 @@
+<div class="admin-container">
+  <div class="header">
+    <h1>🎥 Filmek kezelése</h1>
+    <div class="header-actions">
+      <input type="text" [(ngModel)]="searchTerm" placeholder="Filmek keresése..." class="search-input" />
+      <button (click)="goBack()" class="btn-back">← Vissza</button>
+    </div>
+  </div>
+
+  <div class="movies-list" *ngIf="!loading">
+    <div class="movie-card" *ngFor="let movie of paginatedMovies">
+      <div class="movie-poster" [style.background-image]="movie.poster_url ? 'url(' + movie.poster_url + ')' : (movie.poster_path ? 'url(' + movie.poster_path + ')' : 'none')">
+        <span *ngIf="!movie.poster_url && !movie.poster_path" class="no-poster">🎬</span>
+        <div class="rating-badge-card" *ngIf="movie.rating" [ngClass]="'badge-' + movie.rating">
+          <span *ngIf="movie.rating === 'general'"></span>
+          <span *ngIf="movie.rating !== 'general'">{{ movie.rating }}</span>
+        </div>
+      </div>
+      <div class="movie-info">
+        <h3>{{ movie.title }}</h3>
+        <p class="description">{{ movie.description }}</p>
+        <div class="movie-meta">
+          <span>⏱️ {{ movie.duration_minutes || movie.duration_min }} perc</span>
+        </div>
+        <div class="actions">
+          <button class="btn-edit" (click)="editMovie(movie)">✏️ Szerkesztés</button>
+          <button class="btn-delete" (click)="deleteMovie(movie)">🗑️ Törlés</button>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="movies.length === 0" class="empty-state">
+      <p>📭 Még nincsenek filmek az adatbázisban.</p>
+    </div>
+
+    <div *ngIf="movies.length > 0 && filteredMovies.length === 0" class="empty-state">
+      <p>🔍 Nincs találat a keresésre: "{{ searchTerm }}"</p>
+    </div>
+  </div>
+
+  <div class="pagination-container" *ngIf="!loading && filteredMovies.length > 0">
+    <div class="items-per-page-wrapper">
+      <label>Elemek oldalanként:</label>
+      <select [(ngModel)]="itemsPerPage" (ngModelChange)="onItemsPerPageChange()" class="items-per-page">
+        <option [value]="3">3</option>
+        <option [value]="6">6</option>
+        <option [value]="12">12</option>
+        <option [value]="24">24</option>
+      </select>
+    </div>
+    <div class="pagination" *ngIf="totalPages > 1">
+      <button class="page-btn" (click)="goToPage(currentPage - 1)" [disabled]="currentPage === 1">
+        ← Előző
+      </button>
+      <button 
+        *ngFor="let page of pages" 
+        class="page-btn" 
+        [class.active]="page === currentPage"
+        (click)="goToPage(page)">
+        {{ page }}
+      </button>
+      <button class="page-btn" (click)="goToPage(currentPage + 1)" [disabled]="currentPage === totalPages">
+        Következő →
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="loading">
+    <p>⏳ Betöltés...</p>
+  </div>
+
+  <div *ngIf="error" class="error-message">
+    <p>❌ {{ error }}</p>
+  </div>
+
+  <!-- Edit Modal -->
+  <div class="modal-overlay" *ngIf="showEditModal" (click)="closeModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>✏️ Film szerkesztése</h2>
+        <button class="btn-close" (click)="closeModal()">✕</button>
+      </div>
+      
+      <form *ngIf="editingMovie" (ngSubmit)="saveMovie()" class="edit-form">
+        <div class="form-group">
+          <label>Film címe</label>
+          <input type="text" [(ngModel)]="editingMovie.title" name="title" class="form-input" required>
+        </div>
+
+        <div class="form-group">
+          <label>Leírás</label>
+          <textarea [(ngModel)]="editingMovie.description" name="description" class="form-textarea" rows="4" required></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Időtartam (perc)</label>
+          <input type="number" [(ngModel)]="editingMovie.duration_min" name="duration_min" class="form-input" required>
+        </div>
+
+        <div class="form-group">
+          <label>YouTube Trailer URL</label>
+          <input type="url" [(ngModel)]="editingMovie.trailer_youtube_url" name="trailer_youtube_url" class="form-input" placeholder="https://www.youtube.com/watch?v=...">
+          <small style="color: #888; font-size: 12px;">Teljes YouTube link (pl: https://www.youtube.com/watch?v=dQw4w9WgXcQ)</small>
+        </div>
+
+        <div class="form-group">
+          <label>Korhatár besorolás</label>
+          <div class="rating-selector">
+            <label class="rating-option" [class.selected]="editingMovie.rating === 'general'">
+              <input type="radio" [(ngModel)]="editingMovie.rating" name="rating" value="general">
+              <div class="rating-badge badge-general">KORHATÁR NÉLKÜLI</div>
+            </label>
+            <label class="rating-option" [class.selected]="editingMovie.rating === '6'">
+              <input type="radio" [(ngModel)]="editingMovie.rating" name="rating" value="6">
+              <div class="rating-badge badge-6">6</div>
+            </label>
+            <label class="rating-option" [class.selected]="editingMovie.rating === '12'">
+              <input type="radio" [(ngModel)]="editingMovie.rating" name="rating" value="12">
+              <div class="rating-badge badge-12">12</div>
+            </label>
+            <label class="rating-option" [class.selected]="editingMovie.rating === '16'">
+              <input type="radio" [(ngModel)]="editingMovie.rating" name="rating" value="16">
+              <div class="rating-badge badge-16">16</div>
+            </label>
+            <label class="rating-option" [class.selected]="editingMovie.rating === '18'">
+              <input type="radio" [(ngModel)]="editingMovie.rating" name="rating" value="18">
+              <div class="rating-badge badge-18">18</div>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Poszter feltöltése</label>
+          <input type="file" (change)="onFileSelected($event)" accept="image/*" class="form-input">
+          <small class="form-hint">vagy adjon meg URL-t alább</small>
+        </div>
+
+        <div class="preview-container" *ngIf="previewUrl || editingMovie.poster_path">
+          <img [src]="previewUrl || editingMovie.poster_path || editingMovie.poster_url" alt="Poszter előnézet" class="poster-preview">
+        </div>
+
+        <div class="form-group">
+          <label>Poszter URL (opcionális)</label>
+          <input type="text" [(ngModel)]="editingMovie.poster_path" name="poster_path" class="form-input" [disabled]="!!selectedFile">
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn-cancel" (click)="closeModal()">Mégse</button>
+          <button type="submit" class="btn-save">💾 Mentés</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

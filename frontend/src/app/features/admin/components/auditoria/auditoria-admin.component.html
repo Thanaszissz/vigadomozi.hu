@@ -1,0 +1,271 @@
+<div class="admin-container">
+  <div class="header">
+    <h1>🎭 Termek kezelése</h1>
+    <div class="header-actions">
+      <button (click)="createNewAuditorium()" class="btn-create">+ Új terem</button>
+      <button (click)="goBack()" class="btn-back">← Vissza</button>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="loading">
+    Termek betöltése...
+  </div>
+
+  <div *ngIf="error" class="error-message">
+    {{ error }}
+  </div>
+
+  <div *ngIf="!loading && !error" class="auditoria-container">
+    <div class="auditoria-list">
+      <div 
+        *ngFor="let auditorium of auditoria" 
+        class="auditorium-card"
+        [class.selected]="selectedAuditorium?.id === auditorium.id"
+        (click)="selectAuditorium(auditorium)">
+        <div class="auditorium-header">
+          <h3>{{ auditorium.name }}</h3>
+          <div class="auditorium-actions">
+            <button class="btn-edit-small" (click)="editAuditorium(auditorium); $event.stopPropagation()">✏️</button>
+            <button class="btn-delete-small" (click)="deleteAuditorium(auditorium); $event.stopPropagation()">🗑️</button>
+          </div>
+        </div>
+        <div class="auditorium-info">
+          <span>📍 Sorok: {{ auditorium.rows }}</span>
+          <span>💺 Oszlopok: {{ auditorium.columns }}</span>
+          <span>✅ Össz. hely: {{ auditorium.total_seats }}</span>
+        </div>
+      </div>
+
+      <div *ngIf="auditoria.length === 0" class="empty-state">
+        Még nincsenek termek
+      </div>
+    </div>
+
+    <div *ngIf="selectedAuditorium" class="seat-layout">
+      <h2>{{ selectedAuditorium.name }} - Nézőtér elrendezés</h2>
+
+      <div class="sector-panel">
+        <div class="sector-header">
+          <div>
+            <h3>Szektorok és árak</h3>
+            <p class="sector-hint">Válassz szektort, majd kattints az ülésekre a hozzárendeléshez.</p>
+          </div>
+          <div class="sector-form">
+            <input
+              type="text"
+              [(ngModel)]="newSectorName"
+              placeholder="Szektor neve"
+              class="sector-input">
+            <input
+              type="number"
+              [(ngModel)]="newSectorPrice"
+              placeholder="Ár (Ft)"
+              class="sector-input">
+            <button type="button" class="btn-add-sector" (click)="addSector()">+ Szektor</button>
+          </div>
+        </div>
+
+        <div class="sector-list" *ngIf="sectors.length > 0">
+          <div
+            class="sector-item"
+            *ngFor="let sector of sectors"
+            [class.active]="selectedSectorName === sector.name">
+            <button type="button" class="sector-select" (click)="selectSector(sector)">{{ sector.name }}</button>
+            <div class="sector-price">
+              <input
+                type="number"
+                [(ngModel)]="sector.price"
+                (change)="updateSectorPrice(sector)"
+                class="sector-price-input">
+              <span>Ft</span>
+            </div>
+            <button type="button" class="sector-remove" (click)="removeSector(sector)">✕</button>
+          </div>
+        </div>
+
+        <div class="sector-actions">
+          <div class="active-sector">
+            Aktív szektor:
+            <strong>{{ selectedSectorName || 'nincs kiválasztva' }}</strong>
+          </div>
+          <button type="button" class="btn-clear-sector" (click)="clearSectorSelection()">Szektor kijelölés törlése</button>
+        </div>
+      </div>
+
+      <div class="section-panel">
+        <div class="section-header">
+          <div>
+            <h3>Szintek / elkülönített részek</h3>
+            <p class="section-hint">Válassz szintet (pl. Földszint, Emelet), majd kattints az ülésekre.</p>
+          </div>
+          <div class="section-form">
+            <input
+              type="text"
+              [(ngModel)]="newSectionName"
+              placeholder="Szint neve"
+              class="section-input">
+            <button type="button" class="btn-add-section" (click)="addSection()">+ Szint</button>
+          </div>
+        </div>
+
+        <div class="section-list" *ngIf="sections.length > 0">
+          <div
+            class="section-item"
+            *ngFor="let section of sections"
+            [class.active]="false">
+            <button type="button" class="section-select" (click)="selectSection(section)" disabled>
+              <span class="section-dot" [style.background]="getSectionColor(section.name)"></span>
+              {{ section.name }}
+            </button>
+            <button type="button" class="section-remove" (click)="removeSection(section)">✕</button>
+          </div>
+        </div>
+
+        <div class="section-actions">
+          <div class="active-section">
+            A szinteket soronként állíthatod be lentebb.
+          </div>
+          <button type="button" class="btn-clear-section" (click)="clearSectionSelection()" disabled>Szint kijelölés törlése</button>
+        </div>
+      </div>
+
+      <div class="row-panel">
+        <div class="row-header">
+          <div>
+            <h3>Sorok és oszlopszámok</h3>
+            <p class="row-hint">Itt állíthatod, hogy soronként hány oszlop legyen, és melyik szinthez tartozzon.</p>
+          </div>
+          <div class="row-form">
+            <input
+              type="text"
+              [(ngModel)]="newRowLabel"
+              placeholder="Sor jel (A, B...)"
+              class="row-input">
+            <input
+              type="number"
+              [(ngModel)]="newRowColumns"
+              placeholder="Oszlopok"
+              class="row-input">
+            <select [(ngModel)]="newRowSection" class="row-input">
+              <option [ngValue]="null">Nincs szint</option>
+              <option *ngFor="let section of sections" [ngValue]="section.name">{{ section.name }}</option>
+            </select>
+            <button type="button" class="btn-add-row" (click)="addRow()">+ Sor</button>
+          </div>
+        </div>
+
+        <div class="row-list">
+          <div class="row-item" *ngFor="let row of rowConfigs">
+            <div class="row-label">{{ row.label }}</div>
+            <input
+              type="number"
+              [(ngModel)]="row.columns"
+              (change)="updateRowConfig()"
+              class="row-columns-input">
+            <select [(ngModel)]="row.section" (change)="updateRowConfig()" class="row-section-select">
+              <option [ngValue]="null">Nincs szint</option>
+              <option *ngFor="let section of sections" [ngValue]="section.name">{{ section.name }}</option>
+            </select>
+            <button type="button" class="row-remove" (click)="removeRow(row)">✕</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="screen">VÁSZON</div>
+      
+      <div class="section-group" *ngFor="let group of getSectionGroups()">
+        <div class="section-title" [style.border-color]="group.color">
+          <span class="section-dot" [style.background]="group.color"></span>
+          {{ group.name }}
+        </div>
+        <div class="row" *ngFor="let row of group.rows">
+          <div class="row-label">{{ row.label }}</div>
+          <div class="row-seats" [style.grid-template-columns]="'repeat(' + row.columns + ', 1fr)'">
+            <div
+              *ngFor="let seat of getSeatsForRow(row)"
+              class="seat"
+              [class.sectioned]="seat.section"
+              [class.blocked]="seat.blocked"
+              [class.available]="!seat.blocked"
+              [attr.data-row]="seat.row"
+              [attr.data-col]="seat.column"
+              [style.--section-color]="getSectionColor(seat.section)"
+              (click)="toggleSeat(seat)">
+              <span class="seat-label">{{ seat.column }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="legend">
+        <div class="legend-item">
+          <div class="seat available"></div>
+          <span>Elérhető</span>
+        </div>
+        <div class="legend-item">
+          <div class="seat blocked"></div>
+          <span>Tiltott</span>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn-save" (click)="saveSeatLayout()">💾 Mentés</button>
+        <button class="btn-reset" (click)="resetSeatLayout()">🔄 Visszaállítás</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Modal -->
+  <div class="modal-overlay" *ngIf="showEditModal" (click)="closeModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ isNewAuditorium ? '➕ Új terem' : '✏️ Terem szerkesztése' }}</h2>
+        <button class="btn-close" (click)="closeModal()">✕</button>
+      </div>
+      
+      <form *ngIf="editingAuditorium" (ngSubmit)="saveAuditorium()" class="edit-form">
+        <div class="form-group">
+          <label>Terem neve</label>
+          <input type="text" [(ngModel)]="editingAuditorium.name" name="name" class="form-input" required>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Sorok száma</label>
+            <input 
+              type="number" 
+              [(ngModel)]="editingAuditorium.rows" 
+              name="rows" 
+              class="form-input" 
+              (change)="updateTotalSeats()"
+              min="1"
+              required>
+          </div>
+
+          <div class="form-group">
+            <label>Oszlopok száma</label>
+            <input 
+              type="number" 
+              [(ngModel)]="editingAuditorium.columns" 
+              name="columns" 
+              class="form-input" 
+              (change)="updateTotalSeats()"
+              min="1"
+              required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Össz. helyek száma</label>
+          <input type="number" [(ngModel)]="editingAuditorium.total_seats" name="total_seats" class="form-input" disabled>
+          <small style="color: #888; font-size: 12px;">Automatikusan számítódik: sorok × oszlopok</small>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" (click)="closeModal()" class="btn-cancel">Mégse</button>
+          <button type="submit" class="btn-save">{{ isNewAuditorium ? 'Létrehozás' : 'Mentés' }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

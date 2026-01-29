@@ -1,0 +1,61 @@
+<div class="admin-container">
+  <nav class="admin-navbar">
+    <div class="navbar-brand">
+      <h2>🎬 VIGADÓ Admin</h2>
+    </div>
+    <div class="navbar-user">
+      <span>👤 {{ currentUser?.name }}</span>
+      <button (click)="logout()" class="btn-logout">Kijelentkezés</button>
+    </div>
+  </nav>
+
+  <div class="admin-content">
+    <h1>Üdvözöljük az Admin Panelben!</h1>
+    <p class="subtitle">Jó {{greeting}}! 👋</p>
+
+    <div class="dashboard-grid">
+      <div class="dashboard-card">
+        <h3>🎥 Filmek</h3>
+        <p>Filmek kezelése, szerkesztése</p>
+        <button (click)="navigateTo('/admin/movies')" class="btn-card">Filmek</button>
+      </div>
+
+      <div class="dashboard-card">
+        <h3>🎞️ Előadások</h3>
+        <p>Vetítések szerkesztése és ütemezése</p>
+        <button (click)="navigateTo('/admin/showtimes')" class="btn-card">Előadások</button>
+      </div>
+
+      <div class="dashboard-card">
+        <h3>🎫 Foglalások</h3>
+        <p>Jegyfoglalások megtekintése és exportálása</p>
+        <button (click)="navigateTo('/admin/reservations')" class="btn-card">Foglalások</button>
+      </div>
+
+      <div class="dashboard-card">
+        <h3>📊 Riportok</h3>
+        <p>Napi zárás és bevételi riportok</p>
+        <button (click)="navigateTo('/admin/reports')" class="btn-card">Riportok</button>
+      </div>
+
+      <div class="dashboard-card">
+        <h3>🪑 Termek</h3>
+        <p>Auditorium beállítások és ülések</p>
+        <button (click)="navigateTo('/admin/auditoria')" class="btn-card">Termek</button>
+      </div>
+
+      <div class="dashboard-card">
+        <h3>👥 Felhasználók</h3>
+        <p>Admin felhasználók kezelése</p>
+        <button (click)="navigateTo('/admin/users')" class="btn-card">Felhasználók</button>
+      </div>
+    </div>
+
+    <div class="info-box">
+      <h3>ℹ️ Bejelentkezési Adatok</h3>
+      <p><strong>Email:</strong> {{ currentUser?.email || 'N/A' }}</p>
+      <p><strong>Név:</strong> {{ currentUser?.name || 'N/A' }}</p>
+      <p><strong>Admin Token:</strong> <code>{{ token ? token.substring(0, 20) + '...' : 'N/A' }}</code></p>
+    </div>
+  </div>
+</div>

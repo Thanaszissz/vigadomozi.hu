@@ -1,0 +1,78 @@
+<div class="page">
+  <header class="topbar">
+    <div class="brand">
+      <img class="brand-logo" src="assets/vigado_logo_beige.png" alt="Vigadó Mozi" />
+    </div>
+    <div class="header-right">
+      <div class="search">
+        <input type="text" [(ngModel)]="searchTerm" placeholder="keresd meg. nézd meg. műsor keresése" />
+        <button class="search-btn">🔍</button>
+      </div>
+      <nav class="nav-links">
+        <a routerLink="/">Műsor</a>
+        <a routerLink="/schedule">Műsorlista</a>
+        <a routerLink="/movies" class="active">Jegyvásárlás</a>
+        <a routerLink="/prices">Jegyárak</a>
+        <a routerLink="/">Médiaajánlat</a>
+        <a routerLink="/admin/login" class="admin-link">🔐 Admin</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="content">
+    <h1>Filmek</h1>
+
+    <div *ngIf="loading" class="state loading">
+      <p>Filmek betöltése...</p>
+    </div>
+
+    <div *ngIf="error" class="state error">
+      <p>{{ error }}</p>
+    </div>
+
+    <div *ngIf="!loading && filteredMovies.length > 0" class="movies-grid">
+      <div *ngFor="let movie of filteredMovies" class="movie-card">
+        <div class="movie-poster">
+          <img *ngIf="movie.poster_path" [src]="movie.poster_path" [alt]="movie.title">
+          <div *ngIf="!movie.poster_path" class="no-poster">Nincs poszter</div>
+        </div>
+        <div class="movie-info">
+          <h2>{{ movie.title }}</h2>
+          <p class="duration" *ngIf="movie.duration_min">⏱️ {{ movie.duration_min }} perc</p>
+          <p class="description">{{ movie.description | slice:0:100 }}...</p>
+          <div class="actions">
+            <a [routerLink]="'/movies/' + movie.id" class="btn btn-primary">Részletek &amp; Jegyrendelés</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="!loading && movies.length === 0" class="state empty">
+      <p>Jelenleg nincs elérhető film.</p>
+    </div>
+
+    <div *ngIf="!loading && movies.length > 0 && filteredMovies.length === 0" class="state empty">
+      <p>Nincs találat a keresésre: "{{ searchTerm }}"</p>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="footer-col">
+      <h4>Információk</h4>
+      <a href="#">Házirend</a>
+      <a href="#">Fizetési tájékoztató</a>
+      <a href="#">Adatkezelési tájékoztató</a>
+    </div>
+    <div class="footer-col">
+      <h4>Kapcsolat</h4>
+      <p>Vigadó Mozi • Film és Színház</p>
+      <p>5310 Kisújszállás Szabadság Tér 7.</p>
+      <p>+36-59-328-083</p>
+      <p>info&#64;vigadomozi.hu</p>
+    </div>
+    <div class="footer-col">
+      <h4>Impresszum</h4>
+      <p>Kisújszállási Művelődési Központ és Könyvtár</p>
+    </div>
+  </footer>
+</div>

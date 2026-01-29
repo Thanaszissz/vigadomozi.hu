@@ -1,0 +1,99 @@
+<div class="admin-container">
+  <div class="header">
+    <h1>👥 Felhasználó kezelés</h1>
+    <div class="header-actions">
+      <button (click)="toggleForm()" class="btn-add">
+        {{ showForm ? '✕ Bezárás' : '+ Új felhasználó' }}
+      </button>
+      <button (click)="goBack()" class="btn-back">← Vissza</button>
+    </div>
+  </div>
+
+  <div *ngIf="successMessage" class="success-message">{{ successMessage }}</div>
+  <div *ngIf="error" class="error-message">{{ error }}</div>
+
+  <!-- Add/Edit Form -->
+  <div *ngIf="showForm" class="form-panel">
+    <h3>{{ editingId ? 'Felhasználó szerkesztése' : 'Új felhasználó hozzáadása' }}</h3>
+
+    <div class="form-group">
+      <label for="name">Név:</label>
+      <input
+        id="name"
+        type="text"
+        [(ngModel)]="formData.name"
+        placeholder="Felhasználó neve"
+        class="form-control">
+    </div>
+
+    <div class="form-group">
+      <label for="email">Email:</label>
+      <input
+        id="email"
+        type="email"
+        [(ngModel)]="formData.email"
+        placeholder="user@example.com"
+        class="form-control">
+    </div>
+
+    <div class="form-group">
+      <label for="password">
+        Jelszó:
+        <span *ngIf="editingId" class="optional">(hagyj üresen, ha nem akarod módosítani)</span>
+      </label>
+      <input
+        id="password"
+        type="password"
+        [(ngModel)]="formData.password"
+        placeholder="Jelszó (min. 8 karakter)"
+        class="form-control">
+    </div>
+
+    <div class="form-actions">
+      <button (click)="saveUser()" [disabled]="loading" class="btn-save">
+        {{ loading ? 'Mentés...' : 'Mentés' }}
+      </button>
+      <button (click)="resetForm()" [disabled]="loading" class="btn-cancel">
+        Mégsem
+      </button>
+    </div>
+  </div>
+
+  <!-- Users List -->
+  <div *ngIf="loading && users.length === 0" class="loading">
+    <p>⏳ Betöltés...</p>
+  </div>
+
+  <div *ngIf="users.length > 0 && !loading" class="users-table">
+    <table>
+      <thead>
+        <tr>
+          <th>Név</th>
+          <th>Email</th>
+          <th>Regisztrálva</th>
+          <th>Műveletek</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let user of users">
+          <td>{{ user.name }}</td>
+          <td>{{ user.email }}</td>
+          <td>{{ user.created_at | date: 'yyyy.MM.dd. HH:mm' }}</td>
+          <td class="actions">
+            <button (click)="editUser(user)" class="btn-edit">✏️ Szerkesztés</button>
+            <button
+              (click)="deleteUser(user)"
+              [disabled]="!canDeleteUser(user)"
+              class="btn-delete">
+              🗑️ Törlés
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div *ngIf="!loading && users.length === 0" class="empty-state">
+    <p>📭 Nincsenek felhasználók az adatbázisban.</p>
+  </div>
+</div>

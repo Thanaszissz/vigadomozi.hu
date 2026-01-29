@@ -1,0 +1,187 @@
+<div class="admin-container">
+  <div class="header">
+    <h1>🎬 Előadások kezelése</h1>
+    <div class="header-actions">
+      <button (click)="createNewShowtime()" class="btn-create">+ Új előadás</button>
+      <button (click)="goBack()" class="btn-back">← Vissza</button>
+    </div>
+  </div>
+
+  <div class="toolbar" *ngIf="!loading && !error">
+    <div class="toolbar-group">
+      <label class="toolbar-label" for="showtime-search">Keresés</label>
+      <input
+        id="showtime-search"
+        type="text"
+        [(ngModel)]="searchTerm"
+        placeholder="Film, terem, dátum vagy ID"
+        class="toolbar-input" />
+    </div>
+
+    <div class="toolbar-group">
+      <label class="toolbar-label" for="status-filter">Státusz</label>
+      <select id="status-filter" [(ngModel)]="statusFilter" class="toolbar-select">
+        <option value="all">Összes</option>
+        <option value="active">Aktív</option>
+        <option value="inactive">Inaktív</option>
+      </select>
+    </div>
+
+    <div class="toolbar-group">
+      <label class="toolbar-label" for="sort-select">Rendezés</label>
+      <select id="sort-select" [(ngModel)]="sortOption" class="toolbar-select">
+        <option value="created_desc">Legfrissebb felvett elöl</option>
+        <option value="created_asc">Legrégebbi felvett elöl</option>
+        <option value="starts_asc">Kezdés növekvő</option>
+        <option value="starts_desc">Kezdés csökkenő</option>
+        <option value="movie_asc">Film A → Z</option>
+        <option value="movie_desc">Film Z → A</option>
+        <option value="auditorium_asc">Terem A → Z</option>
+        <option value="auditorium_desc">Terem Z → A</option>
+      </select>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="loading">
+    Előadások betöltése...
+  </div>
+
+  <div *ngIf="error" class="error-message">
+    {{ error }}
+  </div>
+
+  <div *ngIf="!loading && !error && filteredShowtimes.length === 0" class="empty-state">
+    Még nincsenek előadások
+  </div>
+
+  <table *ngIf="!loading && !error && filteredShowtimes.length > 0" class="showtimes-table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Film</th>
+        <th>Terem</th>
+        <th>Kezdés</th>
+        <th>Státusz</th>
+        <th>Műveletek</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let showtime of filteredShowtimes">
+        <td>{{ showtime.id }}</td>
+        <td>{{ showtime.movie?.title || 'N/A' }}</td>
+        <td>{{ showtime.auditorium?.name || 'N/A' }}</td>
+        <td>{{ showtime.starts_at | date:'yyyy-MM-dd HH:mm' }}</td>
+        <td>
+          <span class="status-badge" [class.status-active]="showtime.status === 'active'">
+            {{ showtime.status }}
+          </span>
+        </td>
+        <td class="actions">
+          <button class="btn-edit" (click)="editShowtime(showtime)">✏️ Szerkesztés</button>
+          <button class="btn-delete" (click)="deleteShowtime(showtime)">🗑️ Törlés</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Edit Modal -->
+  <div class="modal-overlay" *ngIf="showEditModal" (click)="closeModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ isNewShowtime ? '➕ Új előadás' : '✏️ Előadás szerkesztése' }}</h2>
+        <button class="btn-close" (click)="closeModal()">✕</button>
+      </div>
+      
+      <form *ngIf="editingShowtime" (ngSubmit)="saveShowtime()" class="edit-form">
+        <div class="form-group">
+          <label>Film</label>
+          <div class="autocomplete-wrapper">
+            <input 
+              type="text" 
+              [(ngModel)]="movieSearchTerm" 
+              name="movieSearch"
+              (focus)="onMovieSearchFocus()"
+              (blur)="onMovieSearchBlur()"
+              placeholder="Kezdj el gépelni..."
+              class="form-input"
+              autocomplete="off"
+              required>
+            <div class="autocomplete-dropdown" *ngIf="showMovieDropdown && filteredMovies.length > 0">
+              <div 
+                *ngFor="let movie of filteredMovies" 
+                class="autocomplete-item"
+                (click)="selectMovie(movie)">
+                {{ movie.title }}
+              </div>
+            </div>
+            <div class="autocomplete-dropdown" *ngIf="showMovieDropdown && movieSearchTerm && filteredMovies.length === 0">
+              <div class="autocomplete-item no-results">Nincs találat</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Terem</label>
+          <div class="autocomplete-wrapper">
+            <input 
+              type="text" 
+              [(ngModel)]="auditoriumSearchTerm" 
+              name="auditoriumSearch"
+              (focus)="onAuditoriumSearchFocus()"
+              (blur)="onAuditoriumSearchBlur()"
+              placeholder="Kezdj el gépelni..."
+              class="form-input"
+              autocomplete="off"
+              required>
+            <div class="autocomplete-dropdown" *ngIf="showAuditoriumDropdown && filteredAuditoria.length > 0">
+              <div 
+                *ngFor="let auditorium of filteredAuditoria" 
+                class="autocomplete-item"
+                (click)="selectAuditorium(auditorium)">
+                {{ auditorium.name }}
+              </div>
+            </div>
+            <div class="autocomplete-dropdown" *ngIf="showAuditoriumDropdown && auditoriumSearchTerm && filteredAuditoria.length === 0">
+              <div class="autocomplete-item no-results">Nincs találat</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Dátum</label>
+            <input 
+              type="date" 
+              [(ngModel)]="dateString" 
+              name="dateString" 
+              class="form-input" 
+              required>
+          </div>
+
+          <div class="form-group">
+            <label>Időpont (24 órás)</label>
+            <input 
+              type="time" 
+              [(ngModel)]="timeString" 
+              name="timeString" 
+              class="form-input" 
+              required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Státusz</label>
+          <select [(ngModel)]="editingShowtime.status" name="status" class="form-select" required>
+            <option value="active">Aktív</option>
+            <option value="inactive">Inaktív</option>
+          </select>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" (click)="closeModal()" class="btn-cancel">Mégse</button>
+          <button type="submit" class="btn-save">{{ isNewShowtime ? 'Létrehozás' : 'Mentés' }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,160 @@
+<div class="page">
+  <header class="topbar">
+    <div class="brand">
+      <img class="brand-logo" src="assets/vigado_logo_beige.png" alt="Vigadó Mozi" />
+    </div>
+    <div class="header-right">
+      <div class="search">
+        <input type="text" placeholder="keresd meg. nézd meg. műsor keresése" />
+        <button class="search-btn">🔍</button>
+      </div>
+      <nav class="nav-links">
+        <a routerLink="/">Műsor</a>
+        <a routerLink="/schedule">Műsorlista</a>
+        <a routerLink="/movies" class="active">Jegyvásárlás</a>
+        <a routerLink="/prices">Jegyárak</a>
+        <a routerLink="/">Médiaajánlat</a>
+        <a routerLink="/admin/login" class="admin-link">🔐 Admin</a>
+      </nav>
+    </div>
+  </header>
+  <section class="content">
+    <div *ngIf="loading" class="state loading">
+      <p>Film betöltése...</p>
+    </div>
+
+    <div *ngIf="error" class="state error">
+      <p>{{ error }}</p>
+    </div>
+
+    <div *ngIf="movie" class="movie-detail">
+      <div class="movie-header">
+        <img
+          *ngIf="movie.poster_path; else noPoster"
+          [src]="movie.poster_path"
+          [alt]="movie.title"
+          class="poster-image"
+        />
+        <ng-template #noPoster>
+          <div class="no-poster">Nincs plakát</div>
+        </ng-template>
+
+        <div class="info-section">
+          <h1>{{ movie.title }}</h1>
+          <div class="meta-info">
+            <span *ngIf="movie.duration_min" class="duration">⏱️ {{ movie.duration_min }} perc</span>
+          </div>
+          <p class="description">{{ movie.description }}</p>
+
+          <div *ngIf="movie.trailer_youtube_url" class="trailer">
+            <h3>Trailer</h3>
+            <iframe
+              [src]="getYouTubeEmbedUrl(movie.trailer_youtube_url)"
+              width="100%"
+              height="360"
+              frameborder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowfullscreen>
+            </iframe>
+          </div>
+        </div>
+      </div>
+
+      <div class="showtimes-section">
+        <h2>Elérhető előadások</h2>
+
+        <div *ngIf="showtimes.length === 0" class="no-showtimes">
+          <p>Jelenleg nincs elérhető előadás ehhez a filmhez.</p>
+        </div>
+
+        <div *ngIf="showtimes.length > 0" class="showtimes-grid">
+          <div *ngFor="let showtime of showtimes" class="showtime-card">
+            <div class="showtime-time">
+              {{ showtime.starts_at | date: 'yyyy.MM.dd.' }}
+              {{ showtime.starts_at | date: 'HH:mm' }}
+            </div>
+            <div class="showtime-auditorium">{{ showtime.auditorium.name }}</div>
+            <a [routerLink]="'/showtimes/' + showtime.id + '/select-seats'" class="btn">Jegyek foglalása</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="hero-slider">
+    <h2 class="slider-title">További ajánló</h2>
+    <div class="slider-window">
+      <div class="slides" [style.transform]="'translateX(' + (-activeSlide * 100) + '%)'">
+        <div class="slide" *ngFor="let slide of slideGroups">
+          <a *ngFor="let poster of slide" [routerLink]="'/movies/' + poster.id" class="poster-link">
+            <img [src]="poster.image" [alt]="poster.title" />
+            <div class="poster-overlay">
+              <button class="play-icon" type="button" (click)="openTrailer(poster, $event)">▶</button>
+              <div class="overlay-actions">
+                <span class="overlay-link">További információ</span>
+                <span class="overlay-btn">Időpontok</span>
+              </div>
+            </div>
+          </a>
+        </div>
+      </div>
+    </div>
+    <div class="slider-controls">
+      <button class="ctrl" (click)="prevSlide()">‹</button>
+      <div class="dots">
+        <span *ngFor="let slide of slideGroups; let i = index"
+              class="dot"
+              [class.active]="i === activeSlide"
+              (click)="goToSlide(i)"></span>
+      </div>
+      <button class="ctrl" (click)="nextSlide()">›</button>
+    </div>
+  </section>
+
+  <div class="trailer-modal" *ngIf="isTrailerOpen" (click)="closeTrailer()">
+    <div class="trailer-modal-content" (click)="$event.stopPropagation()">
+      <button class="trailer-close" type="button" (click)="closeTrailer()">✕</button>
+      <h3 class="trailer-title">{{ trailerTitle }}</h3>
+      <div class="trailer-frame" *ngIf="trailerUrl">
+        <iframe
+          [src]="trailerUrl"
+          width="100%"
+          height="420"
+          frameborder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen>
+        </iframe>
+      </div>
+      <div class="trailer-footer" *ngIf="trailerMovieId">
+        <div class="trailer-left">
+          <img *ngIf="trailerPoster" [src]="trailerPoster" [alt]="trailerTitle" class="trailer-poster" />
+          <div class="trailer-meta">
+            <div class="trailer-movie-title">{{ trailerTitle }}</div>
+            <div class="trailer-rating" *ngIf="trailerRating">{{ trailerRating }}</div>
+          </div>
+        </div>
+        <a class="trailer-ticket" [routerLink]="'/movies/' + trailerMovieId">Jegyfoglalás</a>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="footer-col">
+      <h4>Információk</h4>
+      <a href="#">Házirend</a>
+      <a href="#">Fizetési tájékoztató</a>
+      <a href="#">Adatkezelési tájékoztató</a>
+    </div>
+    <div class="footer-col">
+      <h4>Kapcsolat</h4>
+      <p>Vigadó Mozi • Film és Színház</p>
+      <p>5310 Kisújszállás Szabadság Tér 7.</p>
+      <p>+36-59-328-083</p>
+      <p>info&#64;vigadomozi.hu</p>
+    </div>
+    <div class="footer-col">
+      <h4>Impresszum</h4>
+      <p>Kisújszállási Művelődési Központ és Könyvtár</p>
+    </div>
+  </footer>
+</div>

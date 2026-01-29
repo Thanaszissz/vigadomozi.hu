@@ -1,0 +1,55 @@
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+.sublime-project
+.sublime-workspace
+
+# Backend
+backend/vendor/
+backend/node_modules/
+backend/.idea/
+backend/*.log
+backend/storage/logs/
+backend/storage/cache/
+backend/public/uploads/
+backend/database.sqlite
+backend/database.sqlite-shm
+backend/database.sqlite-wal
+backend/composer.lock
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+frontend/out-tsc/
+frontend/src/environments/environment.prod.ts
+
+# OS
+Thumbs.db
+.DS_Store
+desktop.ini
+
+# Builds
+*.zip
+*.rar
+*.7z
+*.tar.gz
+
+# Misc
+*.bak
+*.tmp
+.history/
+.vscode-server/
+
+# Dependencies lock files (optional - uncomment to include)
+# package-lock.json
+# yarn.lock

@@ -1,0 +1,173 @@
+<div class="page">
+  <header class="topbar">
+    <div class="brand">
+      <img class="brand-logo" src="assets/vigado_logo_beige.png" alt="Vigadó Mozi" />
+    </div>
+    <div class="header-right">
+      <div class="search">
+        <input type="text" placeholder="keresd meg. nézd meg. műsor keresése" />
+        <button class="search-btn">🔍</button>
+      </div>
+      <nav class="nav-links">
+        <a routerLink="/">Műsor</a>
+        <a routerLink="/schedule">Műsorlista</a>
+        <a routerLink="/movies" class="active">Jegyvásárlás</a>
+        <a routerLink="/prices">Jegyárak</a>
+        <a routerLink="/">Médiaajánlat</a>
+        <a routerLink="/admin/login" class="admin-link">🔐 Admin</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="content">
+    <div *ngIf="loading" class="state loading">
+      <p>Adatok betöltése...</p>
+    </div>
+
+    <div *ngIf="error" class="state error">
+      <p>{{ error }}</p>
+    </div>
+
+    <div *ngIf="!loading && showtime" class="seat-select-container">
+      <div class="header">
+        <h1>Szék kiválasztás</h1>
+        <p>{{ showtime.movie.title }} - {{ showtime.starts_at | date: 'yyyy.MM.dd. HH:mm' }}</p>
+        <p class="auditorium">{{ showtime.auditorium.name }}</p>
+      </div>
+
+      <div class="content-grid">
+        <div class="seat-map-section">
+          <div class="screen">{{ showtime.seatMap.layout.screenLabel || 'VÁSZON' }}</div>
+
+          <div class="section-group" *ngFor="let group of getSectionGroups()">
+            <div class="section-title">{{ group.name }}</div>
+            <div class="seats-container">
+              <div *ngFor="let rowLabel of group.rows" class="seat-row">
+                <div class="row-label">{{ rowLabel }}</div>
+                <div class="seats-line">
+                  <div
+                    *ngFor="let seat of getSeatsInRow(rowLabel)"
+                    class="seat"
+                    [ngClass]="getSeatClasses(seat)"
+                    (click)="toggleSeat(seat)"
+                    [title]="getSeatTitle(seat)">
+                    <span *ngIf="!isAisle(seat)" class="seat-number">{{ seat.key.split('-')[1] }}</span>
+                    <span *ngIf="isAisle(seat)" class="aisle-marker">||</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="legend">
+            <div class="legend-item">
+              <div class="legend-square available"></div>
+              <span>Szabad</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-square booked"></div>
+              <span>Foglalt</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-square locked"></div>
+              <span>Lefoglalva</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-square selected"></div>
+              <span>Kiválasztott</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="summary-section">
+          <div class="summary-card">
+            <h2>Foglalás összegzése</h2>
+
+            <div *ngIf="selectedSeats.length === 0" class="no-seats">
+              <p>Még nincsenek kiválasztott székek.</p>
+            </div>
+
+            <div *ngIf="selectedSeats.length > 0" class="selected-seats-list">
+              <div *ngFor="let seat of selectedSeats" class="seat-item">
+                <span>{{ seat.key }} - {{ seat.price }} Ft</span>
+              </div>
+
+              <div class="total">
+                <strong>Összesen:</strong>
+                <strong class="price">{{ totalPrice }} Ft</strong>
+              </div>
+            </div>
+
+            <div class="email-input">
+              <label for="name">Név:</label>
+              <input
+                id="name"
+                type="text"
+                [(ngModel)]="name"
+                placeholder="Teljes név"
+                class="form-control">
+            </div>
+
+            <div class="email-input">
+              <label for="phone">Telefonszám:</label>
+              <input
+                id="phone"
+                type="tel"
+                [(ngModel)]="phone"
+                placeholder="+36 30 123 4567"
+                class="form-control">
+            </div>
+
+            <div class="email-input">
+              <label for="email">Email cím:</label>
+              <input
+                id="email"
+                type="email"
+                [(ngModel)]="email"
+                placeholder="jegyek@example.com"
+                class="form-control">
+            </div>
+
+            <button
+              (click)="reserve()"
+              [disabled]="selectedSeats.length === 0 || !email || !name || !phone || isProcessing"
+              class="btn btn-primary">
+              <span *ngIf="!isProcessing">Kifizetem kártyával (10 perc)</span>
+              <span *ngIf="isProcessing">Feldolgozás...</span>
+            </button>
+
+            <button
+              (click)="hold()"
+              [disabled]="selectedSeats.length === 0 || !email || !name || !phone || isProcessing"
+              class="btn btn-hold">
+              <span *ngIf="!isProcessing">Lefoglalva</span>
+              <span *ngIf="isProcessing">Feldolgozás...</span>
+            </button>
+
+            <div *ngIf="lockError" class="error-message">{{ lockError }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="footer-col">
+      <h4>Információk</h4>
+      <a href="#">Házirend</a>
+      <a href="#">Fizetési tájékoztató</a>
+      <a href="#">Adatkezelési tájékoztató</a>
+    </div>
+    <div class="footer-col">
+      <h4>Kapcsolat</h4>
+      <p>Vigadó Mozi • Film és Színház</p>
+      <p>5310 Kisújszállás Szabadság Tér 7.</p>
+      <p>+36-59-328-083</p>
+      <p>info&#64;vigadomozi.hu</p>
+    </div>
+    <div class="footer-col">
+      <h4>Impresszum</h4>
+      <p>Kisújszállási Művelődési Központ és Könyvtár</p>
+    </div>
+  </footer>
+</div>

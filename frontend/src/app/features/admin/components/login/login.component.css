@@ -1,0 +1,138 @@
+.admin-login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #3d2817 0%, #2a1810 100%);
+  padding: 20px;
+}
+
+.login-card {
+  background: #3d2817;
+  border-radius: 12px;
+  padding: 40px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+  max-width: 400px;
+  width: 100%;
+  border: 2px solid #d4a574;
+}
+
+.logo-wrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.logo {
+  max-width: 180px;
+  width: 100%;
+  height: auto;
+}
+
+h1 {
+  text-align: center;
+  font-size: 28px;
+  margin: 0 0 10px;
+  color: #e8d5b7;
+}
+
+.subtitle {
+  text-align: center;
+  color: #d4a574;
+  margin-bottom: 30px;
+  font-size: 18px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+label {
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #e8d5b7;
+  font-size: 14px;
+}
+
+.form-input {
+  padding: 12px 15px;
+  border: 2px solid #d4a574;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: all 0.3s;
+  font-family: inherit;
+  background: #2a1810;
+  color: #e8d5b7;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #e8d5b7;
+  box-shadow: 0 0 0 3px rgba(232, 213, 183, 0.2);
+}
+
+.form-input:invalid {
+  border-color: #ff6b6b;
+}
+
+.error {
+  color: #ff6b6b;
+  font-size: 12px;
+  margin-top: 5px;
+}
+
+.alert {
+  padding: 12px 15px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+.alert-danger {
+  background-color: #5a2c2c;
+  color: #ff9999;
+  border: 1px solid #ff6b6b;
+}
+
+.btn-login {
+  width: 100%;
+  padding: 12px;
+  background: linear-gradient(135deg, #d4a574 0%, #a08060 100%);
+  color: #2a1810;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s;
+  margin-bottom: 20px;
+}
+
+.btn-login:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 20px rgba(212, 165, 116, 0.4);
+}
+
+.btn-login:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.test-credentials {
+  background: #2a1810;
+  padding: 15px;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #d4a574;
+  border: 1px solid #d4a574;
+}
+
+.test-credentials p {
+  margin: 5px 0;
+}
+
+.test-credentials strong {
+  color: #e8d5b7;
+}

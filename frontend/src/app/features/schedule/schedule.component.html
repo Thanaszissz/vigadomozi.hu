@@ -1,0 +1,74 @@
+<div class="page">
+  <header class="topbar">
+    <div class="brand">
+      <img class="brand-logo" src="assets/vigado_logo_beige.png" alt="Vigadó Mozi" />
+    </div>
+    <div class="header-right">
+      <div class="search">
+        <input type="text" placeholder="keresd meg. nézd meg. műsor keresése" />
+        <button class="search-btn">🔍</button>
+      </div>
+      <nav class="nav-links">
+        <a routerLink="/">Műsor</a>
+        <a routerLink="/schedule" class="active">Műsorlista</a>
+        <a routerLink="/movies">Jegyvásárlás</a>
+        <a routerLink="/prices">Jegyárak</a>
+        <a routerLink="/">Médiaajánlat</a>
+        <a routerLink="/admin/login" class="admin-link">🔐 Admin</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="content">
+    <h1>Műsorlista</h1>
+
+    <div *ngIf="loading" class="state loading">
+      <p>Műsorlista betöltése...</p>
+    </div>
+
+    <div *ngIf="error" class="state error">
+      <p>{{ error }}</p>
+    </div>
+
+    <div *ngIf="!loading && groups.length === 0" class="state empty">
+      <p>Jelenleg nincs elérhető műsor.</p>
+    </div>
+
+    <div *ngFor="let group of groups" class="day-group">
+      <div class="day-header">
+        <h2>{{ group.label }}</h2>
+        <span>{{ group.dayLabel }}</span>
+      </div>
+
+      <div class="showtime-grid">
+        <a class="showtime-card" *ngFor="let showtime of group.showtimes" [routerLink]="'/movies/' + showtime.movie.id">
+          <img *ngIf="showtime.movie.poster_path" [src]="showtime.movie.poster_path" [alt]="showtime.movie.title" />
+          <div class="info">
+            <div class="title">{{ showtime.movie.title }}</div>
+            <div class="time">{{ showtime.starts_at | date:'HH:mm' }}</div>
+          </div>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="footer-col">
+      <h4>Információk</h4>
+      <a href="#">Házirend</a>
+      <a href="#">Fizetési tájékoztató</a>
+      <a href="#">Adatkezelési tájékoztató</a>
+    </div>
+    <div class="footer-col">
+      <h4>Kapcsolat</h4>
+      <p>Vigadó Mozi • Film és Színház</p>
+      <p>5310 Kisújszállás Szabadság Tér 7.</p>
+      <p>+36-59-328-083</p>
+      <p>info&#64;vigadomozi.hu</p>
+    </div>
+    <div class="footer-col">
+      <h4>Impresszum</h4>
+      <p>Kisújszállási Művelődési Központ és Könyvtár</p>
+    </div>
+  </footer>
+</div>

@@ -1,0 +1,94 @@
+<div class="admin-container">
+  <div class="header">
+    <h1>Foglalások kezelése</h1>
+    <button (click)="goBack()" class="btn-back">← Vissza a dashboardra</button>
+  </div>
+
+  <div *ngIf="loading" class="loading">
+    Foglalások betöltése...
+  </div>
+
+  <div *ngIf="error" class="error-message">
+    {{ error }}
+  </div>
+
+  <div *ngIf="!loading && !error && showtimeGroups.length === 0" class="empty-state">
+    Még nincsenek foglalások
+  </div>
+
+  <div *ngIf="!loading && !error && showtimeGroups.length > 0" class="group-list">
+    <div *ngFor="let group of showtimeGroups" class="group-card">
+      <div class="group-header" role="button" tabindex="0" (click)="toggleShowtime(group)">
+        <div>
+          <h2>{{ group.movie?.title || 'Ismeretlen film' }}</h2>
+          <div class="group-meta">
+            {{ group.starts_at | date:'yyyy-MM-dd HH:mm' }} • {{ group.auditorium?.name || 'N/A' }}
+          </div>
+        </div>
+        <div class="group-count">{{ group.reservations?.length || 0 }} foglalás</div>
+        <div class="group-toggle">
+          {{ expandedShowtimeId === group.id ? '▲' : '▼' }}
+        </div>
+      </div>
+
+      <table class="reservations-table" *ngIf="expandedShowtimeId === group.id && group.reservations?.length">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Név</th>
+            <th>Telefon</th>
+            <th>Email</th>
+            <th>Ülések</th>
+            <th>Ár</th>
+            <th>Státusz</th>
+            <th>Fizetés</th>
+            <th>Dátum</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let reservation of group.reservations">
+            <td>#{{ reservation.id }}</td>
+            <td>{{ reservation.customer_name || 'N/A' }}</td>
+            <td>{{ reservation.customer_phone || 'N/A' }}</td>
+            <td>{{ reservation.customer_email || 'N/A' }}</td>
+            <td>
+              <span class="seat-badge">{{ reservation.items?.length || 0 }} ülés</span>
+            </td>
+            <td class="price">{{ reservation.total_amount }} Ft</td>
+            <td>
+              <span class="status-badge" [class.paid]="reservation.status === 'PAID'" [class.pending]="reservation.status === 'PENDING'" [class.cancelled]="reservation.status === 'CANCELLED'" [class.expired]="reservation.status === 'EXPIRED'">
+                {{ reservation.status === 'PAID' ? 'Fizetve' : reservation.status === 'PENDING' ? 'Függő' : reservation.status === 'CANCELLED' ? 'Törölve' : reservation.status === 'EXPIRED' ? 'Lejárt' : reservation.status }}
+              </span>
+            </td>
+            <td>
+              <div class="payment-actions" *ngIf="reservation.status === 'PENDING'">
+                <button class="btn-pay btn-card" type="button" (click)="startCardPayment(reservation)">Kártya</button>
+                <button class="btn-pay btn-cash" type="button" (click)="markPaidCash(reservation)">Készpénz</button>
+              </div>
+              <div *ngIf="reservation.status !== 'PENDING'" class="paid-info">
+                <span>
+                  {{ reservation.payment_provider === 'cash' ? 'Készpénz' : (reservation.payment_provider || '—') }}
+                </span>
+                <button *ngIf="reservation.status === 'PAID'" class="btn-pay btn-receipt" type="button" (click)="printReceipt(reservation)">Igazolás (PDF)</button>
+              </div>
+            </td>
+            <td>{{ reservation.created_at | date:'yyyy-MM-dd HH:mm' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div *ngIf="cashConfirmOpen" class="modal-backdrop" (click)="closeCashConfirm()"></div>
+  <div *ngIf="cashConfirmOpen" class="modal" role="dialog" aria-modal="true">
+    <div class="modal-content">
+      <h3>Foglalás készpénzes fizetése</h3>
+      <p>A foglalást kifizetik készpénzzel?</p>
+      <div *ngIf="cashPaymentError" class="modal-error">{{ cashPaymentError }}</div>
+      <div class="modal-actions">
+        <button class="btn-pay btn-card" type="button" (click)="confirmCashPayment()">Igen</button>
+        <button class="btn-pay btn-cash" type="button" (click)="closeCashConfirm()">Mégsem</button>
+      </div>
+    </div>
+  </div>
+</div>

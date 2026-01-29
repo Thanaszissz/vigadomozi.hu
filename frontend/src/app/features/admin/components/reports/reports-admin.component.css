@@ -1,0 +1,274 @@
+.admin-container {
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+h1 {
+  margin: 0;
+  color: #e8d5b7;
+}
+
+.btn-back {
+  padding: 10px 20px;
+  background: #d4a574;
+  color: #2c1810;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.btn-back:hover {
+  background: #a08060;
+}
+
+.date-selector {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 30px;
+  padding: 16px;
+  background: #2c1810;
+  border: 1px solid #5c3d2e;
+  border-radius: 8px;
+}
+
+.date-selector label {
+  color: #e8d5b7;
+  font-weight: 600;
+}
+
+.date-input {
+  padding: 8px 12px;
+  border: 1px solid #5c3d2e;
+  border-radius: 6px;
+  background: #3d2817;
+  color: #e8d5b7;
+  font-size: 14px;
+}
+
+.btn-refresh {
+  padding: 8px 16px;
+  background: #d4a574;
+  color: #2c1810;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.btn-refresh:hover {
+  background: #a08060;
+}
+
+.btn-export {
+  padding: 8px 16px;
+  background: #d94f04;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background 0.3s;
+}
+
+.btn-export:hover {
+  background: #ff6a13;
+}
+
+.loading, .empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #d4a574;
+  font-size: 18px;
+}
+
+.error-message {
+  background: #ffebee;
+  color: #c62828;
+  padding: 15px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+}
+
+.report-content {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.summary-card {
+  background: #2c1810;
+  border: 1px solid #5c3d2e;
+  border-radius: 12px;
+  padding: 24px;
+  text-align: center;
+}
+
+.summary-card.highlight {
+  background: linear-gradient(135deg, #d4a574 0%, #a08060 100%);
+  border: none;
+}
+
+.summary-card.highlight .card-icon,
+.summary-card.highlight .card-value,
+.summary-card.highlight .card-label {
+  color: #2c1810;
+}
+
+.card-icon {
+  font-size: 36px;
+  margin-bottom: 12px;
+}
+
+.card-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: #e8d5b7;
+  margin-bottom: 8px;
+}
+
+.card-label {
+  font-size: 14px;
+  color: #d4a574;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.report-section {
+  background: #2c1810;
+  border: 1px solid #5c3d2e;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.report-section h2 {
+  margin: 0 0 16px;
+  color: #e8d5b7;
+  font-size: 18px;
+}
+
+.report-table {
+  width: 100%;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  border-collapse: collapse;
+}
+
+.report-table thead {
+  background: linear-gradient(135deg, #d4a574 0%, #a08060 100%);
+  color: #2c1810;
+}
+
+.report-table th {
+  padding: 12px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 13px;
+  text-transform: uppercase;
+}
+
+.report-table tbody tr {
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.report-table tbody tr:hover {
+  background-color: #f5f5f5;
+}
+
+.report-table td {
+  padding: 10px 12px;
+  font-size: 14px;
+  color: #333;
+}
+
+.report-table td.amount {
+  font-weight: 600;
+  color: #2e7d32;
+}
+
+.report-table tfoot {
+  background: #8b6434;
+  color: #fdf7ed;
+}
+
+.report-table .total-row td {
+  padding: 14px 12px;
+  border-top: 3px solid #6b4423;
+  font-size: 15px;
+  color: #fdf7ed;
+}
+
+.payment-badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.payment-badge.cash {
+  background: #c8e6c9;
+  color: #2e7d32;
+}
+
+.payment-badge.card {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.hourly-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.hourly-bar {
+  display: grid;
+  grid-template-columns: 60px 1fr 180px;
+  align-items: center;
+  gap: 12px;
+}
+
+.bar-label {
+  font-size: 13px;
+  color: #d4a574;
+  font-weight: 600;
+}
+
+.bar-container {
+  background: #3d2817;
+  border-radius: 4px;
+  height: 24px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  background: linear-gradient(135deg, #d4a574 0%, #a08060 100%);
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.bar-value {
+  font-size: 13px;
+  color: #e8d5b7;
+  text-align: right;
+}

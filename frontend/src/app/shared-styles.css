@@ -1,0 +1,191 @@
+/* Közös színvilág minden oldalhoz - Vigadó Mozi */
+
+:host {
+  display: block;
+  background: #3d2817;
+  color: #2c1810;
+}
+
+.page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #3d2817;
+}
+
+/* Topbar */
+.topbar {
+  display: grid;
+  grid-template-columns: 200px 1fr 360px;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 0 20px;
+  border-bottom: 1px solid #5c3d2e;
+}
+
+.brand {
+  display: flex;
+  flex-direction: column;
+  font-weight: 700;
+  color: #d4a574;
+}
+
+.brand-sub {
+  color: #a08060;
+  font-size: 12px;
+  letter-spacing: 1px;
+}
+
+.nav-links {
+  display: flex;
+  gap: 18px;
+  font-size: 14px;
+}
+
+.nav-links a {
+  color: #e8d5b7;
+  text-decoration: none;
+  padding: 6px 8px;
+  border-radius: 4px;
+}
+
+.nav-links a.active,
+.nav-links a:hover {
+  background: #5c3d2e;
+  color: #f5e6d3;
+}
+
+/* Search */
+.search {
+  display: flex;
+  align-items: center;
+  background: #5c3d2e;
+  border: 1px solid #6b4e3d;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.search input {
+  flex: 1;
+  padding: 8px 10px;
+  background: transparent;
+  border: none;
+  color: #e8d5b7;
+  font-size: 13px;
+}
+
+.search input::placeholder {
+  color: #a08060;
+}
+
+.search input:focus {
+  outline: none;
+}
+
+.search-btn {
+  background: #6b4e3d;
+  border: none;
+  padding: 8px 12px;
+  color: #e8d5b7;
+  cursor: pointer;
+}
+
+/* Content */
+.content {
+  padding: 20px 0 30px;
+}
+
+.content h1 {
+  margin-bottom: 20px;
+  color: #e8d5b7;
+  font-size: 24px;
+}
+
+/* States */
+.state {
+  text-align: center;
+  padding: 20px;
+  background: #e8d5b7;
+  border: 1px solid #d4a574;
+  border-radius: 8px;
+  color: #2c1810;
+}
+
+.state.error {
+  color: #7f1d1d;
+  background: #fecaca;
+  border-color: #7f1d1d;
+}
+
+.state.loading {
+  color: #5c3d2e;
+}
+
+/* Footer */
+.footer {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  padding: 20px 0 40px;
+  color: #a08060;
+  border-top: 1px solid #5c3d2e;
+}
+
+.footer-col h4 {
+  color: #e8d5b7;
+  margin-bottom: 10px;
+}
+
+.footer-col a {
+  color: #a08060;
+  text-decoration: none;
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+
+.footer-col p {
+  color: #a08060;
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+
+/* Buttons */
+.btn {
+  background: #8b6f47;
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 4px;
+  text-decoration: none;
+  display: inline-block;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s;
+}
+
+.btn:hover {
+  background: #6b4e3d;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Cards */
+.card {
+  background: #e8d5b7;
+  border: 1px solid #d4a574;
+  border-radius: 8px;
+  padding: 20px;
+}
+
+@media (max-width: 1024px) {
+  .topbar {
+    grid-template-columns: 1fr;
+  }
+  .footer {
+    grid-template-columns: 1fr;
+  }
+}
