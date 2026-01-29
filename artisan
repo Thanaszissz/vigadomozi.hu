@@ -11,6 +11,23 @@ if (!is_dir($basePath) || !file_exists($basePath . '/artisan')) {
     exit(1);
 }
 
+// Ensure .env file exists before running artisan commands
+$envFile = $basePath . '/.env';
+$envExample = $basePath . '/.env.example';
+
+if (!file_exists($envFile) && file_exists($envExample)) {
+    copy($envExample, $envFile);
+    echo "Generated .env file from .env.example\n";
+}
+
+// Ensure database.sqlite exists for SQLite
+$databasePath = $basePath . '/database/database.sqlite';
+if (!file_exists($databasePath)) {
+    @mkdir(dirname($databasePath), 0755, true);
+    touch($databasePath);
+    echo "Created database.sqlite file\n";
+}
+
 // Change to backend directory and require artisan
 chdir($basePath);
 require $basePath . '/artisan';
