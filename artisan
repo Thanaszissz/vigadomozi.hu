@@ -1,0 +1,16 @@
+#!/usr/bin/env php
+<?php
+/**
+ * Laravel Artisan wrapper for hosting platforms
+ * Routes artisan commands to the actual Laravel installation in /backend
+ */
+$basePath = __DIR__ . '/backend';
+
+if (!is_dir($basePath) || !file_exists($basePath . '/artisan')) {
+    echo "Error: Laravel installation not found in {$basePath}/artisan\n";
+    exit(1);
+}
+
+// Change to backend directory and require artisan
+chdir($basePath);
+require $basePath . '/artisan';

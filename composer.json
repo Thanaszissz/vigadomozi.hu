@@ -5,7 +5,10 @@
   "require": {},
   "scripts": {
     "post-install-cmd": [
-      "cd backend && composer install --no-dev --optimize-autoloader"
+      "cd backend && composer install --no-dev --optimize-autoloader",
+      "cd backend && php artisan config:cache",
+      "cd backend && php artisan route:cache",
+      "cd backend && php artisan view:cache"
     ]
   }
 }
