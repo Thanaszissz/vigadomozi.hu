@@ -2,13 +2,5 @@
   "name": "vigado/root",
   "description": "Root helper for hosting platforms; Laravel app is in backend",
   "type": "project",
-  "require": {},
-  "scripts": {
-    "post-install-cmd": [
-      "cd backend && composer install --no-dev --optimize-autoloader",
-      "cd backend && php artisan config:cache",
-      "cd backend && php artisan route:cache",
-      "cd backend && php artisan view:cache"
-    ]
-  }
+  "require": {}
 }
