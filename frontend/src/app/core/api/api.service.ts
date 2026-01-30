@@ -2,8 +2,9 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { environment } from 'src/environments/environment';
 
-const API_URL = 'http://localhost:8000/api';
+const API_URL = environment.apiUrl;
 
 export interface Movie {
   id: number;
