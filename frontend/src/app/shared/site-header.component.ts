@@ -35,11 +35,12 @@ export class SiteHeaderComponent implements OnInit {
     });
   }
 
-  get activeSection(): 'home' | 'schedule' | 'tickets' | 'prices' | '' {
+  get activeSection(): 'home' | 'schedule' | 'tickets' | 'prices' | 'media' | '' {
     const path = this.currentUrl.split(/[?#]/)[0];
     if (path === '/' || path === '') return 'home';
     if (path.startsWith('/schedule')) return 'schedule';
     if (path.startsWith('/prices')) return 'prices';
+    if (path.startsWith('/mediaajanlat')) return 'media';
     if (/^\/(movies|showtimes|checkout|hold-summary|success)/.test(path)) return 'tickets';
     return '';
   }

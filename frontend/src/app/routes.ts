@@ -38,6 +38,26 @@ export const routes: Routes = [
     loadComponent: () => import('./features/checkout/success.component').then(m => m.SuccessComponent)
   },
   {
+    path: 'mediaajanlat',
+    data: { title: 'Médiaajánlat' },
+    loadComponent: () => import('./shared/info-page.component').then(m => m.InfoPageComponent)
+  },
+  {
+    path: 'hazirend',
+    data: { title: 'Házirend' },
+    loadComponent: () => import('./shared/info-page.component').then(m => m.InfoPageComponent)
+  },
+  {
+    path: 'fizetesi-tajekoztato',
+    data: { title: 'Fizetési tájékoztató' },
+    loadComponent: () => import('./shared/info-page.component').then(m => m.InfoPageComponent)
+  },
+  {
+    path: 'adatkezelesi-tajekoztato',
+    data: { title: 'Adatkezelési tájékoztató' },
+    loadComponent: () => import('./shared/info-page.component').then(m => m.InfoPageComponent)
+  },
+  {
     path: 'admin',
     loadChildren: () => import('./features/admin/admin.routes').then(m => m.ADMIN_ROUTES)
   },
