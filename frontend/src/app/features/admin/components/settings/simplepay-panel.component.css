@@ -1,0 +1,65 @@
+:host { display: flex; flex-direction: column; gap: 18px; min-width: 0; color: #e8d5b7; }
+
+h2 { margin: 0 0 8px; color: #fdf7ed; font-size: 19px; }
+
+.card { background: #2c1810; border: 1px solid #5c3d2e; border-radius: 12px; padding: 18px; }
+
+.title-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.pills { display: flex; gap: 8px; flex-wrap: wrap; }
+.pill { padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 700; background: #4a3425; }
+.pill.on { background: rgba(34, 197, 94, 0.2); color: #86efac; }
+.pill.off { background: rgba(160, 128, 96, 0.2); color: #cdb596; }
+.pill.env { background: rgba(59, 130, 246, 0.2); color: #93c5fd; }
+.pill.env.live { background: rgba(239, 68, 68, 0.22); color: #fca5a5; }
+
+.muted { color: #a08060; font-size: 13px; }
+.muted.small { font-size: 12px; margin: 8px 0 0; }
+.alert { background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; color: #fecaca; padding: 10px 12px; border-radius: 6px; margin: 10px 0; font-size: 14px; }
+.ok { background: rgba(34, 197, 94, 0.15); border: 1px solid #22c55e; color: #bbf7d0; padding: 10px 12px; border-radius: 6px; }
+.warn { background: rgba(245, 158, 11, 0.15); border: 1px solid #f59e0b; color: #fde68a; padding: 12px 14px; border-radius: 8px; margin: 12px 0; font-size: 14px; }
+.result { margin-top: 12px; padding: 10px 12px; border-radius: 6px; font-size: 14px; }
+
+.switch { display: flex; align-items: center; gap: 10px; font-weight: 600; margin: 8px 0 14px; cursor: pointer; }
+.switch input { width: 20px; height: 20px; accent-color: #d4a574; }
+
+.form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 16px; }
+.field { display: flex; flex-direction: column; gap: 4px; margin: 10px 0; font-size: 13px; color: #a08060; }
+.field.wide { grid-column: 1 / -1; }
+.field input, .field select {
+  padding: 10px 12px; border-radius: 6px; border: 1px solid #5c3d2e; background: #4a3425; color: #e8d5b7; font-size: 15px; width: 100%; box-sizing: border-box;
+}
+.hint { color: #86efac; font-weight: 600; }
+.hint.bad { color: #fca5a5; }
+.secret { display: flex; gap: 8px; align-items: stretch; }
+.secret input { flex: 1; }
+
+.row-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+.btn {
+  display: inline-flex; align-items: center; gap: 6px; padding: 10px 18px; border-radius: 10px; border: 1.5px solid #5c3d2e;
+  background: linear-gradient(180deg, #52392a 0%, #432e21 100%); color: #e8d5b7; font-weight: 700; font-size: 14px; cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.btn:hover:not(:disabled) { transform: translateY(-2px); border-color: #d4a574; box-shadow: 0 6px 14px rgba(0, 0, 0, 0.35); }
+.btn.small { padding: 6px 12px; font-size: 13px; white-space: nowrap; }
+.btn.primary { background: linear-gradient(180deg, #e6bd89 0%, #c8955d 100%); color: #2c1810; border-color: #d4a574; }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.url-row { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; align-items: center; margin: 12px 0; }
+.url-row .label { grid-column: 1 / -1; font-size: 12px; color: #a08060; text-transform: uppercase; letter-spacing: 0.4px; }
+.url-row code { background: #3d2817; border: 1px solid #5c3d2e; border-radius: 6px; padding: 8px 10px; font-size: 13px; word-break: break-all; color: #fdf7ed; }
+.steps { margin: 14px 0 0; padding-left: 20px; line-height: 1.8; font-size: 14px; }
+
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid #4a3425; }
+th { color: #a08060; font-size: 12px; text-transform: uppercase; }
+.mono { font-family: 'Courier New', monospace; font-size: 13px; }
+.badge { padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; background: #4a3425; white-space: nowrap; }
+.badge.s-SUCCESS { background: rgba(34, 197, 94, 0.22); color: #86efac; }
+.badge.s-INIT { background: rgba(59, 130, 246, 0.22); color: #93c5fd; }
+.badge.s-CONFLICT, .badge.s-DUPLICATE, .badge.s-ERROR { background: rgba(239, 68, 68, 0.25); color: #fca5a5; }
+.badge.s-FAIL, .badge.s-CANCEL, .badge.s-TIMEOUT { background: rgba(245, 158, 11, 0.22); color: #fcd34d; }
+
+@media (max-width: 700px) {
+  .form-grid { grid-template-columns: 1fr; }
+}

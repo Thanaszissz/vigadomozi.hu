@@ -54,13 +54,14 @@
         </div>
 
         <button (click)="initiatePayment()" [disabled]="isProcessingPayment" class="btn btn-primary btn-large">
-          <span *ngIf="!isProcessingPayment">Fizetés Stripe-pel</span>
+          <span *ngIf="!isProcessingPayment">💳 Fizetés bankkártyával</span>
           <span *ngIf="isProcessingPayment">Feldolgozás...</span>
         </button>
 
-        <p class="payment-note">💳 A fizetést a Stripe-pal végezzük. Bankkártya szükséges.</p>
+        <p class="payment-note">🔒 A bankkártyás fizetés biztonságos fizetési oldalon történik (OTP SimplePay). A kártyaadatokat az oldalunk nem látja és nem tárolja.</p>
 
         <div *ngIf="paymentError" class="error-message">{{ paymentError }}</div>
+        <div *ngIf="paymentNotice" class="error-message">{{ paymentNotice }}</div>
       </div>
     </div>
 

@@ -14,6 +14,8 @@ use App\Http\Controllers\Admin\ActivityLogController;
 use App\Http\Controllers\Admin\EmailTemplateController;
 use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\BackupController;
+use App\Http\Controllers\Admin\SimplePaySettingsController;
+use App\Http\Controllers\Admin\NavController;
 
 // A jogosultságokat a szerepkörök adják (App\Support\Roles); minden csoport a megfelelő jogot követeli meg.
 
@@ -66,6 +68,21 @@ Route::middleware('permission:settings.manage')->group(function () {
     Route::get('settings/ticket-numbering', [SettingsController::class, 'ticketNumbering']);
     Route::post('settings/ticket-numbering/prepare', [SettingsController::class, 'prepareTicketNumbering'])->middleware('throttle:10,1');
     Route::post('settings/ticket-numbering/apply', [SettingsController::class, 'applyTicketNumbering'])->middleware('throttle:10,1');
+
+    // NAV nyugtaadat-szolgáltatás (KOBAK): kapcsolati adatok, napi automatikus és kézi beküldés
+    Route::get('settings/nav', [NavController::class, 'show']);
+    Route::put('settings/nav', [NavController::class, 'update'])->middleware('throttle:20,1,nav-save');
+    Route::put('settings/nav/schedule', [NavController::class, 'updateSchedule']);
+    Route::post('settings/nav/test', [NavController::class, 'test'])->middleware('throttle:20,1,nav-test');
+    Route::post('settings/nav/software', [NavController::class, 'registerSoftware'])->middleware('throttle:10,1,nav-software');
+    Route::get('settings/nav/preview', [NavController::class, 'preview']);
+    Route::post('settings/nav/send/prepare', [NavController::class, 'prepareSend'])->middleware('throttle:15,1,nav-prepare');
+    Route::post('settings/nav/send/apply', [NavController::class, 'applySend'])->middleware('throttle:15,1,nav-apply');
+
+    // OTP SimplePay online fizetés: kapcsolati adatok, kapcsolat-ellenőrzés
+    Route::get('settings/simplepay', [SimplePaySettingsController::class, 'show']);
+    Route::put('settings/simplepay', [SimplePaySettingsController::class, 'update'])->middleware('throttle:20,1');
+    Route::post('settings/simplepay/test', [SimplePaySettingsController::class, 'test'])->middleware('throttle:10,1');
 
     // Biztonsági mentés: teljes adatbázis-mentés, letöltés, feltöltés, ütemezés, többszörösen védett visszatöltés
     Route::get('settings/backups', [BackupController::class, 'index']);

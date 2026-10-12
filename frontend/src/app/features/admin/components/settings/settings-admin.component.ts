@@ -4,13 +4,15 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AdminService, TicketNumberingPlan, TicketNumberingState } from '../../../../services/admin.service';
 import { BackupsPanelComponent } from './backups-panel.component';
+import { SimplePayPanelComponent } from './simplepay-panel.component';
+import { NavPanelComponent } from './nav-panel.component';
 
-type Section = 'numbering' | 'backups';
+type Section = 'numbering' | 'simplepay' | 'nav' | 'backups';
 
 @Component({
   selector: 'app-settings-admin',
   standalone: true,
-  imports: [CommonModule, FormsModule, BackupsPanelComponent],
+  imports: [CommonModule, FormsModule, BackupsPanelComponent, SimplePayPanelComponent, NavPanelComponent],
   templateUrl: './settings-admin.component.html',
   styleUrls: ['./settings-admin.component.css']
 })

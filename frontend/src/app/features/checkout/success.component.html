@@ -10,76 +10,74 @@
 
     <div *ngIf="!loading && reservation" class="success-container">
       <div class="success-card">
-        <div class="success-icon">✓</div>
+        <div class="hero" *ngIf="reservation.status === 'PAID'">
+          <div class="success-icon"><span>✓</span></div>
+          <h1>Sikeres foglalás!</h1>
+          <p class="success-message">
+            Köszönjük a jegyek megvásárlását! A jegyeket elküldtük a megadott e-mail címre.
+          </p>
+          <span class="status-paid">✔ FIZETVE</span>
+        </div>
 
-        <h1>Sikeres foglalás!</h1>
-        <p class="success-message">
-          Köszönjük a jegyek megvásárlásáért. Foglalási adatait emailben megküldjük.
-        </p>
+        <div class="hero pending" *ngIf="reservation.status !== 'PAID'">
+          <div class="success-icon wait"><span>⏳</span></div>
+          <h1>{{ reservation.status === 'PENDING' ? 'A fizetés feldolgozása folyamatban' : 'A foglalás nem aktív' }}</h1>
+          <p class="success-message" *ngIf="reservation.status === 'PENDING'">
+            A bank visszaigazolására várunk. Ez általában pár másodperc; a visszaigazolás után a jegyeket e-mailben elküldjük.
+          </p>
+          <p class="success-message" *ngIf="reservation.status !== 'PENDING'">
+            Ez a foglalás nincs kifizetve (állapot: {{ reservation.status }}).
+          </p>
+          <button type="button" class="btn reload" (click)="loadReservation()">🔄 Állapot frissítése</button>
+        </div>
 
         <div class="reservation-details">
           <h2>Foglalás adatai</h2>
 
-          <div class="detail-row">
-            <span>Foglalási ID:</span>
-            <strong class="reservation-id">{{ reservation.id }}</strong>
-          </div>
-
-          <div class="detail-row">
-            <span>Film:</span>
-            <strong>{{ reservation.showtime?.movie?.title }}</strong>
-          </div>
-
-          <div class="detail-row">
-            <span>Előadás:</span>
-            <strong>{{ reservation.showtime?.starts_at | date: 'yyyy.MM.dd. HH:mm' }}</strong>
-          </div>
-
-          <div class="detail-row">
-            <span>Terem:</span>
-            <strong>{{ reservation.showtime?.auditorium?.name }}</strong>
-          </div>
-
-          <div class="detail-row">
-            <span>Email:</span>
-            <strong>{{ reservation.customer_email }}</strong>
-          </div>
-
-          <div class="divider"></div>
-
-          <h3>Kiválasztott székek:</h3>
-          <div class="seats-list">
-            <div *ngFor="let item of reservation.items" class="seat-item">
-              <span class="seat-key">{{ item.row_label }}-{{ item.seat_number }}</span>
-              <span class="price">{{ item.price_amount }} Ft</span>
+          <div class="movie-box">
+            <div class="movie-title">{{ reservation.showtime?.movie?.title }}</div>
+            <div class="movie-meta">
+              <span>📅 {{ reservation.showtime?.starts_at | date: 'yyyy.MM.dd. HH:mm' }}</span>
+              <span>🎞️ {{ reservation.showtime?.auditorium?.name }}</span>
             </div>
           </div>
 
-          <div class="divider"></div>
+          <div class="detail-row">
+            <span>Foglalási azonosító</span>
+            <strong class="reservation-id">#{{ reservation.id }}</strong>
+          </div>
 
-          <div class="total-row">
-            <span>Összesen:</span>
-            <strong class="total-amount">{{ reservation.total_amount }} Ft</strong>
+          <div class="detail-row">
+            <span>E-mail</span>
+            <strong>{{ reservation.customer_email }}</strong>
+          </div>
+
+          <h3>Kiválasztott székek</h3>
+          <div class="seats-list">
+            <div *ngFor="let item of reservation.items" class="seat-item">
+              <span class="seat-key">💺 {{ item.row_label }}-{{ item.seat_number }}</span>
+              <span class="price">{{ item.price_amount | number:'1.0-0' }} Ft</span>
+            </div>
           </div>
 
           <div class="total-row">
-            <span>Státusz:</span>
-            <strong class="status-paid">FIZETVE</strong>
+            <span>Összesen</span>
+            <strong class="total-amount">{{ reservation.total_amount | number:'1.0-0' }} Ft</strong>
           </div>
         </div>
 
-        <div class="next-steps">
-          <h3>Következő lépések:</h3>
+        <div class="next-steps" *ngIf="reservation.status === 'PAID'">
+          <h3>Következő lépések</h3>
           <ul>
-            <li>Ellenőrizze emailjét a jegy megerősítésért</li>
-            <li>A jegy tartalmazza a QR kódot a belépéshez</li>
-            <li>Hozza magával az azonosítót vagy az emailt az előadásra</li>
+            <li><span class="ico">✉️</span><span>Ellenőrizd az e-mailjeidet: a jegyek a megadott címre érkeztek (a Spam mappát is nézd meg).</span></li>
+            <li><span class="ico">🎟️</span><span>Hozd magaddal a jegyet kinyomtatva vagy a telefonodon.</span></li>
+            <li><span class="ico">⏰</span><span>Kérjük, érkezz legalább 15 perccel az előadás kezdete előtt.</span></li>
           </ul>
         </div>
 
         <div class="actions">
-          <a routerLink="/movies" class="btn">Vissza a filmekhez</a>
-          <a routerLink="/" class="btn secondary">Kezdőoldal</a>
+          <a routerLink="/movies" class="btn">🎬 Vissza a filmekhez</a>
+          <a routerLink="/" class="btn secondary">🏠 Kezdőoldal</a>
         </div>
       </div>
     </div>

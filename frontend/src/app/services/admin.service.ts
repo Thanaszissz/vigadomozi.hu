@@ -180,6 +180,114 @@ export interface TicketNumberingPlan {
   warnings: string[];
 }
 
+export interface NavSubmissionItem {
+  id: number;
+  applicable_date: string;
+  environment: string;
+  operation: 'create' | 'modify';
+  trigger: 'manual' | 'auto';
+  status: 'PENDING' | 'SENT' | 'FAILED' | 'REPLACED';
+  nav_id: string | null;
+  serial_number: string;
+  sale_count: number;
+  total_amount: number;
+  sent_by: string | null;
+  error_message: string | null;
+  created_at: string;
+}
+
+export interface NavState {
+  enabled: boolean;
+  configured: boolean;
+  active: boolean;
+  environment: string;
+  tax_number: string;
+  login: string;
+  has_password: boolean;
+  has_signature_key: boolean;
+  signature_key_hint: string | null;
+  software_name: string;
+  vat_category: string;
+  vat_options: string[];
+  base_url: string;
+  schedule: {
+    auto_enabled: boolean;
+    auto_time: string;
+    catchup_days: number;
+    next_run: string | null;
+    last_run: string | null;
+    last_status: { at: string; ok: boolean; sent: number; failed: number; message: string } | null;
+  };
+  unsent_days: string[];
+  today: string;
+  yesterday: string;
+  submissions: NavSubmissionItem[];
+}
+
+export interface NavDayData {
+  date: string;
+  count: number;
+  total: number;
+  serial: string;
+  last_serial: string;
+  currency: string;
+  vat: Array<{ name: string; sale: number; modifying: number }>;
+  by_method: Array<{ method: string; tickets: number; amount: number }>;
+}
+
+export interface NavPreview {
+  data: NavDayData;
+  operation: 'create' | 'modify';
+  blocker: string | null;
+  sent: { nav_id: string; sent_at: string; sale_count: number; total_amount: number } | null;
+  xml: string | null;
+  is_today: boolean;
+}
+
+export interface NavSendPlan {
+  token: string;
+  expires_in: number;
+  phrase: string;
+  environment: string;
+  operation: string;
+  data: NavDayData;
+  warnings: string[];
+  summary: string[];
+}
+
+export interface NavTestResult {
+  ok: boolean;
+  steps: Array<{ name: string; ok: boolean; message: string }>;
+  vat_categories: string[];
+  software_registered: boolean | null;
+}
+
+export interface SimplePaySettings {
+  enabled: boolean;
+  ready: boolean;
+  environment: string;
+  merchant: string;
+  has_secret: boolean;
+  secret_hint: string | null;
+  language: string;
+  languages: string[];
+  timeout_minutes: number;
+  site_url: string;
+  urls: { ipn: string; return: string; api: string };
+  recent_payments: Array<{
+    id: number; reservation_id: number; order_ref: string; transaction_id: string | null;
+    status: string; amount: number; environment: string | null; created_at: string; completed_at: string | null;
+  }>;
+}
+
+export interface SimplePayTestResult {
+  ok: boolean;
+  message: string;
+  http_status: number | null;
+  error_codes: string[];
+  signature_valid: boolean | null;
+}
+
 export interface BackupStats {
   tickets: number;
   reservations: number;
@@ -399,6 +507,58 @@ export class AdminService {
 
   applyTicketNumbering(payload: { token: string; phrase: string; password: string }): Observable<{ status: string; message: string; state: TicketNumberingState }> {
     return this.http.post<{ status: string; message: string; state: TicketNumberingState }>(`${this.apiUrl}/settings/ticket-numbering/apply`, payload);
+  }
+
+  // Beállítások: NAV kapcsolat (nyugtaadat-szolgáltatás)
+  getNav(): Observable<NavState> {
+    return this.http.get<NavState>(`${this.apiUrl}/settings/nav`);
+  }
+
+  saveNav(payload: {
+    enabled: boolean; environment: string; tax_number: string; login: string; tech_password?: string;
+    signature_key?: string; software_name: string; vat_category: string; password: string;
+  }): Observable<NavState> {
+    return this.http.put<NavState>(`${this.apiUrl}/settings/nav`, payload);
+  }
+
+  saveNavSchedule(payload: { auto_enabled: boolean; auto_time: string; catchup_days: number }): Observable<NavState> {
+    return this.http.put<NavState>(`${this.apiUrl}/settings/nav/schedule`, payload);
+  }
+
+  testNav(): Observable<NavTestResult> {
+    return this.http.post<NavTestResult>(`${this.apiUrl}/settings/nav/test`, {});
+  }
+
+  registerNavSoftware(): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.apiUrl}/settings/nav/software`, {});
+  }
+
+  previewNav(date: string): Observable<NavPreview> {
+    return this.http.get<NavPreview>(`${this.apiUrl}/settings/nav/preview`, { params: { date } });
+  }
+
+  prepareNavSend(payload: { date: string; modify: boolean; password: string }): Observable<NavSendPlan> {
+    return this.http.post<NavSendPlan>(`${this.apiUrl}/settings/nav/send/prepare`, payload);
+  }
+
+  applyNavSend(payload: { token: string; phrase: string; password: string; acknowledge: boolean }): Observable<{ status: string; submission: NavSubmissionItem; state: NavState }> {
+    return this.http.post<{ status: string; submission: NavSubmissionItem; state: NavState }>(`${this.apiUrl}/settings/nav/send/apply`, payload);
+  }
+
+  // Beállítások: OTP SimplePay
+  getSimplePay(): Observable<SimplePaySettings> {
+    return this.http.get<SimplePaySettings>(`${this.apiUrl}/settings/simplepay`);
+  }
+
+  saveSimplePay(payload: {
+    enabled: boolean; environment: string; merchant: string; secret_key?: string; language: string;
+    timeout_minutes: number; site_url: string; password: string;
+  }): Observable<SimplePaySettings> {
+    return this.http.put<SimplePaySettings>(`${this.apiUrl}/settings/simplepay`, payload);
+  }
+
+  testSimplePay(): Observable<SimplePayTestResult> {
+    return this.http.post<SimplePayTestResult>(`${this.apiUrl}/settings/simplepay/test`, {});
   }
 
   // Beállítások: biztonsági mentés

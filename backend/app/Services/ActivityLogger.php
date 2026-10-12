@@ -65,6 +65,22 @@ class ActivityLogger
         'settings.ticket_prefix_changed' => ['settings', 'Jegyszám előtag módosítása'],
         'settings.ticket_counter_set' => ['settings', 'Jegyszám-számláló beállítása'],
         'settings.ticketing_denied' => ['settings', 'Jegyszámozás módosítása elutasítva'],
+        'settings.password_denied' => ['settings', 'Beállítás módosítása elutasítva (hibás jelszó)'],
+        'settings.simplepay_changed' => ['settings', 'OTP SimplePay beállítások módosítása'],
+        'settings.simplepay_tested' => ['settings', 'OTP SimplePay kapcsolat-ellenőrzés'],
+
+        'payment.simplepay_started' => ['reservation', 'SimplePay fizetés indítása'],
+        'payment.simplepay_paid' => ['reservation', 'SimplePay fizetés sikeres'],
+        'payment.simplepay_failed' => ['reservation', 'SimplePay fizetés sikertelen'],
+        'payment.simplepay_ipn_rejected' => ['reservation', 'SimplePay IPN elutasítva'],
+
+        'settings.nav_changed' => ['settings', 'NAV kapcsolat beállításai módosítva'],
+        'settings.nav_schedule_changed' => ['settings', 'Automatikus NAV beküldés beállítása'],
+        'nav.tested' => ['report', 'NAV kapcsolat-ellenőrzés'],
+        'nav.software_registered' => ['report', 'NAV kiállító szoftver regisztrálása'],
+        'nav.sent' => ['report', 'NAV adatszolgáltatás beküldve'],
+        'nav.failed' => ['report', 'NAV adatszolgáltatás sikertelen'],
+        'nav.send_denied' => ['report', 'NAV beküldés elutasítva'],
 
         'backup.created' => ['settings', 'Biztonsági mentés készült'],
         'backup.failed' => ['settings', 'Biztonsági mentés sikertelen'],

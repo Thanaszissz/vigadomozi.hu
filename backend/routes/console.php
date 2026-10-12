@@ -1,6 +1,7 @@
 <?php
 
 use App\Services\BackupService;
+use App\Services\NavReceiptService;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -16,3 +17,10 @@ Artisan::command('backups:run', function (BackupService $backups) {
 })->purpose('Run the scheduled database backup if it is due');
 
 Schedule::command('backups:run')->everyMinute()->withoutOverlapping();
+
+Artisan::command('nav:run', function (NavReceiptService $nav) {
+    $results = $nav->runDue();
+    $this->info($results === null ? 'Nincs esedékes NAV beküldés.' : count($results) . ' nap feldolgozva.');
+})->purpose('Send the daily NAV receipt data report if it is due');
+
+Schedule::command('nav:run')->everyMinute()->withoutOverlapping();

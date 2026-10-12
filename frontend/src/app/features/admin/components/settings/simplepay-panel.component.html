@@ -1,0 +1,143 @@
+<div *ngIf="loading && !data" class="muted">Betöltés...</div>
+<div *ngIf="error" class="alert">{{ error }}</div>
+<div *ngIf="notice" class="ok">✅ {{ notice }}</div>
+
+<ng-container *ngIf="data">
+  <section class="card">
+    <div class="title-row">
+      <h2>💳 OTP SimplePay</h2>
+      <div class="pills">
+        <span class="pill" [class.on]="data.ready" [class.off]="!data.ready">{{ data.ready ? '● Online fizetés aktív' : '○ Nincs aktiválva' }}</span>
+        <span class="pill env" [class.live]="data.environment === 'live'">{{ data.environment === 'live' ? 'ÉLES környezet' : 'TESZT környezet' }}</span>
+      </div>
+    </div>
+    <p class="muted">
+      Ha a SimplePay be van kapcsolva, a nyilvános oldalon a bankkártyás fizetés az OTP SimplePay biztonságos fizetési oldalán történik.
+      A sikeres fizetés után a foglalás automatikusan kifizetettre vált, a jegyek elkészülnek és e-mailben kiküldésre kerülnek.
+    </p>
+  </section>
+
+  <section class="card">
+    <h2>🔑 Kapcsolati adatok</h2>
+
+    <label class="switch">
+      <input type="checkbox" [(ngModel)]="form.enabled" />
+      <span>Online fizetés a SimplePay-jel bekapcsolva</span>
+    </label>
+
+    <div class="form-grid">
+      <label class="field">
+        <span>Környezet</span>
+        <select [(ngModel)]="form.environment">
+          <option value="sandbox">Teszt (sandbox) – próbafizetések, nincs valódi terhelés</option>
+          <option value="live">Éles – valódi bankkártyás fizetések</option>
+        </select>
+      </label>
+
+      <label class="field">
+        <span>Kereskedő azonosító (Merchant ID)</span>
+        <input type="text" [(ngModel)]="form.merchant" maxlength="64" placeholder="pl. PUBLICTESTHUF vagy P123456" autocomplete="off" spellcheck="false" />
+      </label>
+
+      <label class="field wide">
+        <span>
+          Titkos kulcs (Secret key)
+          <b *ngIf="data.has_secret" class="hint">— mentve: {{ data.secret_hint }}; hagyd üresen, ha nem módosítod</b>
+          <b *ngIf="!data.has_secret" class="hint bad">— még nincs megadva</b>
+        </span>
+        <div class="secret">
+          <input [type]="showSecret ? 'text' : 'password'" [(ngModel)]="form.secret_key" autocomplete="new-password" spellcheck="false"
+                 [placeholder]="data.has_secret ? 'Új kulcs megadása (csak módosításhoz)' : 'A SimplePay felületén kapott titkos kulcs'" />
+          <button type="button" class="btn small" (click)="showSecret = !showSecret">{{ showSecret ? '🙈 Elrejt' : '👁️ Mutat' }}</button>
+        </div>
+      </label>
+
+      <label class="field">
+        <span>Fizetési oldal nyelve</span>
+        <select [(ngModel)]="form.language">
+          <option *ngFor="let l of data.languages" [value]="l">{{ l }}</option>
+        </select>
+      </label>
+
+      <label class="field">
+        <span>Fizetési időkorlát (perc)</span>
+        <input type="number" min="5" max="120" [(ngModel)]="form.timeout_minutes" />
+      </label>
+
+      <label class="field wide">
+        <span>Webhely nyilvános címe (a SimplePay erre tér vissza és erre küld értesítést)</span>
+        <input type="url" [(ngModel)]="form.site_url" placeholder="https://mozi.pelda.hu" spellcheck="false" />
+      </label>
+    </div>
+
+    <div class="warn" *ngIf="isLive && form.enabled">
+      ⚠️ Éles környezetben valódi bankkártyás tranzakciók történnek. Csak a SimplePay által jóváhagyott, éles kereskedői azonosítóval és kulccsal használd.
+    </div>
+
+    <label class="field">
+      <span>Jelszavad (a módosítás megerősítéséhez)</span>
+      <input type="password" [(ngModel)]="password" autocomplete="new-password" (keyup.enter)="save()" />
+    </label>
+
+    <div *ngIf="saveError" class="alert">{{ saveError }}</div>
+
+    <div class="row-actions">
+      <button type="button" class="btn primary" [disabled]="!canSave" (click)="save()">{{ saving ? 'Mentés...' : '💾 Beállítások mentése' }}</button>
+      <button type="button" class="btn" [disabled]="testing || !data.has_secret || !data.merchant" (click)="runTest()">
+        {{ testing ? 'Ellenőrzés...' : '🔌 Kapcsolat ellenőrzése' }}
+      </button>
+    </div>
+    <p class="muted small">A kapcsolat-ellenőrzés a <b>mentett</b> adatokkal fut: aláírt lekérdezést küld a SimplePay-nek, és ellenőrzi a válasz aláírását.</p>
+
+    <div *ngIf="testResult" class="result" [class.ok]="testResult.ok" [class.alert]="!testResult.ok">
+      {{ testResult.ok ? '✅' : '❌' }} {{ testResult.message }}
+      <div class="muted" *ngIf="testResult.error_codes.length">SimplePay kódok: {{ testResult.error_codes.join(', ') }}</div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>🔗 Beállítás a SimplePay kereskedői felületén</h2>
+    <p class="muted">Ezeket a címeket a SimplePay kereskedői (admin) felületén kell megadni / ellenőrizni:</p>
+
+    <div class="url-row">
+      <div class="label">IPN (értesítési) URL</div>
+      <code>{{ data.urls.ipn }}</code>
+      <button type="button" class="btn small" (click)="copy(data.urls.ipn, 'ipn')">{{ copied === 'ipn' ? '✔ Másolva' : '📋 Másolás' }}</button>
+    </div>
+    <div class="url-row">
+      <div class="label">Visszatérési URL (automatikusan küldjük)</div>
+      <code>{{ data.urls.return }}</code>
+      <button type="button" class="btn small" (click)="copy(data.urls.return, 'return')">{{ copied === 'return' ? '✔ Másolva' : '📋 Másolás' }}</button>
+    </div>
+    <div class="url-row">
+      <div class="label">SimplePay API (a kiválasztott környezet)</div>
+      <code>{{ data.urls.api }}</code>
+    </div>
+
+    <ol class="steps">
+      <li>A SimplePay kereskedői felületén (Azonosítók / Fiókbeállítások) másold ki a <b>Merchant ID</b>-t és a <b>titkos kulcsot</b>, és add meg fent.</li>
+      <li>Add meg az <b>IPN URL</b>-t a SimplePay felületén is, enélkül a háttér-értesítések nem érkeznek meg.</li>
+      <li>Először <b>Teszt</b> környezetben próbálj ki egy fizetést (a sikeres fizetés után a foglalásnak „Fizetve” állapotúra kell váltania).</li>
+      <li>Éles indításhoz a SimplePay jóváhagyása után add meg az éles azonosítót és kulcsot, majd válts <b>Éles</b> környezetre. Az éles működéshez a webhelynek https-en kell futnia.</li>
+    </ol>
+  </section>
+
+  <section class="card" *ngIf="data.recent_payments.length">
+    <h2>🧾 Legutóbbi SimplePay fizetések</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Indítva</th><th>Foglalás</th><th>Rendelésazonosító</th><th>Összeg</th><th>Környezet</th><th>Állapot</th></tr></thead>
+        <tbody>
+          <tr *ngFor="let p of data.recent_payments">
+            <td>{{ p.created_at | date:'yyyy.MM.dd. HH:mm:ss' }}</td>
+            <td>#{{ p.reservation_id }}</td>
+            <td class="mono">{{ p.order_ref }}</td>
+            <td>{{ p.amount | number:'1.0-0' }} Ft</td>
+            <td>{{ p.environment === 'live' ? 'Éles' : 'Teszt' }}</td>
+            <td><span class="badge" [ngClass]="'s-' + p.status">{{ statusLabel(p.status) }}</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</ng-container>

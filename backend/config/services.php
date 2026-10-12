@@ -41,4 +41,9 @@ return [
         'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
     ],
 
+    // Csak fejlesztői teszthez: a NAV végpont felülírása (üresen hagyva a hivatalos teszt/éles cím él)
+    'nav' => [
+        'base_url_override' => env('NAV_BASE_URL_OVERRIDE'),
+    ],
+
 ];

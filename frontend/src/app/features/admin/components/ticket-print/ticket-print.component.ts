@@ -7,6 +7,7 @@ export function paymentLabel(method: string): string {
     case 'cash': return 'Készpénz';
     case 'card': return 'Bankkártya';
     case 'stripe': return 'Online';
+    case 'simplepay': return 'Online (bankkártya)';
     default: return method;
   }
 }

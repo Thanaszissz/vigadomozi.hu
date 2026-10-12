@@ -102,6 +102,27 @@ class SeatClaimService
         }
     }
 
+    /**
+     * Az online foglalás zárolásának lejáratát módosítja (fizetés indításakor kitolja, sikertelen fizetésnél rövidíti).
+     * A lejárat nélküli (pénztári) foglalásokhoz nem nyúl. Tranzakción kívül is hívható.
+     */
+    public function adjustHold(Reservation $reservation, Carbon $until, bool $onlyShrink = false): void
+    {
+        $reservation->refresh();
+
+        if ($reservation->status !== 'PENDING' || $reservation->expires_at === null) {
+            return;
+        }
+
+        $shouldChange = $onlyShrink ? $reservation->expires_at->gt($until) : $reservation->expires_at->lt($until);
+        if (!$shouldChange) {
+            return;
+        }
+
+        $reservation->update(['expires_at' => $until]);
+        SeatLock::where('reservation_id', $reservation->id)->whereNotNull('expires_at')->update(['expires_at' => $until]);
+    }
+
     /** Annak ellenőrzése, hogy a foglalás székei még a foglaláshoz tartoznak (pl. fizetés indítása előtt). */
     public function assertStillHeld(Reservation $reservation): void
     {

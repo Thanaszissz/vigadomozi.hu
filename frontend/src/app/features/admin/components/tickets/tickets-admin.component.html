@@ -23,6 +23,7 @@
         <option value="cash">Készpénz</option>
         <option value="card">Bankkártya</option>
         <option value="stripe">Online</option>
+        <option value="simplepay">Online (SimplePay)</option>
       </select>
     </label>
     <label class="grow">
@@ -43,6 +44,7 @@
     <div class="card"><span>Készpénz</span><b>{{ methodSummary('cash').tickets }} db • {{ methodSummary('cash').amount | number:'1.0-0' }} Ft</b></div>
     <div class="card"><span>Bankkártya</span><b>{{ methodSummary('card').tickets }} db • {{ methodSummary('card').amount | number:'1.0-0' }} Ft</b></div>
     <div class="card" *ngIf="methodSummary('stripe').tickets > 0"><span>Online</span><b>{{ methodSummary('stripe').tickets }} db • {{ methodSummary('stripe').amount | number:'1.0-0' }} Ft</b></div>
+    <div class="card" *ngIf="methodSummary('simplepay').tickets > 0"><span>Online (SimplePay)</span><b>{{ methodSummary('simplepay').tickets }} db • {{ methodSummary('simplepay').amount | number:'1.0-0' }} Ft</b></div>
   </div>
 
   <div *ngIf="loading" class="muted">Betöltés...</div>

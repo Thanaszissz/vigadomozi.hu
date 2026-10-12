@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\ShowtimeController;
 use App\Http\Controllers\Api\SeatLockController;
 use App\Http\Controllers\Api\ReservationController;
 use App\Http\Controllers\Api\WebhookController;
+use App\Http\Controllers\Api\SimplePayController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\TheaterShowController;
 
@@ -44,3 +45,7 @@ Route::middleware('auth:sanctum')->group(function () {
 // Webhooks (CSRF exemption needed)
 Route::post('/webhooks/stripe', [WebhookController::class, 'stripe'])
     ->withoutMiddleware('api');
+
+// OTP SimplePay: a vásárló visszatérése és a szerver-szerver értesítés (IPN, aláírással hitelesítve)
+Route::get('/payments/simplepay/return', [SimplePayController::class, 'back'])->middleware('throttle:60,1');
+Route::post('/webhooks/simplepay', [SimplePayController::class, 'ipn']);

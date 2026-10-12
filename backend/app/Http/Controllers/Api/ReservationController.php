@@ -3,11 +3,14 @@
 namespace App\Http\Controllers\Api;
 
 use App\Exceptions\SeatUnavailableException;
+use App\Exceptions\SimplePayException;
 use App\Http\Controllers\Controller;
 use App\Models\Reservation;
 use App\Services\SeatClaimService;
+use App\Services\SimplePayService;
 use App\Services\StripeService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class ReservationController extends Controller
 {
@@ -19,7 +22,7 @@ class ReservationController extends Controller
         );
     }
 
-    public function pay(Reservation $reservation, Request $request, StripeService $stripeService)
+    public function pay(Reservation $reservation, Request $request)
     {
         // Check if reservation is still PENDING and not expired
         if ($reservation->status !== 'PENDING') {
@@ -45,7 +48,25 @@ class ReservationController extends Controller
             return response()->json(['message' => $e->getMessage()], $e->status);
         }
 
-        $checkoutUrl = $stripeService->createCheckoutSession($reservation);
+        // Ha az OTP SimplePay be van állítva, a bankkártyás fizetés azon keresztül megy
+        $simplePay = app(SimplePayService::class);
+        if ($simplePay->isEnabled()) {
+            try {
+                $paymentUrl = $simplePay->start($reservation);
+            } catch (SimplePayException $e) {
+                Log::error('SimplePay fizetés indítása sikertelen: ' . $e->getMessage());
+
+                return response()->json(['message' => 'A fizetés indítása most nem sikerült. Kérjük, próbálja meg később.'], $e->status >= 500 ? 502 : $e->status);
+            }
+
+            return response()->json([
+                'checkout_url' => $paymentUrl,
+                'provider' => 'simplepay',
+                'reservation_id' => $reservation->id,
+            ], 200);
+        }
+
+        $checkoutUrl = app(StripeService::class)->createCheckoutSession($reservation);
 
         return response()->json([
             'checkout_url' => $checkoutUrl,

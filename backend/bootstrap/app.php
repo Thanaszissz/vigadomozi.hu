@@ -16,7 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->trustProxies(at: '*');
         $middleware->append(\Illuminate\Http\Middleware\HandleCors::class);
         $middleware->append(\App\Http\Middleware\CompressResponse::class);
-        $middleware->api(append: [\App\Http\Middleware\RunDueBackups::class]);
+        $middleware->api(append: [\App\Http\Middleware\RunDueBackups::class, \App\Http\Middleware\RunDueNavReports::class]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

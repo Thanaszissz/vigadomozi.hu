@@ -1,0 +1,288 @@
+<div *ngIf="loading && !data" class="muted">Betöltés...</div>
+<div *ngIf="error" class="alert">{{ error }}</div>
+<div *ngIf="notice" class="ok">✅ {{ notice }}</div>
+
+<ng-container *ngIf="data">
+  <section class="card">
+    <div class="title-row">
+      <h2>🏛️ NAV kapcsolat (KOBAK – nyugtaadat-szolgáltatás)</h2>
+      <div class="pills">
+        <span class="pill" [class.on]="data.active" [class.off]="!data.active">{{ data.active ? '● AKTÍV' : '○ Nincs aktiválva' }}</span>
+        <span class="pill env" [class.live]="data.environment === 'live'">{{ data.environment === 'live' ? 'ÉLES környezet' : 'TESZT környezet' }}</span>
+      </div>
+    </div>
+    <p class="muted">
+      A rendszer naponta egy összesített adatszolgáltatást küld a NAV-nak: a tárgynap eladott jegyei (minden jegy egy számítógépes nyugta)
+      ÁFA kategória szerint összesítve, a nap első nyugtájának sorszámával (a NAV nyugtaadat-szolgáltatás interfész specifikációja szerint).
+    </p>
+    <div class="warn" *ngIf="!data.active">
+      ⚠️ Az integráció <b>elkészült, de nincs aktiválva</b>: automatikus beküldés nem történik, és éles környezetbe nem küldhető adat.
+      Aktiváláshoz add meg a kapcsolati adatokat és kapcsold be az „Integráció aktiválása” kapcsolót. Teszt környezetbe a kézi beküldés
+      aktiválás nélkül is kipróbálható.
+    </div>
+  </section>
+
+  <!-- Kapcsolati adatok -->
+  <section class="card">
+    <h2>🔑 Kapcsolati adatok</h2>
+    <p class="muted">A technikai felhasználót a NAV Felhasználókezelőben (<code>uam.nav.gov.hu</code> / teszt: <code>uam-test.nav.gov.hu</code>) kell létrehozni; az onnan kapott adatokat add meg.</p>
+
+    <label class="switch">
+      <input type="checkbox" [(ngModel)]="form.enabled" />
+      <span>Integráció aktiválása</span>
+    </label>
+
+    <div class="form-grid">
+      <label class="field">
+        <span>Környezet</span>
+        <select [(ngModel)]="form.environment">
+          <option value="test">Teszt – próbabeküldés a NAV teszt rendszerébe</option>
+          <option value="live">Éles – valódi adatszolgáltatás a NAV-nak</option>
+        </select>
+      </label>
+
+      <label class="field">
+        <span>Adószám (a 8 jegyű törzsszám vagy a teljes adószám)</span>
+        <input type="text" [(ngModel)]="form.tax_number" maxlength="20" placeholder="12345678-2-41" autocomplete="off" />
+      </label>
+
+      <label class="field">
+        <span>Technikai felhasználó neve (login)</span>
+        <input type="text" [(ngModel)]="form.login" maxlength="50" autocomplete="off" spellcheck="false" />
+      </label>
+
+      <label class="field">
+        <span>
+          Technikai felhasználó jelszava
+          <b *ngIf="data.has_password" class="hint">— mentve; hagyd üresen, ha nem módosítod</b>
+          <b *ngIf="!data.has_password" class="hint bad">— még nincs megadva</b>
+        </span>
+        <input [type]="showSecrets ? 'text' : 'password'" [(ngModel)]="form.tech_password" autocomplete="new-password" />
+      </label>
+
+      <label class="field wide">
+        <span>
+          Aláírókulcs (signature key)
+          <b *ngIf="data.has_signature_key" class="hint">— mentve: {{ data.signature_key_hint }}; hagyd üresen, ha nem módosítod</b>
+          <b *ngIf="!data.has_signature_key" class="hint bad">— még nincs megadva</b>
+        </span>
+        <div class="secret">
+          <input [type]="showSecrets ? 'text' : 'password'" [(ngModel)]="form.signature_key" autocomplete="new-password" spellcheck="false" />
+          <button type="button" class="btn small" (click)="showSecrets = !showSecrets">{{ showSecrets ? '🙈 Elrejt' : '👁️ Mutat' }}</button>
+        </div>
+      </label>
+
+      <label class="field">
+        <span>Nyugta kiállító szoftver neve (a NAV-nál regisztrálni kell)</span>
+        <input type="text" [(ngModel)]="form.software_name" maxlength="100" spellcheck="false" />
+      </label>
+
+      <label class="field">
+        <span>Jegyek ÁFA kategóriája (egyeztesd a könyvelőddel)</span>
+        <select [(ngModel)]="form.vat_category">
+          <option *ngFor="let v of vatChoices" [value]="v">{{ v }}</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="warn" *ngIf="form.environment === 'live' && form.enabled">
+      ⚠️ Éles környezetben az adatok a NAV éles rendszerébe kerülnek. Ellenőrizd a kapcsolatot és az ÁFA kategóriát, mielőtt aktiválod.
+    </div>
+
+    <label class="field">
+      <span>Jelszavad (a módosítás megerősítéséhez)</span>
+      <input type="password" [(ngModel)]="password" autocomplete="new-password" (keyup.enter)="save()" />
+    </label>
+    <div *ngIf="saveError" class="alert">{{ saveError }}</div>
+
+    <div class="row-actions">
+      <button type="button" class="btn primary" [disabled]="!canSave" (click)="save()">{{ saving ? 'Mentés...' : '💾 Beállítások mentése' }}</button>
+      <button type="button" class="btn" [disabled]="testing || !data.configured" (click)="runTest()">{{ testing ? 'Ellenőrzés...' : '🔌 Kapcsolat ellenőrzése' }}</button>
+      <button type="button" class="btn" [disabled]="registering || !data.configured" (click)="registerSoftware()">{{ registering ? 'Regisztrálás...' : '🧾 Szoftver regisztrálása a NAV-nál' }}</button>
+    </div>
+    <p class="muted small">A kapcsolat-ellenőrzés és a regisztráció a <b>mentett</b> adatokkal fut a kiválasztott környezetben.</p>
+
+    <div *ngIf="actionMessage" class="ok">✅ {{ actionMessage }}</div>
+    <div *ngIf="actionError" class="alert">{{ actionError }}</div>
+
+    <ul class="steps" *ngIf="testResult">
+      <li *ngFor="let s of testResult.steps" [class.bad]="!s.ok">
+        {{ s.ok ? '✅' : '❌' }} <b>{{ s.name }}:</b> {{ s.message }}
+      </li>
+    </ul>
+  </section>
+
+  <!-- Automatikus küldés -->
+  <section class="card">
+    <h2>⏱️ Automatikus napi beküldés</h2>
+
+    <label class="switch">
+      <input type="checkbox" [(ngModel)]="schedule.auto_enabled" />
+      <span>Automatikus beküldés bekapcsolva</span>
+    </label>
+
+    <div class="form-grid" [class.off]="!schedule.auto_enabled">
+      <label class="field">
+        <span>Időpont (naponta, budapesti idő)</span>
+        <input type="time" [(ngModel)]="schedule.auto_time" [disabled]="!schedule.auto_enabled" />
+      </label>
+      <label class="field">
+        <span>Elmaradt napok pótlása (ennyi napra visszamenőleg)</span>
+        <input type="number" min="0" max="30" [(ngModel)]="schedule.catchup_days" [disabled]="!schedule.auto_enabled" />
+      </label>
+    </div>
+
+    <p class="muted">
+      A megadott időpont után az első kiszolgált kérésnél (vagy cronnal, <code>php artisan schedule:run</code>) elindul a beküldés: az előző nap, valamint az
+      elmaradt, még be nem küldött napok adatait küldi a NAV-nak. Sikertelen próbálkozás után 30 percenként újra próbálja (naponta legfeljebb 6-szor).
+      Csak aktivált integrációnál működik.
+    </p>
+
+    <div class="status" *ngIf="data.schedule.auto_enabled">
+      <div *ngIf="data.schedule.next_run">📅 Következő automatikus futás: <b>{{ data.schedule.next_run | date:'yyyy.MM.dd. HH:mm' }}</b> {{ data.active ? '' : '(az integráció nincs aktiválva, nem fog lefutni)' }}</div>
+      <div *ngIf="data.schedule.last_status" [class.bad]="!data.schedule.last_status.ok">
+        {{ data.schedule.last_status.ok ? '✅' : '❌' }} Utolsó futás: {{ data.schedule.last_status.at | date:'yyyy.MM.dd. HH:mm' }} – {{ data.schedule.last_status.message }}
+      </div>
+    </div>
+    <div class="status" *ngIf="data.unsent_days.length">
+      📋 Beküldésre váró napok (volt eladás, még nincs beküldve): <b>{{ data.unsent_days.join(', ') }}</b>
+    </div>
+
+    <div *ngIf="scheduleError" class="alert">{{ scheduleError }}</div>
+    <div class="row-actions">
+      <button type="button" class="btn primary" [disabled]="scheduleBusy" (click)="saveSchedule()">{{ scheduleBusy ? 'Mentés...' : 'Ütemezés mentése' }}</button>
+    </div>
+  </section>
+
+  <!-- Kézi beküldés -->
+  <section class="card">
+    <h2>📤 Kézi beküldés</h2>
+    <p class="muted">Válaszd ki a tárgynapot, nézd át az összesítést, majd küldd be – a beküldés többlépcsős megerősítéssel védett.</p>
+
+    <div class="date-row">
+      <label class="field inline">
+        <span>Tárgynap</span>
+        <input type="date" [(ngModel)]="date" [max]="data.today" (ngModelChange)="loadPreview()" />
+      </label>
+      <button type="button" class="btn small" (click)="setDate('yesterday')">Tegnap</button>
+      <button type="button" class="btn small" (click)="setDate('today')">Ma</button>
+    </div>
+
+    <div *ngIf="previewLoading" class="muted">Előnézet betöltése...</div>
+    <div *ngIf="previewError" class="alert">{{ previewError }}</div>
+
+    <ng-container *ngIf="preview && !previewLoading">
+      <div class="stats">
+        <div class="stat"><span>Eladott jegyek (nyugták)</span><b class="big">{{ preview.data.count }}</b></div>
+        <div class="stat"><span>Bruttó összeg</span><b>{{ preview.data.total | number:'1.0-0' }} Ft</b></div>
+        <div class="stat"><span>Kezdő nyugta sorszám</span><b class="mono">{{ preview.data.serial || '—' }}</b></div>
+        <div class="stat"><span>ÁFA kategória</span><b>{{ preview.data.vat[0].name }}</b></div>
+      </div>
+
+      <div class="muted" *ngIf="preview.data.by_method.length">
+        Fizetési mód szerint:
+        <span *ngFor="let m of preview.data.by_method" class="chip">{{ m.method }}: {{ m.tickets }} db • {{ m.amount | number:'1.0-0' }} Ft</span>
+      </div>
+
+      <div class="status" *ngIf="preview.sent">
+        ✅ Erre a napra már van beküldött adatszolgáltatás: <b>{{ preview.sent.nav_id }}</b> ({{ preview.sent.sale_count }} jegy, {{ preview.sent.total_amount | number:'1.0-0' }} Ft)
+      </div>
+      <div class="warn" *ngIf="preview.blocker && preview.data.count > 0">ℹ️ {{ preview.blocker }}</div>
+      <div class="muted" *ngIf="preview.data.count === 0">Erre a napra nincs eladott jegy, nincs mit beküldeni.</div>
+      <div class="warn" *ngIf="preview.is_today && preview.data.count > 0">A mai nap még nem zárult le, a később eladott jegyek nem szerepelnének a beküldésben.</div>
+
+      <div class="row-actions">
+        <button type="button" class="btn warnbtn" [disabled]="!canOpenSend" (click)="openSend(preview.operation === 'modify')">
+          {{ preview.operation === 'modify' ? '✏️ Helyesbítés beküldése…' : '📤 Beküldés most…' }}
+        </button>
+        <button type="button" class="btn" *ngIf="preview.xml" (click)="showXml = !showXml">{{ showXml ? 'XML elrejtése' : '🧾 Beküldendő XML megtekintése' }}</button>
+      </div>
+      <pre class="xml" *ngIf="showXml && preview.xml">{{ preview.xml }}</pre>
+    </ng-container>
+  </section>
+
+  <!-- Beküldések -->
+  <section class="card" *ngIf="data.submissions.length">
+    <h2>🧾 Beküldések naplója</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Tárgynap</th><th>Művelet</th><th>Környezet</th><th>Indító</th><th>Sorszám</th><th>Jegyek</th><th>Összeg</th><th>Állapot</th><th>NAV azonosító</th><th>Idő</th></tr></thead>
+        <tbody>
+          <tr *ngFor="let s of data.submissions">
+            <td>{{ s.applicable_date }}</td>
+            <td>{{ s.operation === 'modify' ? 'Helyesbítés' : 'Új' }}</td>
+            <td>{{ s.environment === 'live' ? 'Éles' : 'Teszt' }}</td>
+            <td>{{ s.trigger === 'auto' ? 'Automatikus' : (s.sent_by || 'Kézi') }}</td>
+            <td class="mono">{{ s.serial_number }}</td>
+            <td>{{ s.sale_count }}</td>
+            <td>{{ s.total_amount | number:'1.0-0' }} Ft</td>
+            <td>
+              <span class="badge" [ngClass]="'s-' + s.status" [title]="s.error_message || ''">{{ statusLabel(s.status) }}</span>
+              <div class="err" *ngIf="s.error_message">{{ s.error_message }}</div>
+            </td>
+            <td class="mono">{{ s.nav_id || '—' }}</td>
+            <td>{{ s.created_at | date:'yyyy.MM.dd. HH:mm' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</ng-container>
+
+<!-- Beküldés megerősítése -->
+<div class="backdrop" *ngIf="sendOpen"></div>
+<div class="confirm" *ngIf="sendOpen" role="dialog" aria-modal="true">
+  <ng-container *ngIf="!sendDone">
+    <h2>{{ sendModify ? '✏️ NAV helyesbítés beküldése' : '📤 NAV adatszolgáltatás beküldése' }}</h2>
+    <p class="muted">Tárgynap: <b>{{ date }}</b></p>
+
+    <ng-container *ngIf="!plan">
+      <div class="warn">⚠️ Az adatszolgáltatás a NAV rendszerébe kerül. A következő lépésben összefoglaljuk, mi lesz beküldve.</div>
+      <label class="field">
+        <span>Jelszavad</span>
+        <input type="password" [(ngModel)]="sendPassword1" autocomplete="new-password" (keyup.enter)="prepareSend()" />
+      </label>
+      <div *ngIf="sendError" class="alert">{{ sendError }}</div>
+      <div class="actions">
+        <button type="button" class="btn" (click)="closeSend()">Mégsem</button>
+        <button type="button" class="btn primary" [disabled]="!sendPassword1 || sendBusy" (click)="prepareSend()">{{ sendBusy ? 'Ellenőrzés...' : 'Tovább' }}</button>
+      </div>
+    </ng-container>
+
+    <ng-container *ngIf="plan">
+      <div class="env-banner" [class.live]="plan.environment === 'live'">{{ plan.environment === 'live' ? 'ÉLES KÖRNYEZET' : 'TESZT KÖRNYEZET' }}</div>
+      <ul class="summary"><li *ngFor="let l of plan.summary">{{ l }}</li></ul>
+      <div class="warnings" *ngIf="plan.warnings.length"><div *ngFor="let w of plan.warnings">• {{ w }}</div></div>
+
+      <div class="timer" [class.expired]="secondsLeft === 0">
+        {{ secondsLeft > 0 ? 'A megerősítés érvényes még: ' + minutes + ' perc ' + seconds + ' mp' : 'A megerősítés lejárt, kezdd újra.' }}
+      </div>
+
+      <label class="check">
+        <input type="checkbox" [(ngModel)]="acknowledge" />
+        <span>Ellenőriztem az adatokat, tudomásul veszem, hogy az adatszolgáltatás a NAV-hoz kerül, és egy rekord csak egyszer módosítható.</span>
+      </label>
+
+      <label class="field">
+        <span>A beküldéshez írd be pontosan: <b class="phrase">{{ plan.phrase }}</b></span>
+        <input type="text" [(ngModel)]="phrase" autocomplete="off" spellcheck="false" [class.match]="phraseMatches" />
+      </label>
+      <label class="field">
+        <span>Jelszavad (még egyszer)</span>
+        <input type="password" [(ngModel)]="sendPassword2" autocomplete="new-password" />
+      </label>
+
+      <div *ngIf="sendError" class="alert">{{ sendError }}</div>
+      <div class="actions">
+        <button type="button" class="btn" [disabled]="sendBusy" (click)="closeSend()">Mégsem</button>
+        <button type="button" class="btn danger" [disabled]="!canApply" (click)="applySend()">{{ sendBusy ? 'Beküldés...' : '📤 Beküldés a NAV-nak' }}</button>
+      </div>
+    </ng-container>
+  </ng-container>
+
+  <ng-container *ngIf="sendDone">
+    <h2>✅ Beküldve</h2>
+    <p>{{ sendDone }}</p>
+    <div class="actions"><button type="button" class="btn primary" (click)="closeSend()">Bezárás</button></div>
+  </ng-container>
+</div>

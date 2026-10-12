@@ -9,6 +9,12 @@
       <button type="button" class="menu-item" [class.active]="section === 'numbering'" (click)="section = 'numbering'">
         🎟️ Jegyszámozás
       </button>
+      <button type="button" class="menu-item" [class.active]="section === 'simplepay'" (click)="section = 'simplepay'">
+        💳 OTP SimplePay
+      </button>
+      <button type="button" class="menu-item" [class.active]="section === 'nav'" (click)="section = 'nav'">
+        🏛️ NAV kapcsolat
+      </button>
       <button type="button" class="menu-item" [class.active]="section === 'backups'" (click)="section = 'backups'">
         💾 Biztonsági mentés
       </button>
@@ -128,6 +134,14 @@
           </button>
         </section>
       </ng-container>
+    </main>
+
+    <main class="content" *ngIf="section === 'simplepay'">
+      <app-simplepay-panel></app-simplepay-panel>
+    </main>
+
+    <main class="content" *ngIf="section === 'nav'">
+      <app-nav-panel></app-nav-panel>
     </main>
 
     <main class="content" *ngIf="section === 'backups'">
