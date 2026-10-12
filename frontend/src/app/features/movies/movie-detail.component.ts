@@ -34,6 +34,8 @@ export class MovieDetailComponent implements OnInit, OnDestroy {
   activeSlide = 0;
   private timer?: number;
 
+  // Egyszer számolt URL: ha a sablon minden változásdetektáláskor új objektumot kapna, az iframe újratöltődne
+  trailerEmbedUrl: SafeResourceUrl | null = null;
   trailerUrl: SafeResourceUrl | null = null;
   trailerTitle = "";
   trailerPoster = "";
@@ -119,6 +121,9 @@ export class MovieDetailComponent implements OnInit, OnDestroy {
     this.apiService.getMovieById(this.movieId).subscribe({
       next: (data) => {
         this.movie = data;
+        this.trailerEmbedUrl = data.trailer_youtube_url
+          ? this.getYouTubeEmbedUrl(data.trailer_youtube_url)
+          : null;
         this.loading = false;
       },
       error: (err) => {

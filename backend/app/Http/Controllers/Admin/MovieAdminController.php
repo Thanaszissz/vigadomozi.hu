@@ -32,7 +32,7 @@ class MovieAdminController extends Controller
 
         if ($request->hasFile('poster_file')) {
             $path = $request->file('poster_file')->store('posters', 'public');
-            $data['poster_path'] = 'http://127.0.0.1:8000/storage/' . str_replace('posters/', 'posters/', $path);
+            $data['poster_path'] = url('/storage') . '/' . str_replace('posters/', 'posters/', $path);
             unset($data['poster_file']);
         }
 
@@ -61,7 +61,7 @@ class MovieAdminController extends Controller
             }
             
             $path = $request->file('poster_file')->store('posters', 'public');
-            $data['poster_path'] = 'http://127.0.0.1:8000/storage/' . str_replace('posters/', 'posters/', $path);
+            $data['poster_path'] = url('/storage') . '/' . str_replace('posters/', 'posters/', $path);
             unset($data['poster_file']);
         }
 
@@ -97,7 +97,7 @@ class MovieAdminController extends Controller
             }
             
             $path = $request->file('poster_file')->store('posters', 'public');
-            $data['poster_path'] = 'http://127.0.0.1:8000/storage/' . str_replace('posters/', 'posters/', $path);
+            $data['poster_path'] = url('/storage') . '/' . str_replace('posters/', 'posters/', $path);
             unset($data['poster_file']);
         }
 

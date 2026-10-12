@@ -1,6 +1,7 @@
 ﻿import { Component, OnDestroy, OnInit } from "@angular/core";
 import { RouterLink } from "@angular/router";
 import { CommonModule } from "@angular/common";
+import { FormsModule } from "@angular/forms";
 import { ApiService } from "../../core/api/api.service";
 import { DomSanitizer, SafeResourceUrl } from "@angular/platform-browser";
 
@@ -27,26 +28,14 @@ interface WeekDay {
 @Component({
   selector: "app-home",
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, FormsModule],
   templateUrl: "./home.component.html",
   styleUrls: ["./home.component.css"]
 })
 export class HomeComponent implements OnInit, OnDestroy {
-  posters = [
-    { id: 2, title: "Inception", image: "https://image.tmdb.org/t/p/w500/9gk7adHYeDvHkCSEqAvQNLV5Uge.jpg" },
-    { id: 3, title: "The Dark Knight", image: "https://image.tmdb.org/t/p/w500/qJ2tW6WMUDux911r6m7haRef0WH.jpg" },
-    { id: 1, title: "Interstellar", image: "https://image.tmdb.org/t/p/w500/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg" },
-    { id: 2, title: "The Matrix", image: "https://image.tmdb.org/t/p/w500/f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg" },
-    { id: 3, title: "Dune", image: "https://image.tmdb.org/t/p/w500/d5NXSklXo0qyIYkgV94XAgMIckC.jpg" },
-    { id: 1, title: "Avatar", image: "https://image.tmdb.org/t/p/w500/kyeqWdyUXW608qlYkRqosgbbJyK.jpg" },
-    { id: 2, title: "Oppenheimer", image: "https://image.tmdb.org/t/p/w500/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg" },
-    { id: 3, title: "Barbie", image: "https://image.tmdb.org/t/p/w500/iuFNMS8U5cb6xfzi51Dbkovj7vM.jpg" },
-    { id: 1, title: "John Wick", image: "https://image.tmdb.org/t/p/w500/5vUux2vNUTqwCzb7tVcH18XnsF.jpg" },
-    { id: 2, title: "Spider-Man", image: "https://image.tmdb.org/t/p/w500/1g0dhYtq4irTY1GPXvft6k4YLjm.jpg" },
-    { id: 3, title: "Joker", image: "https://image.tmdb.org/t/p/w500/udDclJoHjfjb8Ekgsd4FDteOkCU.jpg" }
-  ];
+  posters: Array<{ id: number; title: string; image: string; startsAt?: string }> = [];
 
-  slideGroups = this.chunk(this.posters, 4);
+  slideGroups: Array<Array<{ id: number; title: string; image: string; startsAt?: string }>> = [];
   featuredMovies: Array<{ showtime: ShowtimeWithMovie; movieId: number }> = [];
   weekDays: WeekDay[] = [];
   allShowtimes: ShowtimeWithMovie[] = [];
@@ -61,7 +50,10 @@ export class HomeComponent implements OnInit, OnDestroy {
   trailerMovieId: number | null = null;
   isTrailerOpen = false;
 
-  constructor(private apiService: ApiService, private sanitizer: DomSanitizer) {}
+  constructor(
+    private apiService: ApiService,
+    private sanitizer: DomSanitizer
+  ) {}
 
   ngOnInit(): void {
     this.timer = window.setInterval(() => this.nextSlide(), 4000);
@@ -139,6 +131,29 @@ export class HomeComponent implements OnInit, OnDestroy {
           movieId: st.movie.id
         }));
 
+        // Slider: legközelebbi előadások egyedi filmjei időrendben
+        const upcomingSorted = showtimes
+          .filter(st => new Date(st.starts_at) > now)
+          .sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime());
+
+        const seen = new Set<number>();
+        const sliderItems: Array<{ id: number; title: string; image: string; startsAt?: string }> = [];
+        for (const st of upcomingSorted) {
+          if (seen.has(st.movie.id)) continue;
+          if (!st.movie.poster_path) continue;
+          seen.add(st.movie.id);
+          sliderItems.push({
+            id: st.movie.id,
+            title: st.movie.title,
+            image: st.movie.poster_path,
+            startsAt: st.starts_at
+          });
+          if (sliderItems.length >= 16) break;
+        }
+        this.posters = sliderItems;
+        this.slideGroups = this.chunk(this.posters, 4);
+        this.activeSlide = 0;
+
         // Set showtimes for the first selected day
         const selectedDay = this.weekDays.find(d => d.isSelected);
         if (selectedDay && !selectedDay.isAll) {
@@ -207,15 +222,24 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   nextSlide(): void {
+    if (!this.slideGroups.length) return;
     this.activeSlide = (this.activeSlide + 1) % this.slideGroups.length;
   }
 
   prevSlide(): void {
+    if (!this.slideGroups.length) return;
     this.activeSlide = (this.activeSlide - 1 + this.slideGroups.length) % this.slideGroups.length;
   }
 
   goToSlide(index: number): void {
     this.activeSlide = index;
+  }
+
+  formatShowtime(iso: string): string {
+    const d = new Date(iso);
+    const dayNames = ["V", "H", "K", "Sze", "Cs", "P", "Szo"];
+    const pad = (n: number) => n.toString().padStart(2, "0");
+    return `${pad(d.getMonth() + 1)}.${pad(d.getDate())}. (${dayNames[d.getDay()]}) ${pad(d.getHours())}:${pad(d.getMinutes())}`;
   }
 
   private chunk<T>(items: T[], size: number): T[][] {

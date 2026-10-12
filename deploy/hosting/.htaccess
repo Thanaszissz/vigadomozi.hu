@@ -1,0 +1,34 @@
+DirectoryIndex index.html index.php
+Options -Indexes -MultiViews
+AddType image/webp .webp
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    # Feltöltött képek (Laravel public disk) kiszolgálása symlink nélkül
+    RewriteCond %{DOCUMENT_ROOT}/backend/storage/app/public/$1 -f
+    RewriteRule ^storage/(.+)$ backend/storage/app/public/$1 [END]
+
+    # Belső mappák és fájlok nem érhetők el
+    RewriteRule ^(backend|app|bootstrap|config|database|docs|resources|routes|storage|tests|vendor)(/|$) - [F,L]
+    RewriteRule (^|/)\.(?!well-known) - [F,L]
+    RewriteRule ^(artisan|composer\.(json|lock)|README\.md|phpunit\.xml|package\.json|vite\.config\.js)$ - [F,L]
+
+    # API -> Laravel
+    RewriteRule ^(api|up)(/|$) index.php [L]
+
+    # Meglévő fájlok közvetlenül, minden más az Angular alkalmazásé
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+    RewriteRule ^ index.html [L]
+</IfModule>
+
+<IfModule mod_headers.c>
+    <FilesMatch "^index\.html$">
+        Header set Cache-Control "no-cache"
+    </FilesMatch>
+</IfModule>

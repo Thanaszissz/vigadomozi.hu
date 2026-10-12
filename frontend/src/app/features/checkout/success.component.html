@@ -1,24 +1,4 @@
 <div class="page">
-  <header class="topbar">
-    <div class="brand">
-      <img class="brand-logo" src="assets/vigado_logo_beige.png" alt="Vigadó Mozi" />
-    </div>
-    <div class="header-right">
-      <div class="search">
-        <input type="text" placeholder="keresd meg. nézd meg. műsor keresése" />
-        <button class="search-btn">🔍</button>
-      </div>
-      <nav class="nav-links">
-        <a routerLink="/">Műsor</a>
-        <a routerLink="/schedule">Műsorlista</a>
-        <a routerLink="/movies" class="active">Jegyvásárlás</a>
-        <a routerLink="/prices">Jegyárak</a>
-        <a routerLink="/">Médiaajánlat</a>
-        <a routerLink="/admin/login" class="admin-link">🔐 Admin</a>
-      </nav>
-    </div>
-  </header>
-
   <section class="content">
     <div *ngIf="loading" class="state loading">
       <p>Foglalás adatainak betöltése...</p>

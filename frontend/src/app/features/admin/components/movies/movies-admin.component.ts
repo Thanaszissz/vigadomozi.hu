@@ -20,6 +20,7 @@ export class MoviesAdminComponent implements OnInit {
   error = '';
   editingMovie: Movie | null = null;
   showEditModal = false;
+  isCreating = false;
   selectedFile: File | null = null;
   previewUrl: string | null = null;
 
@@ -49,6 +50,24 @@ export class MoviesAdminComponent implements OnInit {
 
   editMovie(movie: Movie): void {
     this.editingMovie = { ...movie };
+    this.isCreating = false;
+    this.showEditModal = true;
+    this.selectedFile = null;
+    this.previewUrl = null;
+  }
+
+  newMovie(): void {
+    this.editingMovie = {
+      id: 0,
+      title: '',
+      description: '',
+      duration_minutes: 0,
+      duration_min: 0,
+      rating: 'general',
+      poster_path: '',
+      trailer_youtube_url: ''
+    } as Movie;
+    this.isCreating = true;
     this.showEditModal = true;
     this.selectedFile = null;
     this.previewUrl = null;
@@ -57,6 +76,7 @@ export class MoviesAdminComponent implements OnInit {
   closeModal(): void {
     this.showEditModal = false;
     this.editingMovie = null;
+    this.isCreating = false;
     this.selectedFile = null;
     this.previewUrl = null;
   }
@@ -82,7 +102,7 @@ export class MoviesAdminComponent implements OnInit {
     formData.append('description', this.editingMovie.description || '');
     formData.append('duration_min', String(this.editingMovie.duration_min || this.editingMovie.duration_minutes || 0));
     formData.append('rating', this.editingMovie.rating || 'general');
-    
+
     if (this.selectedFile) {
       formData.append('poster_file', this.selectedFile);
     } else if (this.editingMovie.poster_path) {
@@ -94,20 +114,34 @@ export class MoviesAdminComponent implements OnInit {
       formData.append('trailer_youtube_url', trailerUrl);
     }
 
-    this.adminService.updateMovieWithFile(this.editingMovie.id, formData).subscribe({
-      next: (updatedMovie) => {
-        const index = this.movies.findIndex(m => m.id === updatedMovie.id);
-        if (index !== -1) {
-          this.movies[index] = updatedMovie;
+    if (this.isCreating) {
+      this.adminService.createMovieWithFile(formData).subscribe({
+        next: (createdMovie) => {
+          this.movies = [createdMovie, ...this.movies];
+          this.closeModal();
+        },
+        error: (err) => {
+          this.error = 'Hiba történt a film létrehozása során';
+          console.error('Error creating movie:', err);
+          console.error('Error details:', err.error);
         }
-        this.closeModal();
-      },
-      error: (err) => {
-        this.error = 'Hiba történt a mentés során';
-        console.error('Error updating movie:', err);
-        console.error('Error details:', err.error);
-      }
-    });
+      });
+    } else {
+      this.adminService.updateMovieWithFile(this.editingMovie.id, formData).subscribe({
+        next: (updatedMovie) => {
+          const index = this.movies.findIndex(m => m.id === updatedMovie.id);
+          if (index !== -1) {
+            this.movies[index] = updatedMovie;
+          }
+          this.closeModal();
+        },
+        error: (err) => {
+          this.error = 'Hiba történt a mentés során';
+          console.error('Error updating movie:', err);
+          console.error('Error details:', err.error);
+        }
+      });
+    }
   }
 
   deleteMovie(movie: Movie): void {

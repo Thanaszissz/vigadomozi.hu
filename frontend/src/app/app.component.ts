@@ -1,13 +1,15 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterOutlet, RouterLink } from '@angular/router';
+import { NavigationEnd, Router, RouterOutlet, RouterLink } from '@angular/router';
+import { SiteHeaderComponent } from './shared/site-header.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink],
+  imports: [CommonModule, RouterOutlet, RouterLink, SiteHeaderComponent],
   template: `
     <div class="app-container">
+      <app-site-header *ngIf="showHeader"></app-site-header>
       <main>
         <router-outlet></router-outlet>
       </main>
@@ -32,4 +34,14 @@ import { RouterOutlet, RouterLink } from '@angular/router';
 })
 export class AppComponent {
   title = 'Jegyfoglalási Rendszer';
+  showHeader = true;
+
+  constructor(router: Router) {
+    this.showHeader = !router.url.startsWith('/admin');
+    router.events.subscribe(event => {
+      if (event instanceof NavigationEnd) {
+        this.showHeader = !event.urlAfterRedirects.startsWith('/admin');
+      }
+    });
+  }
 }

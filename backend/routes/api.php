@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\SeatLockController;
 use App\Http\Controllers\Api\ReservationController;
 use App\Http\Controllers\Api\WebhookController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\TheaterShowController;
 
 // Auth routes (public)
 Route::post('/login', [AuthController::class, 'login']);
@@ -15,6 +16,9 @@ Route::post('/login', [AuthController::class, 'login']);
 // Public routes
 Route::get('/movies', [MovieController::class, 'index']);
 Route::get('/movies/{movie}', [MovieController::class, 'show']);
+
+Route::get('/theater-shows', [TheaterShowController::class, 'index']);
+Route::get('/theater-shows/{theater_show}', [TheaterShowController::class, 'show']);
 
 Route::get('/showtimes', [ShowtimeController::class, 'index']);
 Route::get('/showtimes/{showtime}', [ShowtimeController::class, 'show']);

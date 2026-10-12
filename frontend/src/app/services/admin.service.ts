@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { environment } from '../../environments/environment';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
@@ -15,11 +16,23 @@ export interface Movie {
   trailer_youtube_url?: string;
 }
 
+export interface TheaterShow {
+  id: number;
+  title: string;
+  description: string;
+  duration_minutes: number;
+  poster_url?: string;
+  rating?: 'general' | '6' | '12' | '16' | '18';
+  duration_min?: number;
+  poster_path?: string;
+  trailer_youtube_url?: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class AdminService {
-  private apiUrl = 'http://localhost:8000/api';
+  private apiUrl = environment.apiUrl;
 
   constructor(private http: HttpClient) {}
 
@@ -36,6 +49,10 @@ export class AdminService {
     return this.http.post<Movie>(`${this.apiUrl}/movies-admin`, movie);
   }
 
+  createMovieWithFile(formData: FormData): Observable<Movie> {
+    return this.http.post<Movie>(`${this.apiUrl}/movies-admin`, formData);
+  }
+
   updateMovie(id: number, movie: Partial<Movie>): Observable<Movie> {
     return this.http.put<Movie>(`${this.apiUrl}/movies-admin/${id}`, movie);
   }
@@ -46,6 +63,27 @@ export class AdminService {
 
   deleteMovie(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/movies-admin/${id}`);
+  }
+
+  // Theater Shows
+  getTheaterShows(): Observable<TheaterShow[]> {
+    return this.http.get<TheaterShow[]>(`${this.apiUrl}/theater-shows-admin`);
+  }
+
+  getTheaterShow(id: number): Observable<TheaterShow> {
+    return this.http.get<TheaterShow>(`${this.apiUrl}/theater-shows-admin/${id}`);
+  }
+
+  createTheaterShowWithFile(formData: FormData): Observable<TheaterShow> {
+    return this.http.post<TheaterShow>(`${this.apiUrl}/theater-shows-admin`, formData);
+  }
+
+  updateTheaterShowWithFile(id: number, formData: FormData): Observable<TheaterShow> {
+    return this.http.post<TheaterShow>(`${this.apiUrl}/theater-shows-admin/${id}/upload`, formData);
+  }
+
+  deleteTheaterShow(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/theater-shows-admin/${id}`);
   }
 
   // Showtimes

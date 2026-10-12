@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\ShowtimeAdminController;
 use App\Http\Controllers\Admin\ReservationAdminController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\UserAdminController;
+use App\Http\Controllers\Admin\TheaterShowAdminController;
 
 // User management
 Route::apiResource('users', UserAdminController::class);
@@ -19,6 +20,11 @@ Route::put('auditoria/{auditorium}/seats', [AuditoriumController::class, 'update
 // Movie management
 Route::apiResource('movies-admin', MovieAdminController::class);
 Route::post('movies-admin/{movie}/upload', [MovieAdminController::class, 'uploadPoster']);
+
+// Theater show management
+Route::apiResource('theater-shows-admin', TheaterShowAdminController::class)
+    ->parameters(['theater-shows-admin' => 'theater_show']);
+Route::post('theater-shows-admin/{theater_show}/upload', [TheaterShowAdminController::class, 'uploadPoster']);
 
 // Showtime management
 Route::apiResource('showtimes-admin', ShowtimeAdminController::class);

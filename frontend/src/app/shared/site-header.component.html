@@ -1,0 +1,42 @@
+<header class="topbar">
+  <div class="brand">
+    <a routerLink="/"><img class="brand-logo" src="assets/vigado_logo_beige.png" alt="Vigadó Mozi" /></a>
+  </div>
+  <div class="header-right">
+    <div class="search">
+      <input
+        type="text"
+        placeholder="keresd meg. nézd meg. műsor keresése"
+        [(ngModel)]="searchQuery"
+        (input)="onSearchInput()"
+        (focus)="onSearchInput()"
+        (blur)="onSearchBlur()"
+        (keydown)="onSearchKeydown($event)" />
+      <button class="search-btn" type="button" (click)="submitSearch()">🔍</button>
+      <div class="search-suggestions" *ngIf="showSuggestions && searchResults.length > 0">
+        <a class="suggestion-item"
+           *ngFor="let m of searchResults; let i = index"
+           [class.active]="i === highlightedIndex"
+           [routerLink]="'/movies/' + m.id"
+           (mousedown)="selectSuggestion(m)">
+          <img *ngIf="m.poster_path" [src]="m.poster_path" [alt]="m.title" />
+          <div class="suggestion-text">
+            <span class="suggestion-title">{{ m.title }}</span>
+            <span class="suggestion-meta" *ngIf="m.duration_min">{{ m.duration_min }} perc</span>
+          </div>
+        </a>
+      </div>
+      <div class="search-suggestions empty" *ngIf="showSuggestions && searchQuery.trim().length > 0 && searchResults.length === 0">
+        Nincs találat
+      </div>
+    </div>
+    <nav class="nav-links">
+      <a routerLink="/" [class.active]="activeSection === 'home'">Műsor</a>
+      <a routerLink="/schedule" [class.active]="activeSection === 'schedule'">Műsorlista</a>
+      <a routerLink="/movies" [class.active]="activeSection === 'tickets'">Jegyvásárlás</a>
+      <a routerLink="/prices" [class.active]="activeSection === 'prices'">Jegyárak</a>
+      <a routerLink="/">Médiaajánlat</a>
+      <a routerLink="/admin/login" class="admin-link">🔐 Admin</a>
+    </nav>
+  </div>
+</header>
