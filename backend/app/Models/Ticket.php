@@ -8,6 +8,7 @@ class Ticket extends Model
 {
     protected $fillable = [
         'ticket_year',
+        'ticket_prefix',
         'ticket_seq',
         'ticket_number',
         'reservation_id',

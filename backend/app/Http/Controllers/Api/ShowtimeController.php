@@ -12,7 +12,8 @@ class ShowtimeController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Showtime::with(['movie', 'auditorium']);
+        // A terem teljes elrendezése (layout_json) a listához nem kell, csak a neve
+        $query = Showtime::with(['movie', 'auditorium:id,name']);
 
         if ($request->has('date')) {
             $date = $request->date;
@@ -23,10 +24,8 @@ class ShowtimeController extends Controller
             $query->where('movie_id', $request->movie_id);
         }
 
-        return response()->json(
-            $query->get(),
-            200
-        );
+        return response()->json($query->get(), 200)
+            ->header('Cache-Control', 'public, max-age=30');
     }
 
     public function show(Showtime $showtime)

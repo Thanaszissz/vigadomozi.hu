@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
@@ -18,19 +18,9 @@ export class MovieDetailComponent implements OnInit, OnDestroy {
   error: string | null = null;
   movieId: number = 0;
 
-  // Slider properties
-  posters = [
-    { id: 2, title: "Inception", image: "https://image.tmdb.org/t/p/w500/9gk7adHYeDvHkCSEqAvQNLV5Uge.jpg" },
-    { id: 3, title: "The Dark Knight", image: "https://image.tmdb.org/t/p/w500/qJ2tW6WMUDux911r6m7haRef0WH.jpg" },
-    { id: 1, title: "Interstellar", image: "https://image.tmdb.org/t/p/w500/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg" },
-    { id: 2, title: "The Matrix", image: "https://image.tmdb.org/t/p/w500/f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg" },
-    { id: 3, title: "Dune", image: "https://image.tmdb.org/t/p/w500/d5NXSklXo0qyIYkgV94XAgMIckC.jpg" },
-    { id: 1, title: "Avatar", image: "https://image.tmdb.org/t/p/w500/kyeqWdyUXW608qlYkRqosgbbJyK.jpg" },
-    { id: 2, title: "Oppenheimer", image: "https://image.tmdb.org/t/p/w500/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg" },
-    { id: 3, title: "Barbie", image: "https://image.tmdb.org/t/p/w500/iuFNMS8U5cb6xfzi51Dbkovj7vM.jpg" }
-  ];
-
-  slideGroups = this.chunk(this.posters, 5);
+  // További ajánló: a még várható előadásokkal rendelkező filmek (dinamikusan töltve)
+  posters: Array<{ id: number; title: string; image: string }> = [];
+  slideGroups: Array<Array<{ id: number; title: string; image: string }>> = [];
   activeSlide = 0;
   private timer?: number;
 
@@ -55,12 +45,28 @@ export class MovieDetailComponent implements OnInit, OnDestroy {
       this.movieId = parseInt(params['id'], 10);
       this.loadMovie();
       this.loadShowtimes();
+      this.loadRecommendations();
     });
   }
 
   ngOnDestroy(): void {
     if (this.timer) {
       window.clearInterval(this.timer);
+    }
+  }
+
+  /** Egy lapon annyi plakát jelenik meg, ahány oszlopot a képernyő szélessége megenged (a CSS-sel egyező töréspontok). */
+  private slideSize(): number {
+    const w = window.innerWidth;
+    return w <= 480 ? 2 : w <= 768 ? 3 : w <= 1024 ? 4 : 5;
+  }
+
+  @HostListener('window:resize')
+  regroupSlides(): void {
+    const groups = this.chunk(this.posters, this.slideSize());
+    if (groups.length !== this.slideGroups.length || groups[0]?.length !== this.slideGroups[0]?.length) {
+      this.slideGroups = groups;
+      this.activeSlide = Math.min(this.activeSlide, Math.max(groups.length - 1, 0));
     }
   }
 
@@ -73,10 +79,12 @@ export class MovieDetailComponent implements OnInit, OnDestroy {
   }
 
   nextSlide(): void {
+    if (!this.slideGroups.length) return;
     this.activeSlide = (this.activeSlide + 1) % this.slideGroups.length;
   }
 
   prevSlide(): void {
+    if (!this.slideGroups.length) return;
     this.activeSlide = (this.activeSlide - 1 + this.slideGroups.length) % this.slideGroups.length;
   }
 
@@ -142,6 +150,37 @@ export class MovieDetailComponent implements OnInit, OnDestroy {
       error: (err) => {
         console.error('Showtimes betöltése sikertelen:', err);
       },
+    });
+  }
+
+  /** A még várható előadások egyedi filmjei időrendben, az éppen megnyitott film nélkül. */
+  loadRecommendations() {
+    this.apiService.getShowtimes().subscribe({
+      next: (showtimes) => {
+        const now = Date.now();
+        const seen = new Set<number>([this.movieId]);
+        const items: Array<{ id: number; title: string; image: string }> = [];
+
+        const upcoming = showtimes
+          .filter(st => new Date(st.starts_at).getTime() > now)
+          .sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime());
+
+        for (const st of upcoming) {
+          const movie = st.movie;
+          if (!movie || seen.has(movie.id) || !movie.poster_path) continue;
+          seen.add(movie.id);
+          items.push({ id: movie.id, title: movie.title, image: movie.poster_path });
+          if (items.length >= 15) break;
+        }
+
+        this.posters = items;
+        this.regroupSlides();
+        this.activeSlide = 0;
+      },
+      error: () => {
+        this.posters = [];
+        this.slideGroups = [];
+      }
     });
   }
 

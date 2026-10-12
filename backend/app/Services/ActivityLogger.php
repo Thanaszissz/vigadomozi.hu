@@ -18,6 +18,8 @@ class ActivityLogger
         'showtime' => 'Előadások',
         'auditorium' => 'Termek',
         'user' => 'Felhasználók',
+        'email' => 'E-mailek',
+        'settings' => 'Beállítások',
         'report' => 'Riportok, exportok',
     ];
 
@@ -26,11 +28,14 @@ class ActivityLogger
         'auth.login' => ['auth', 'Bejelentkezés'],
         'auth.login_failed' => ['auth', 'Sikertelen bejelentkezés'],
         'auth.logout' => ['auth', 'Kijelentkezés'],
+        'auth.permission_denied' => ['auth', 'Jogosulatlan hozzáférési kísérlet'],
 
         'ticket.sale' => ['ticket', 'Jegyeladás'],
         'ticket.print' => ['ticket', 'Jegynyomtatás'],
 
+        'reservation.created' => ['reservation', 'Helyszíni foglalás rögzítése'],
         'reservation.payment' => ['reservation', 'Foglalás kifizetése'],
+        'reservation.payment_conflict' => ['reservation', 'Fizetési ütközés (visszatérítés szükséges)'],
 
         'movie.created' => ['movie', 'Film felvétele'],
         'movie.updated' => ['movie', 'Film módosítása'],
@@ -51,6 +56,26 @@ class ActivityLogger
         'user.created' => ['user', 'Felhasználó felvétele'],
         'user.updated' => ['user', 'Felhasználó módosítása'],
         'user.deleted' => ['user', 'Felhasználó törlése'],
+        'user.role_changed' => ['user', 'Szerepkör módosítása'],
+
+        'email_template.updated' => ['email', 'E-mail sablon módosítása'],
+        'email.sent' => ['email', 'E-mail elküldve'],
+        'email.failed' => ['email', 'E-mail küldési hiba'],
+
+        'settings.ticket_prefix_changed' => ['settings', 'Jegyszám előtag módosítása'],
+        'settings.ticket_counter_set' => ['settings', 'Jegyszám-számláló beállítása'],
+        'settings.ticketing_denied' => ['settings', 'Jegyszámozás módosítása elutasítva'],
+
+        'backup.created' => ['settings', 'Biztonsági mentés készült'],
+        'backup.failed' => ['settings', 'Biztonsági mentés sikertelen'],
+        'backup.downloaded' => ['settings', 'Mentés letöltése'],
+        'backup.deleted' => ['settings', 'Mentés törlése'],
+        'backup.uploaded' => ['settings', 'Mentésfájl feltöltése'],
+        'backup.schedule_changed' => ['settings', 'Automatikus mentés beállítása'],
+        'backup.restore_prepared' => ['settings', 'Visszatöltés előkészítése'],
+        'backup.restored' => ['settings', 'Adatbázis visszatöltése'],
+        'backup.restore_denied' => ['settings', 'Visszatöltés elutasítva'],
+        'backup.restore_failed' => ['settings', 'Visszatöltés sikertelen'],
 
         'report.daily_close' => ['report', 'Napi zárás megtekintése'],
         'report.daily_close_print' => ['report', 'Napi zárás nyomtatása'],

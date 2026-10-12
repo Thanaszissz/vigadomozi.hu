@@ -269,35 +269,67 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  margin-top: 10px;
+  gap: 18px;
+  margin-top: 16px;
 }
 
 .ctrl {
-  width: 32px;
-  height: 32px;
-  border-radius: 4px;
-  border: 1px solid #6b4e3d;
-  background: #5c3d2e;
-  color: #e8d5b7;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1.5px solid rgba(212, 165, 116, 0.55);
+  background: linear-gradient(180deg, #4a3020 0%, #2c1810 100%);
+  color: #e6bd89;
+  font-size: 26px;
+  line-height: 1;
+  padding-bottom: 3px;
   cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
+  transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ctrl:hover {
+  transform: translateY(-2px) scale(1.06);
+  background: linear-gradient(180deg, #e6bd89 0%, #c8955d 100%);
+  border-color: #e6bd89;
+  color: #2c1810;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.45);
+  opacity: 1;
+}
+
+.ctrl:active {
+  transform: scale(0.96);
 }
 
 .dots {
   display: flex;
-  gap: 6px;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(44, 24, 16, 0.55);
 }
 
 .dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
   background: #6b4e3d;
   cursor: pointer;
+  transition: width 0.3s ease, background 0.3s ease;
+}
+
+.dot:hover {
+  background: #a67c52;
 }
 
 .dot.active {
-  background: #d4a574;
+  width: 26px;
+  background: linear-gradient(90deg, #e6bd89, #c8955d);
 }
 
 .week-schedule {

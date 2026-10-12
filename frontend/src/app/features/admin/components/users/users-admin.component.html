@@ -49,6 +49,21 @@
         class="form-control">
     </div>
 
+    <div class="form-group">
+      <label for="role">Szerepkör:</label>
+      <select id="role" [(ngModel)]="formData.role" [disabled]="editingId !== null && editingId === currentUserId" class="form-control">
+        <option *ngFor="let r of roles" [value]="r.key">{{ r.label }}</option>
+      </select>
+      <p class="role-help" *ngIf="editingId !== null && editingId === currentUserId">A saját szerepköröd nem módosítható.</p>
+    </div>
+
+    <div class="role-legend" *ngIf="roles.length">
+      <div *ngFor="let r of roles">
+        <strong>{{ r.label }}</strong>
+        <ul><li *ngFor="let p of r.permissions">{{ p }}</li></ul>
+      </div>
+    </div>
+
     <div class="form-actions">
       <button (click)="saveUser()" [disabled]="loading" class="btn-save">
         {{ loading ? 'Mentés...' : 'Mentés' }}
@@ -70,6 +85,7 @@
         <tr>
           <th>Név</th>
           <th>Email</th>
+          <th>Szerepkör</th>
           <th>Regisztrálva</th>
           <th>Műveletek</th>
         </tr>
@@ -78,6 +94,10 @@
         <tr *ngFor="let user of users">
           <td>{{ user.name }}</td>
           <td>{{ user.email }}</td>
+          <td>
+            <span class="role-pill" [ngClass]="'role-' + user.role">{{ user.role_label }}</span>
+            <span *ngIf="isSelf(user)" class="self-note"> (te)</span>
+          </td>
           <td>{{ user.created_at | date: 'yyyy.MM.dd. HH:mm' }}</td>
           <td class="actions">
             <button (click)="editUser(user)" class="btn-edit">✏️ Szerkesztés</button>

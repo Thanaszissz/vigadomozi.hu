@@ -2,15 +2,14 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Exceptions\SeatUnavailableException;
 use App\Http\Controllers\Controller;
 use App\Models\Reservation;
-use App\Models\ReservationItem;
-use App\Models\SeatLock;
 use App\Models\Showtime;
-use App\Services\PricingService;
-use App\Services\SeatMapService;
+use App\Services\ActivityLogger;
+use App\Services\ReservationMailer;
+use App\Services\SeatClaimService;
 use App\Services\TicketService;
-use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -22,7 +21,7 @@ class PosController extends Controller
     // Az előadás kezdete után ennyi percig még adható el jegy
     private const SALES_GRACE_MINUTES = 30;
 
-    public function __construct(private TicketService $tickets)
+    public function __construct(private TicketService $tickets, private SeatClaimService $claims)
     {
     }
 
@@ -47,30 +46,8 @@ class PosController extends Controller
         }
 
         try {
+            // A foglalás, a székek zárolása és a fizetés egyetlen tranzakció: ütközésnél semmi nem marad félig kész
             $reservation = DB::transaction(function () use ($showtime, $data, $request) {
-                SeatLock::where('showtime_id', $showtime->id)
-                    ->whereNotNull('expires_at')
-                    ->where('expires_at', '<', now())
-                    ->delete();
-
-                $seatMap = app(SeatMapService::class)->getFullSeatMap($showtime, app(PricingService::class));
-                $seats = [];
-                foreach ($seatMap['seats'] as $rowSeats) {
-                    foreach ($rowSeats as $key => $seat) {
-                        $seats[$key] = $seat;
-                    }
-                }
-
-                foreach ($data['seatKeys'] as $key) {
-                    $seat = $seats[$key] ?? null;
-                    if (!$seat || !$seat['bookable'] || $seat['type'] === 'aisle') {
-                        abort(422, "A(z) {$key} szék nem értékesíthető.");
-                    }
-                    if ($seat['status'] !== 'available') {
-                        abort(409, "A(z) {$key} szék már foglalt vagy eladott.");
-                    }
-                }
-
                 $reservation = Reservation::create([
                     'showtime_id' => $showtime->id,
                     'customer_email' => self::WALK_IN_EMAIL,
@@ -82,36 +59,72 @@ class PosController extends Controller
                     'expires_at' => null,
                 ]);
 
-                $total = 0;
-                foreach ($data['seatKeys'] as $key) {
-                    $price = (int) $seats[$key]['price'];
-                    [$rowLabel, $number] = array_pad(explode('-', $key), 2, null);
-
-                    ReservationItem::create([
-                        'reservation_id' => $reservation->id,
-                        'seat_key' => $key,
-                        'row_label' => $rowLabel,
-                        'seat_number' => intval($number) ?: null,
-                        'price_amount' => $price,
-                    ]);
-
-                    // Az egyedi (showtime, szék) kulcs védi az egyidejű eladásokat
-                    SeatLock::create([
-                        'showtime_id' => $showtime->id,
-                        'reservation_id' => $reservation->id,
-                        'seat_key' => $key,
-                        'expires_at' => null,
-                    ]);
-
-                    $total += $price;
-                }
-
-                $reservation->update(['total_amount' => $total]);
+                $this->claims->claimSeats($showtime, $reservation, $data['seatKeys'], null);
 
                 return $this->markPaid($reservation, $data['payment_method'], $request);
             });
-        } catch (QueryException $e) {
-            return response()->json(['message' => 'Néhány szék közben már foglalttá vált. Frissítse az előadást.'], 409);
+        } catch (SeatUnavailableException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->status);
+        }
+
+        return response()->json($this->payload($reservation), 201);
+    }
+
+    /**
+     * Helyszíni foglalás fizetés nélkül: a székek lejárati idő nélkül zároltak, a foglalás a foglalások között jelenik meg,
+     * és később a pénztárban kifizethető. Név és telefonszám kötelező, az e-mail nem.
+     */
+    public function hold(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'showtime_id' => ['required', 'integer', 'exists:showtimes,id'],
+            'seatKeys' => ['required', 'array', 'min:1', 'max:20'],
+            'seatKeys.*' => ['string', 'max:32', 'distinct'],
+            'customer_name' => ['required', 'string', 'max:255'],
+            'customer_phone' => ['required', 'string', 'max:20'],
+            'customer_email' => ['nullable', 'email', 'max:255'],
+        ]);
+
+        $showtime = Showtime::with(['movie', 'auditorium'])->findOrFail($data['showtime_id']);
+
+        if ($error = $this->salesClosedReason($showtime)) {
+            return response()->json(['message' => $error], 422);
+        }
+
+        $email = trim((string) ($data['customer_email'] ?? ''));
+
+        try {
+            $reservation = DB::transaction(function () use ($showtime, $data, $email) {
+                $reservation = Reservation::create([
+                    'showtime_id' => $showtime->id,
+                    'customer_email' => $email !== '' ? $email : self::WALK_IN_EMAIL,
+                    'customer_name' => $data['customer_name'],
+                    'customer_phone' => $data['customer_phone'],
+                    'status' => 'PENDING',
+                    'currency' => 'HUF',
+                    'total_amount' => 0,
+                    'expires_at' => null,
+                ]);
+
+                $this->claims->claimSeats($showtime, $reservation, $data['seatKeys'], null);
+
+                return $reservation;
+            });
+        } catch (SeatUnavailableException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->status);
+        }
+
+        ActivityLogger::log(
+            'reservation.created',
+            sprintf('Helyszíni foglalás: #%d, %s, %d szék (%s)', $reservation->id, $data['customer_name'], count($data['seatKeys']), implode(', ', $data['seatKeys'])),
+            $reservation,
+            ['seats' => $data['seatKeys'], 'amount' => $reservation->total_amount, 'showtime_id' => $showtime->id],
+            subjectLabel: "Foglalás #{$reservation->id}"
+        );
+
+        // Visszaigazoló e-mail csak akkor megy, ha a vásárló megadott címet
+        if ($email !== '') {
+            app(ReservationMailer::class)->reservationReceived($reservation);
         }
 
         return response()->json($this->payload($reservation), 201);
@@ -140,9 +153,13 @@ class PosController extends Controller
             return response()->json(['message' => $error], 422);
         }
 
-        $reservation = DB::transaction(
-            fn() => $this->markPaid($reservation, $data['payment_method'], $request)
-        );
+        try {
+            $reservation = DB::transaction(
+                fn() => $this->markPaid($reservation, $data['payment_method'], $request)
+            );
+        } catch (SeatUnavailableException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->status);
+        }
 
         return response()->json($this->payload($reservation));
     }
@@ -154,8 +171,12 @@ class PosController extends Controller
         );
     }
 
+    /** @throws SeatUnavailableException */
     private function markPaid(Reservation $reservation, string $method, Request $request): Reservation
     {
+        // A székek zárolása nem törlődik, hanem véglegessé válik: az eladott szék nem adható ki újra
+        $this->claims->finalizeClaims($reservation);
+
         $reservation->update([
             'status' => 'PAID',
             'payment_provider' => $method,
@@ -163,8 +184,6 @@ class PosController extends Controller
             'expires_at' => null,
             'handled_by_admin_id' => $request->user()->id,
         ]);
-
-        SeatLock::where('reservation_id', $reservation->id)->delete();
 
         $this->tickets->issueForReservation($reservation, $method, $request->user(), 'pos');
 

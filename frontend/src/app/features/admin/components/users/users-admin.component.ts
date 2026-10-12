@@ -3,13 +3,22 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AdminService } from '../../../../services/admin.service';
+import { AuthService } from '../../../../services/auth.service';
 
 interface User {
   id?: number;
   name: string;
   email: string;
   password?: string;
+  role?: string;
+  role_label?: string;
   created_at?: string;
+}
+
+interface RoleInfo {
+  key: string;
+  label: string;
+  permissions: string[];
 }
 
 @Component({
@@ -31,16 +40,26 @@ export class UsersAdminComponent implements OnInit {
   formData: User = {
     name: '',
     email: '',
-    password: ''
+    password: '',
+    role: 'cashier'
   };
+  roles: RoleInfo[] = [];
+  currentUserId: number | null = null;
 
   constructor(
     private adminService: AdminService,
+    private authService: AuthService,
     private router: Router
   ) {}
 
   ngOnInit() {
+    this.currentUserId = this.authService.getCurrentUser()?.id ?? null;
+    this.adminService.getRoles().subscribe({ next: (roles) => (this.roles = roles), error: () => {} });
     this.loadUsers();
+  }
+
+  isSelf(user: User): boolean {
+    return user.id === this.currentUserId;
   }
 
   loadUsers() {
@@ -68,7 +87,7 @@ export class UsersAdminComponent implements OnInit {
   }
 
   resetForm() {
-    this.formData = { name: '', email: '', password: '' };
+    this.formData = { name: '', email: '', password: '', role: 'cashier' };
     this.editingId = null;
     this.error = null;
   }
@@ -141,7 +160,7 @@ export class UsersAdminComponent implements OnInit {
   }
 
   canDeleteUser(user: User): boolean {
-    return true;
+    return !this.isSelf(user);
   }
 
   goBack() {

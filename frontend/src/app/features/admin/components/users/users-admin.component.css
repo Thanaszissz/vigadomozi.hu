@@ -260,3 +260,30 @@ td {
   border-radius: 6px;
   font-size: 14px;
 }
+
+.role-pill {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  background: #e8eaf6;
+  color: #283593;
+}
+.role-pill.role-admin { background: #fde7e9; color: #b71c1c; }
+.role-pill.role-manager { background: #fff3e0; color: #e65100; }
+.role-pill.role-cashier { background: #e0f2f1; color: #00695c; }
+.role-help {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #555;
+}
+.role-legend {
+  margin: 16px 0;
+  padding: 12px 16px;
+  background: #f7f7fb;
+  border-radius: 8px;
+  font-size: 13px;
+}
+.role-legend ul { margin: 4px 0 10px 18px; padding: 0; }
+.self-note { color: #888; font-size: 12px; }

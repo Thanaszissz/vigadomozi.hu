@@ -29,6 +29,8 @@
     <button type="button" [class.active]="tab === 'log'" (click)="tab = 'log'">Eladási napló ({{ logs.length }})</button>
   </div>
 
+  <div *ngIf="close?.scope === 'own'" class="muted">ℹ️ Pénztárosként csak a saját eladásaidat látod és nyomtathatod.</div>
+
   <div *ngIf="loading" class="muted">Betöltés...</div>
   <div *ngIf="error" class="alert">{{ error }}</div>
 

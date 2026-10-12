@@ -12,6 +12,8 @@ import { PosAdminComponent } from './components/pos/pos-admin.component';
 import { TicketsAdminComponent } from './components/tickets/tickets-admin.component';
 import { DailyCloseAdminComponent } from './components/daily-close/daily-close-admin.component';
 import { ActivityLogAdminComponent } from './components/activity-log/activity-log-admin.component';
+import { EmailTemplatesAdminComponent } from './components/email-templates/email-templates-admin.component';
+import { SettingsAdminComponent } from './components/settings/settings-admin.component';
 import { AuthGuard } from '../../services/auth.guard';
 
 export const ADMIN_ROUTES: Routes = [
@@ -27,57 +29,80 @@ export const ADMIN_ROUTES: Routes = [
   {
     path: 'pos',
     component: PosAdminComponent,
-    canActivate: [AuthGuard]
+    canActivate: [AuthGuard],
+    data: { permission: 'pos.sell' }
   },
   {
     path: 'tickets',
     component: TicketsAdminComponent,
-    canActivate: [AuthGuard]
+    canActivate: [AuthGuard],
+    data: { permission: 'tickets.archive' }
   },
   {
     path: 'daily-close',
     component: DailyCloseAdminComponent,
-    canActivate: [AuthGuard]
+    canActivate: [AuthGuard],
+    data: { permission: 'daily_close.view' }
   },
   {
     path: 'activity-log',
     component: ActivityLogAdminComponent,
-    canActivate: [AuthGuard]
+    canActivate: [AuthGuard],
+    data: { permission: 'activity.view' }
+  },
+  {
+    path: 'email-templates',
+    component: EmailTemplatesAdminComponent,
+    canActivate: [AuthGuard],
+    data: { permission: 'email.manage' }
+  },
+  {
+    path: 'settings',
+    component: SettingsAdminComponent,
+    canActivate: [AuthGuard],
+    data: { permission: 'settings.manage' }
   },
   {
     path: 'movies',
     component: MoviesAdminComponent,
-    canActivate: [AuthGuard]
+    canActivate: [AuthGuard],
+    data: { permission: 'catalog.manage' }
   },
   {
     path: 'theater-shows',
     component: TheaterShowsAdminComponent,
-    canActivate: [AuthGuard]
+    canActivate: [AuthGuard],
+    data: { permission: 'catalog.manage' }
   },
   {
     path: 'showtimes',
     component: ShowtimesAdminComponent,
-    canActivate: [AuthGuard]
+    canActivate: [AuthGuard],
+    data: { permission: 'catalog.manage' }
   },
   {
     path: 'auditoria',
     component: AuditoriaAdminComponent,
-    canActivate: [AuthGuard]
+    canActivate: [AuthGuard],
+    data: { permission: 'catalog.manage' }
   },
   {
     path: 'reservations',
     component: ReservationsAdminComponent,
-    canActivate: [AuthGuard]
+    canActivate: [AuthGuard],
+    data: { permission: 'reservations.manage' }
   },
   {
     path: 'reports',
     component: ReportsAdminComponent,
-    canActivate: [AuthGuard]
+    canActivate: [AuthGuard],
+    data: { permission: 'reports.view' }
   },
   {
     path: 'users',
     component: UsersAdminComponent,
-    canActivate: [AuthGuard]
+    canActivate: [AuthGuard],
+    data: { permission: 'users.manage' }
   },
   {
     path: '',

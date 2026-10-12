@@ -1,0 +1,226 @@
+<div *ngIf="loading && !data" class="muted">Betöltés...</div>
+<div *ngIf="error" class="alert">{{ error }}</div>
+<div *ngIf="notice" class="ok">✅ {{ notice }}</div>
+
+<ng-container *ngIf="data">
+  <!-- Áttekintés és kézi mentés -->
+  <section class="card">
+    <h2>💾 Biztonsági mentés</h2>
+    <p class="muted">
+      A mentés a <b>teljes adatbázist</b> tartalmazza (filmek, előadások, foglalások, eladott jegyek, felhasználók, naplók, beállítások).
+      A fájlok a szerveren, a weben nem elérhető mappában tárolódnak, innen letölthetők és vissza is tölthetők.
+    </p>
+
+    <div class="stats">
+      <div class="stat"><span>Mentések száma</span><b class="big">{{ data.backups.length }}</b></div>
+      <div class="stat"><span>Utolsó mentés</span><b>{{ lastBackup ? (lastBackup.created_at | date:'yyyy.MM.dd. HH:mm') : '—' }}</b></div>
+      <div class="stat"><span>Tárhelyfoglalás</span><b>{{ size(data.disk.used) }}</b></div>
+      <div class="stat"><span>Adatbázis</span><b>{{ data.database.driver }} • {{ data.database.tables }} tábla</b></div>
+    </div>
+
+    <div class="row-actions">
+      <button type="button" class="btn primary" [disabled]="busy" (click)="createNow()">
+        {{ creating ? 'Mentés készül...' : '💾 Mentés most' }}
+      </button>
+      <label class="btn upload" [class.disabled]="busy">
+        ⬆️ Mentésfájl feltöltése
+        <input type="file" accept=".gz,application/gzip" hidden [disabled]="busy" (change)="onFile($event)" />
+      </label>
+    </div>
+    <div *ngIf="actionError" class="alert">{{ actionError }}</div>
+  </section>
+
+  <!-- Ütemezés -->
+  <section class="card">
+    <h2>⏱️ Automatikus mentés</h2>
+
+    <label class="switch">
+      <input type="checkbox" [(ngModel)]="form.enabled" />
+      <span>Automatikus mentés bekapcsolva</span>
+    </label>
+
+    <div class="form-grid" [class.off]="!form.enabled">
+      <label class="field">
+        <span>Gyakoriság</span>
+        <select [(ngModel)]="form.frequency" [disabled]="!form.enabled">
+          <option *ngFor="let f of data.frequencies" [value]="f.key">{{ f.label }}</option>
+        </select>
+      </label>
+
+      <label class="field" *ngIf="form.frequency === 'weekly'">
+        <span>Nap</span>
+        <select [(ngModel)]="form.weekday" [disabled]="!form.enabled">
+          <option *ngFor="let d of weekdays" [ngValue]="d.value">{{ d.label }}</option>
+        </select>
+      </label>
+
+      <label class="field" *ngIf="form.frequency === 'daily' || form.frequency === 'weekly'">
+        <span>Időpont</span>
+        <input type="time" [(ngModel)]="form.time" [disabled]="!form.enabled" />
+      </label>
+
+      <label class="field">
+        <span>Megtartott automatikus mentések (db)</span>
+        <input type="number" min="1" max="90" [(ngModel)]="form.keep" [disabled]="!form.enabled" />
+      </label>
+    </div>
+
+    <p class="muted">
+      Az ütemezett mentés a megadott időpont után az első kiszolgált kérésnél indul el (a mentés a háttérben fut), a megadott számnál
+      régebbi <b>automatikus</b> mentések törlődnek. A kézi és a visszatöltés előtti biztonsági mentések nem törlődnek automatikusan.
+      Az időpontok budapesti idő szerint értendők.
+    </p>
+
+    <div class="status" *ngIf="data.schedule.enabled">
+      <div>📅 Következő mentés: <b>{{ data.schedule.next_run_at ? (data.schedule.next_run_at | date:'yyyy.MM.dd. HH:mm') : '—' }}</b> ({{ data.schedule.description }})</div>
+      <div *ngIf="data.schedule.last_run_at" [class.bad]="data.schedule.last_status === 'failed'">
+        {{ data.schedule.last_status === 'failed' ? '❌' : '✅' }} Utolsó automatikus futás:
+        {{ data.schedule.last_run_at | date:'yyyy.MM.dd. HH:mm' }} – {{ data.schedule.last_message }}
+      </div>
+    </div>
+
+    <div *ngIf="scheduleError" class="alert">{{ scheduleError }}</div>
+    <div class="row-actions">
+      <button type="button" class="btn primary" [disabled]="scheduleBusy" (click)="saveSchedule()">
+        {{ scheduleBusy ? 'Mentés...' : 'Ütemezés mentése' }}
+      </button>
+    </div>
+  </section>
+
+  <!-- Mentések listája -->
+  <section class="card">
+    <h2>🗂️ Mentések</h2>
+    <div *ngIf="data.backups.length === 0" class="muted">Még nincs mentés.</div>
+
+    <div class="table-wrap" *ngIf="data.backups.length">
+      <table>
+        <thead>
+          <tr>
+            <th>Készült</th><th>Típus</th><th>Méret</th><th>Tartalom</th><th>Készítette</th><th>Kód</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let b of data.backups" [class.invalid]="b.valid === false">
+            <td>{{ b.created_at | date:'yyyy.MM.dd. HH:mm:ss' }}</td>
+            <td><span class="badge" [ngClass]="'t-' + b.type">{{ typeLabel(b.type) }}</span></td>
+            <td>{{ size(b.size) }}</td>
+            <td>
+              <ng-container *ngIf="b.valid !== false">
+                {{ b.stats.tickets | number:'1.0-0' }} jegy • {{ b.stats.reservations | number:'1.0-0' }} foglalás • {{ b.stats.users }} felhasználó
+              </ng-container>
+              <span *ngIf="b.valid === false" class="bad">❌ Sérült fájl: {{ b.error }}</span>
+            </td>
+            <td>{{ b.created_by || (b.type === 'auto' ? 'Automatikus' : '—') }}</td>
+            <td class="mono">{{ b.code || '—' }}</td>
+            <td class="actions">
+              <button type="button" class="btn small" (click)="download(b)" [disabled]="busy">⬇️ Letöltés</button>
+              <button type="button" class="btn small warn" (click)="openRestore(b)" [disabled]="busy || b.valid === false">♻️ Visszatöltés</button>
+              <button type="button" class="btn small danger" (click)="remove(b)" [disabled]="busy">🗑️</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Eseménynapló -->
+  <section class="card" *ngIf="data.history.length">
+    <h2>📜 Mentési események</h2>
+    <ul class="history">
+      <li *ngFor="let h of data.history">
+        <span class="when">{{ h.at | date:'yyyy.MM.dd. HH:mm:ss' }}</span>
+        <span class="what" [class.bad]="h.event === 'restore_failed' || h.event === 'backup_failed'">{{ h.message }}</span>
+        <span class="who">{{ h.who }}</span>
+      </li>
+    </ul>
+  </section>
+</ng-container>
+
+<!-- Visszatöltés: megerősítő ablak -->
+<div class="backdrop" *ngIf="restoreTarget"></div>
+<div class="confirm" *ngIf="restoreTarget" role="dialog" aria-modal="true">
+  <ng-container *ngIf="!restored">
+    <h2>♻️ Visszatöltés mentésből</h2>
+    <p class="muted">
+      Mentés: <b>{{ restoreTarget.created_at | date:'yyyy.MM.dd. HH:mm:ss' }}</b> ({{ typeLabel(restoreTarget.type) }}, {{ size(restoreTarget.size) }})
+    </p>
+
+    <!-- 1. lépés: jelszó -->
+    <ng-container *ngIf="!plan">
+      <div class="warn">
+        ⚠️ A visszatöltés a <b>teljes adatbázist felülírja</b> a mentés tartalmával. A mentés után történt minden módosítás elvész,
+        és mindenkit ki kell léptetni. A következő lépésben ellenőrizzük a mentést, és megmutatjuk, mi fog változni.
+      </div>
+      <label class="field">
+        <span>Jelszavad</span>
+        <input type="password" [(ngModel)]="password1" autocomplete="new-password" (keyup.enter)="prepareRestore()" />
+      </label>
+      <div *ngIf="restoreError" class="alert">{{ restoreError }}</div>
+      <div class="actions">
+        <button type="button" class="btn" (click)="closeRestore()">Mégsem</button>
+        <button type="button" class="btn primary" [disabled]="!password1 || restoreBusy" (click)="prepareRestore()">
+          {{ restoreBusy ? 'Ellenőrzés...' : 'Mentés ellenőrzése' }}
+        </button>
+      </div>
+    </ng-container>
+
+    <!-- 2. lépés: összefoglaló és megerősítés -->
+    <ng-container *ngIf="plan">
+      <ul class="summary">
+        <li *ngFor="let line of plan.summary">{{ line }}</li>
+      </ul>
+
+      <table class="compare">
+        <thead><tr><th></th><th>Jelenleg</th><th>A mentésben</th></tr></thead>
+        <tbody>
+          <tr [class.diff]="plan.current.tickets !== plan.backup.stats.tickets"><td>Eladott jegy</td><td>{{ plan.current.tickets }}</td><td>{{ plan.backup.stats.tickets }}</td></tr>
+          <tr [class.diff]="plan.current.reservations !== plan.backup.stats.reservations"><td>Foglalás</td><td>{{ plan.current.reservations }}</td><td>{{ plan.backup.stats.reservations }}</td></tr>
+          <tr [class.diff]="plan.current.users !== plan.backup.stats.users"><td>Felhasználó</td><td>{{ plan.current.users }}</td><td>{{ plan.backup.stats.users }}</td></tr>
+          <tr [class.diff]="plan.current.showtimes !== plan.backup.stats.showtimes"><td>Előadás</td><td>{{ plan.current.showtimes }}</td><td>{{ plan.backup.stats.showtimes }}</td></tr>
+          <tr [class.diff]="plan.current.movies !== plan.backup.stats.movies"><td>Film</td><td>{{ plan.current.movies }}</td><td>{{ plan.backup.stats.movies }}</td></tr>
+        </tbody>
+      </table>
+
+      <div class="warnings" *ngIf="plan.warnings.length">
+        <div *ngFor="let w of plan.warnings">• {{ w }}</div>
+      </div>
+
+      <div class="timer" [class.expired]="secondsLeft === 0">
+        {{ secondsLeft > 0 ? 'A megerősítés érvényes még: ' + minutes + ' perc ' + seconds + ' mp' : 'A megerősítés lejárt, kezdd újra.' }}
+      </div>
+
+      <label class="check">
+        <input type="checkbox" [(ngModel)]="acknowledge" />
+        <span>Tudomásul veszem, hogy a mentés utáni adatok (jegyek, foglalások, módosítások) elvesznek, és mindenkit ki kell léptetni.</span>
+      </label>
+
+      <label class="field">
+        <span>A végrehajtáshoz írd be pontosan: <b class="phrase">{{ plan.phrase }}</b></span>
+        <input type="text" [(ngModel)]="phrase" autocomplete="off" spellcheck="false" [class.match]="phraseMatches" />
+      </label>
+
+      <label class="field">
+        <span>Jelszavad (még egyszer)</span>
+        <input type="password" [(ngModel)]="password2" autocomplete="new-password" />
+      </label>
+
+      <div *ngIf="restoreError" class="alert">{{ restoreError }}</div>
+
+      <div class="actions">
+        <button type="button" class="btn" [disabled]="restoreBusy" (click)="closeRestore()">Mégsem</button>
+        <button type="button" class="btn danger" [disabled]="!canApply" (click)="applyRestore()">
+          {{ restoreBusy ? 'Visszatöltés folyamatban...' : '♻️ Adatbázis visszatöltése' }}
+        </button>
+      </div>
+    </ng-container>
+  </ng-container>
+
+  <ng-container *ngIf="restored">
+    <h2>✅ Visszatöltve</h2>
+    <p>{{ restored }}</p>
+    <p class="muted">A visszatöltés előtti állapotról biztonsági mentés készült. Átirányítás a bejelentkezéshez...</p>
+    <div class="actions">
+      <button type="button" class="btn primary" (click)="goLogin()">Bejelentkezés</button>
+    </div>
+  </ng-container>
+</div>

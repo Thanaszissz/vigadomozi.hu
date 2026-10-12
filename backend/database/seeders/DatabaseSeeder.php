@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
             'name' => 'Admin',
             'email' => 'admin@vigadomozi.hu',
             'password' => bcrypt('admin123'),
+            'role' => 'admin',
         ]);
 
         // Terem létrehozása

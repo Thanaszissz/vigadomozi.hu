@@ -1,0 +1,78 @@
+:host {
+  display: block;
+  background: #3d2817;
+  min-height: 100vh;
+  color: #e8d5b7;
+}
+
+.tpl-container { padding: 20px; max-width: 1300px; margin: 0 auto; }
+
+.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 12px; flex-wrap: wrap; }
+h1 { margin: 0; color: #e8d5b7; }
+h2 { margin: 0 0 4px; color: #fdf7ed; font-size: 20px; }
+
+.btn-back {
+  padding: 10px 20px; background: #d4a574; color: #2c1810; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;
+}
+
+.warn { background: rgba(245, 158, 11, 0.15); border: 1px solid #f59e0b; color: #fde68a; padding: 12px 14px; border-radius: 8px; margin-bottom: 14px; }
+.info { color: #a08060; font-size: 13px; margin-bottom: 14px; }
+.alert { background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; color: #fecaca; padding: 10px 12px; border-radius: 6px; margin-bottom: 12px; }
+.ok { background: rgba(34, 197, 94, 0.15); border: 1px solid #22c55e; color: #bbf7d0; padding: 10px 12px; border-radius: 6px; margin-bottom: 12px; }
+.muted { color: #a08060; font-size: 13px; }
+.dirty { color: #fcd34d; font-weight: 400; font-size: 13px; }
+
+.layout { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 18px; align-items: start; }
+
+.list { display: flex; flex-direction: column; gap: 10px; }
+.item {
+  display: flex; flex-direction: column; gap: 4px; text-align: left; padding: 12px 14px; border-radius: 10px;
+  border: 1px solid #5c3d2e; background: #2c1810; color: #e8d5b7; cursor: pointer;
+}
+.item:hover { border-color: #d4a574; }
+.item.active { border-color: #d4a574; background: #4a3425; }
+.item .name { font-weight: 700; }
+.item .desc { font-size: 12px; color: #a08060; }
+.item .state { align-self: flex-start; font-size: 11px; padding: 1px 8px; border-radius: 999px; background: rgba(34, 197, 94, 0.2); color: #86efac; }
+.item .state.off { background: rgba(148, 163, 184, 0.2); color: #cbd5e1; }
+
+.editor { background: #2c1810; border: 1px solid #5c3d2e; border-radius: 12px; padding: 18px; }
+
+.field { display: flex; flex-direction: column; gap: 4px; margin: 12px 0; font-size: 13px; color: #a08060; }
+.field.inline { flex: 1; margin: 0; }
+.field input, .field textarea {
+  padding: 10px 12px; border-radius: 6px; border: 1px solid #5c3d2e; background: #4a3425; color: #e8d5b7; font-size: 15px; font-family: inherit;
+}
+.field textarea { font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.5; resize: vertical; }
+
+.check { display: flex; align-items: center; gap: 8px; margin: 10px 0 4px; cursor: pointer; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 8px 0 14px; }
+.chips-title { font-size: 12px; color: #a08060; width: 100%; }
+.chip {
+  padding: 3px 10px; border-radius: 999px; border: 1px solid #5c3d2e; background: #3d2817; color: #d4a574;
+  font-family: 'Courier New', monospace; font-size: 12px; cursor: pointer;
+}
+.chip:hover { background: #5c3d2e; color: #fff; }
+
+.actions { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+.btn { padding: 9px 16px; border-radius: 6px; border: 1px solid #5c3d2e; background: #4a3425; color: #e8d5b7; font-weight: 600; cursor: pointer; }
+.btn.primary { background: #d4a574; color: #2c1810; border-color: #d4a574; }
+.btn.danger { border-color: #7f1d1d; color: #fecaca; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.test { display: flex; gap: 10px; align-items: flex-end; padding-top: 14px; border-top: 1px solid #4a3425; }
+
+.preview-backdrop { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7); z-index: 2000; }
+.preview {
+  position: fixed; z-index: 2001; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  width: min(720px, 95vw); height: min(90vh, 900px); display: flex; flex-direction: column;
+  background: #2c1810; border: 1px solid #5c3d2e; border-radius: 12px; overflow: hidden;
+}
+.preview-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid #5c3d2e; }
+.preview-frame { flex: 1; width: 100%; border: 0; background: #fff; }
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; }
+  .test { flex-direction: column; align-items: stretch; }
+}

@@ -13,7 +13,7 @@ class MovieController extends Controller
         return response()->json(
             Movie::all(),
             200
-        );
+        )->header('Cache-Control', 'public, max-age=30');
     }
 
     public function show(Movie $movie)

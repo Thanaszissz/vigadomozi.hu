@@ -23,9 +23,9 @@ Route::get('/theater-shows/{theater_show}', [TheaterShowController::class, 'show
 Route::get('/showtimes', [ShowtimeController::class, 'index']);
 Route::get('/showtimes/{showtime}', [ShowtimeController::class, 'show']);
 
-// Seat locking and reservation
+// Seat locking and reservation (a hold e-mailt is küld, ezért korlátozzuk a gyakoriságát)
 Route::post('/showtimes/{showtime}/lock', [SeatLockController::class, 'lock']);
-Route::post('/showtimes/{showtime}/hold', [SeatLockController::class, 'hold']);
+Route::post('/showtimes/{showtime}/hold', [SeatLockController::class, 'hold'])->middleware('throttle:10,1');
 
 // Reservation management
 Route::get('/reservations/{reservation}', [ReservationController::class, 'show'])

@@ -24,6 +24,16 @@ export class AdminDashboardComponent implements OnInit {
     this.currentUser = this.authService.getCurrentUser();
     this.token = this.authService.getToken();
     this.setGreeting();
+
+    // A szerepkör időközben változhatott: a friss jogokat a szerverről olvassuk be
+    this.authService.refreshUser().subscribe({
+      next: (user) => (this.currentUser = user),
+      error: () => {}
+    });
+  }
+
+  can(permission: string): boolean {
+    return this.authService.can(permission);
   }
 
   setGreeting(): void {

@@ -46,6 +46,13 @@ export class PosAdminComponent implements OnInit {
   processing = false;
   error: string | null = null;
 
+  // Helyszíni foglalás (fizetés nélkül)
+  reserveOpen = false;
+  holdName = '';
+  holdPhone = '';
+  holdEmail = '';
+  heldNotice: string | null = null;
+
   soldTickets: Ticket[] = [];
   printOpen = false;
 
@@ -318,6 +325,62 @@ export class PosAdminComponent implements OnInit {
     this.printOpen = false;
   }
 
+  // ---- Foglalás fizetés nélkül ----
+
+  openReserve(): void {
+    this.reserveOpen = true;
+    this.heldNotice = null;
+    this.error = null;
+  }
+
+  closeReserve(): void {
+    this.reserveOpen = false;
+    this.error = null;
+  }
+
+  get canHold(): boolean {
+    const emailOk = !this.holdEmail.trim() || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.holdEmail.trim());
+    return this.mode === 'seats' && this.selectedSeats.length > 0 && !!this.holdName.trim() && !!this.holdPhone.trim() && emailOk && !this.processing;
+  }
+
+  confirmHold(): void {
+    if (!this.canHold || !this.showtime) return;
+
+    this.processing = true;
+    this.error = null;
+
+    this.admin.posHold({
+      showtime_id: this.showtime.id,
+      seatKeys: this.selectedSeats.map(s => s.key),
+      customer_name: this.holdName.trim(),
+      customer_phone: this.holdPhone.trim(),
+      customer_email: this.holdEmail.trim() || undefined
+    }).subscribe({
+      next: (response) => {
+        const seats = this.selectedSeats.map(s => s.key).join(', ');
+        this.heldNotice = `📌 Foglalás rögzítve (#${response.reservation.id}): ${this.holdName.trim()}, ${seats}.`
+          + (this.holdEmail.trim() ? ' A visszaigazoló e-mailt elküldtük.' : '');
+        this.processing = false;
+        this.selectedSeats = [];
+        this.reserveOpen = false;
+        this.holdName = '';
+        this.holdPhone = '';
+        this.holdEmail = '';
+        this.resetPayment();
+        this.refresh();
+      },
+      error: (err) => {
+        this.processing = false;
+        const errors = err?.error?.errors;
+        this.error = (errors && Object.values(errors as Record<string, string[]>)[0]?.[0]) || err?.error?.message || 'A foglalás rögzítése sikertelen. Próbálja újra.';
+        if (err?.status === 409 || err?.status === 422) {
+          this.selectedSeats = this.selectedSeats.filter(sel => this.findSeat(sel.key)?.status === 'available');
+          this.refresh();
+        }
+      }
+    });
+  }
+
   newSale(): void {
     this.soldTickets = [];
     this.printOpen = false;
@@ -335,6 +398,8 @@ export class PosAdminComponent implements OnInit {
     this.selectedSeats = [];
     this.selectedReservation = null;
     this.customerName = '';
+    this.reserveOpen = false;
+    this.heldNotice = null;
     this.soldTickets = [];
     this.resetPayment();
   }

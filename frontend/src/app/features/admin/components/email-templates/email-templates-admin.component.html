@@ -1,0 +1,86 @@
+<div class="tpl-container">
+  <div class="header">
+    <h1>✉️ E-mail sablonok</h1>
+    <button (click)="goBack()" class="btn-back">← Vissza a dashboardra</button>
+  </div>
+
+  <div class="warn" *ngIf="data && !data.mail.delivers">
+    ⚠️ Az e-mail küldés jelenleg <b>{{ data.mail.mailer }}</b> módban van: a levelek csak naplóba kerülnek, valódi címzetthez <b>nem</b> érkeznek meg.
+    A kiküldéshez a szerveren e-mail küldési (SMTP) beállítás szükséges.
+  </div>
+  <div class="info" *ngIf="data && data.mail.delivers">
+    Feladó: <b>{{ data.mail.from }}</b> • küldési mód: {{ data.mail.mailer }}
+  </div>
+
+  <div *ngIf="loading" class="muted">Betöltés...</div>
+  <div *ngIf="error" class="alert">{{ error }}</div>
+  <div *ngIf="notice" class="ok">{{ notice }}</div>
+
+  <div class="layout" *ngIf="data && selected">
+    <aside class="list">
+      <button *ngFor="let t of data.templates" type="button" class="item"
+              [class.active]="t.key === selectedKey" (click)="select(t)">
+        <span class="name">{{ t.name }}</span>
+        <span class="state" [class.off]="!t.is_active">{{ t.is_active ? 'Aktív' : 'Kikapcsolva' }}</span>
+        <span class="desc">{{ t.description }}</span>
+      </button>
+    </aside>
+
+    <section class="editor">
+      <h2>{{ selected.name }} <small *ngIf="dirty" class="dirty">• nem mentett módosítás</small></h2>
+      <p class="muted">{{ selected.description }}</p>
+
+      <label class="check">
+        <input type="checkbox" [(ngModel)]="form.is_active" />
+        <span>A levél kiküldése be van kapcsolva</span>
+      </label>
+
+      <label class="field">
+        <span>Tárgy</span>
+        <input type="text" [(ngModel)]="form.subject" maxlength="200" />
+      </label>
+
+      <label class="field">
+        <span>Szöveg (HTML; a bekezdéseket &lt;p&gt;…&lt;/p&gt; közé írd)</span>
+        <textarea #bodyBox [(ngModel)]="form.body" rows="16" spellcheck="false"></textarea>
+      </label>
+
+      <div class="chips">
+        <span class="chips-title">Változók (kattints a beszúráshoz a kurzor helyére):</span>
+        <button *ngFor="let p of data.placeholders" type="button" class="chip" [title]="p.description" (click)="insert(p.key)">
+          {{ '{{' + p.key + '}}' }}
+        </button>
+      </div>
+
+      <div class="actions">
+        <button type="button" class="btn primary" (click)="save()" [disabled]="!dirty || saving">
+          {{ saving ? 'Mentés...' : '💾 Mentés' }}
+        </button>
+        <button type="button" class="btn" (click)="preview()" [disabled]="previewing">👁 Előnézet</button>
+        <button type="button" class="btn danger" (click)="reset()">↺ Alapértelmezett szöveg</button>
+      </div>
+
+      <div class="test">
+        <label class="field inline">
+          <span>Teszt levél küldése (minta adatokkal)</span>
+          <input type="email" [(ngModel)]="testTo" placeholder="te@pelda.hu" />
+        </label>
+        <button type="button" class="btn" (click)="sendTest()" [disabled]="testing">
+          {{ testing ? 'Küldés...' : 'Teszt küldése' }}
+        </button>
+      </div>
+    </section>
+  </div>
+
+  <div class="preview-backdrop" *ngIf="previewHtml" (click)="closePreview()"></div>
+  <div class="preview" *ngIf="previewHtml" role="dialog" aria-modal="true">
+    <div class="preview-head">
+      <div>
+        <div class="muted">Tárgy (minta adatokkal)</div>
+        <b>{{ previewSubject }}</b>
+      </div>
+      <button type="button" class="btn" (click)="closePreview()">Bezár</button>
+    </div>
+    <iframe class="preview-frame" sandbox="" [srcdoc]="previewHtml" title="E-mail előnézet"></iframe>
+  </div>
+</div>

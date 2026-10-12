@@ -124,8 +124,8 @@
         </label>
 
         <div class="pay-methods">
-          <button type="button" class="pay-btn cash" [class.active]="paymentMethod === 'cash'" (click)="setPayment('cash')">💶 Készpénz</button>
-          <button type="button" class="pay-btn card" [class.active]="paymentMethod === 'card'" (click)="setPayment('card')">💳 Bankkártya</button>
+          <button type="button" class="pay-btn m-cash" [class.active]="paymentMethod === 'cash'" (click)="setPayment('cash')"><span class="pay-icon">💶</span>Készpénz</button>
+          <button type="button" class="pay-btn m-card" [class.active]="paymentMethod === 'card'" (click)="setPayment('card')"><span class="pay-icon">💳</span>Bankkártya</button>
         </div>
 
         <div *ngIf="paymentMethod === 'cash'" class="cash-box">
@@ -142,12 +142,46 @@
           Kérje a kártyaterminálon <b>{{ total | number:'1.0-0' }} Ft</b> fizetését, és a sikeres terminálos fizetés után rögzítse az eladást.
         </div>
 
-        <div *ngIf="error" class="alert">{{ error }}</div>
+        <div *ngIf="error && !reserveOpen" class="alert">{{ error }}</div>
 
         <button type="button" class="btn-confirm" [disabled]="!canConfirm" (click)="confirmSale()">
           {{ processing ? 'Feldolgozás...' : 'Fizetés rögzítése és jegyek kiállítása' }}
         </button>
+
+        <ng-container *ngIf="mode === 'seats'">
+          <button type="button" class="btn-hold" *ngIf="!reserveOpen" [disabled]="processing" (click)="openReserve()">
+            📌 Foglalás (fizetés nélkül)
+          </button>
+
+          <div *ngIf="reserveOpen" class="hold-box">
+            <h3>📌 Foglalás rögzítése</h3>
+            <p class="muted">A székek zárolva lesznek, a foglalás a Foglalások között jelenik meg, és később itt kifizethető.</p>
+            <label class="field">
+              <span>Név *</span>
+              <input type="text" [(ngModel)]="holdName" maxlength="255" placeholder="Vásárló neve" />
+            </label>
+            <label class="field">
+              <span>Telefonszám *</span>
+              <input type="tel" [(ngModel)]="holdPhone" maxlength="20" placeholder="+36 30 123 4567" />
+            </label>
+            <label class="field">
+              <span>E-mail (nem kötelező)</span>
+              <input type="email" [(ngModel)]="holdEmail" maxlength="255" placeholder="vasarlo@example.com" />
+            </label>
+            <div *ngIf="error" class="alert">{{ error }}</div>
+            <div class="hold-actions">
+              <button type="button" class="btn-small primary" [disabled]="!canHold" (click)="confirmHold()">
+                {{ processing ? 'Mentés...' : 'Foglalás rögzítése' }}
+              </button>
+              <button type="button" class="btn-small" [disabled]="processing" (click)="closeReserve()">Mégsem</button>
+            </div>
+          </div>
+        </ng-container>
       </ng-container>
+
+      <div *ngIf="heldNotice" class="sold-box held-box">
+        <div>{{ heldNotice }}</div>
+      </div>
 
       <div *ngIf="soldTickets.length > 0 && !printOpen" class="sold-box">
         <div>✅ Sikeres eladás: <b>{{ soldTickets.length }}</b> jegy ({{ soldTickets[0].ticket_number }}

@@ -12,8 +12,13 @@ use Illuminate\Support\Facades\Log;
 
 class TicketService
 {
+    public function __construct(private TicketNumberingService $numbering)
+    {
+    }
+
     /**
-     * Minden fizetett foglalási tételhez jegyet állít ki, évenként folyamatos sorszámmal.
+     * Minden fizetett foglalási tételhez jegyet állít ki. A jegyszám előtagja és folyamatos sorszáma
+     * a Beállításokban megadott jegyszámozás szerint alakul (minden eladott jegy egyet emel a sorszámon).
      * Ha a foglaláshoz már vannak jegyek, azokat adja vissza (idempotens).
      */
     public function issueForReservation(
@@ -33,6 +38,7 @@ class TicketService
 
             $soldAt = now();
             $year = (int) $soldAt->copy()->timezone('Europe/Budapest')->year;
+            $prefix = $this->numbering->currentPrefix();
 
             $items = $reservation->items
                 ->sortBy(fn($item) => sprintf('%s-%05d', $item->row_label, (int) $item->seat_number))
@@ -40,12 +46,13 @@ class TicketService
 
             $tickets = collect();
             foreach ($items as $item) {
-                $seq = $this->nextSequence($year);
+                $seq = $this->numbering->nextSequence($prefix);
 
                 $tickets->push(Ticket::create([
                     'ticket_year' => $year,
+                    'ticket_prefix' => $prefix,
                     'ticket_seq' => $seq,
-                    'ticket_number' => sprintf('%d-%06d', $year, $seq),
+                    'ticket_number' => $this->numbering->format($prefix, $seq),
                     'reservation_id' => $reservation->id,
                     'showtime_id' => $showtime?->id,
                     'movie_title' => $showtime?->movie?->title ?? 'Ismeretlen film',
@@ -133,17 +140,5 @@ class TicketService
                 $title
             );
         }
-    }
-
-    private function nextSequence(int $year): int
-    {
-        DB::table('ticket_sequences')->insertOrIgnore(['year' => $year, 'last_number' => 0]);
-
-        $row = DB::table('ticket_sequences')->where('year', $year)->lockForUpdate()->first();
-        $next = $row->last_number + 1;
-
-        DB::table('ticket_sequences')->where('year', $year)->update(['last_number' => $next]);
-
-        return $next;
     }
 }

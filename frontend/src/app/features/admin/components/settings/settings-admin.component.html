@@ -1,0 +1,174 @@
+<div class="settings-container">
+  <div class="header">
+    <h1>⚙️ Beállítások</h1>
+    <button (click)="goBack()" class="btn-back">← Vissza a dashboardra</button>
+  </div>
+
+  <div class="layout">
+    <nav class="menu">
+      <button type="button" class="menu-item" [class.active]="section === 'numbering'" (click)="section = 'numbering'">
+        🎟️ Jegyszámozás
+      </button>
+      <button type="button" class="menu-item" [class.active]="section === 'backups'" (click)="section = 'backups'">
+        💾 Biztonsági mentés
+      </button>
+    </nav>
+
+    <main class="content" *ngIf="section === 'numbering'">
+      <div *ngIf="loading" class="muted">Betöltés...</div>
+      <div *ngIf="error" class="alert">{{ error }}</div>
+      <div *ngIf="notice" class="ok">✅ {{ notice }}</div>
+
+      <ng-container *ngIf="state">
+        <div class="warn" *ngIf="state.year_notice">
+          ℹ️ Az előtag (<b>{{ state.prefix }}</b>) egy korábbi évre utal, pedig már {{ state.current_year }} van.
+          A jegyszám előtagja nem változik automatikusan évváltáskor. Ha új évet szeretnél kezdeni, módosítsd lent az előtagot.
+        </div>
+
+        <!-- Jelenlegi állapot -->
+        <section class="card">
+          <h2>Jelenlegi jegyszámozás</h2>
+          <div class="stats">
+            <div class="stat"><span>Előtag</span><b class="big">{{ state.prefix }}</b></div>
+            <div class="stat"><span>Jegyszám formátuma</span><b class="mono">{{ formatExample }}</b></div>
+            <div class="stat"><span>Utoljára kiadott jegyszám</span><b class="mono">{{ state.last_number_formatted || '—' }}</b></div>
+            <div class="stat highlight"><span>Következő jegy száma</span><b class="mono">{{ state.next_number }}</b></div>
+          </div>
+          <p class="muted">
+            A jegyszám az <b>előtagból</b> és egy folyamatosan emelkedő <b>sorszámból</b> áll. A sorszám minden eladott jegynél eggyel nő
+            (nem előadásonként), a jegyszámok egyediek, ugyanaz a szám nem adható ki kétszer.
+          </p>
+
+          <h3>Előtagonkénti számlálók</h3>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Előtag</th><th>Utolsó sorszám</th><th>Kiadott jegyek</th><th>Utolsó eladás</th><th></th></tr></thead>
+              <tbody>
+                <tr *ngFor="let c of state.counters" [class.current]="c.is_current">
+                  <td class="mono">{{ c.prefix }}</td>
+                  <td>{{ c.last_number | number:'1.0-0' }}</td>
+                  <td>{{ c.tickets | number:'1.0-0' }}</td>
+                  <td>{{ c.last_sold_at ? (c.last_sold_at | date:'yyyy.MM.dd. HH:mm') : '—' }}</td>
+                  <td><span class="badge" *ngIf="c.is_current">Aktuális</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Előtag módosítása -->
+        <section class="card">
+          <h2>Előtag módosítása</h2>
+          <p class="muted">
+            Az új előtaggal kiadott jegyek száma az új előtaggal kezdődik. A korábban kiadott jegyek nem változnak.
+            A módosítás jelszóval és kétlépcsős megerősítéssel védett.
+          </p>
+
+          <label class="field">
+            <span>Új előtag (1–12 karakter, csak betű és szám)</span>
+            <input type="text" [(ngModel)]="newPrefix" maxlength="12" autocomplete="off" placeholder="pl. 2027" style="text-transform: uppercase" />
+          </label>
+
+          <div class="modes">
+            <label class="mode" [class.selected]="mode === 'continue'">
+              <input type="radio" name="mode" value="continue" [(ngModel)]="mode" />
+              <div>
+                <b>A sorszám folytatódik</b>
+                <div class="muted">Az új előtaggal ott folytatjuk, ahol tartunk (utolsó sorszám: {{ state.last_number | number:'1.0-0' }}). Ajánlott.</div>
+              </div>
+            </label>
+            <label class="mode danger" [class.selected]="mode === 'reset'">
+              <input type="radio" name="mode" value="reset" [(ngModel)]="mode" />
+              <div>
+                <b>A sorszám nullázódik</b>
+                <div class="muted">Az új előtaggal újra 1-ről indul a számozás. Csak olyan előtagnál engedélyezett, amellyel még nem adtak ki jegyet.</div>
+              </div>
+            </label>
+          </div>
+
+          <label class="field">
+            <span>A te jelszavad (biztonsági megerősítés)</span>
+            <input type="password" [(ngModel)]="prefixPassword" autocomplete="new-password" />
+          </label>
+
+          <div *ngIf="prefixError" class="alert">{{ prefixError }}</div>
+          <button type="button" class="btn primary" [disabled]="!canPreparePrefix" (click)="preparePrefix()">
+            {{ prefixBusy ? 'Ellenőrzés...' : 'Tovább a megerősítéshez →' }}
+          </button>
+        </section>
+
+        <!-- Számláló beállítása -->
+        <section class="card">
+          <h2>Számláló beállítása (folytatás ott, ahol abbahagytuk)</h2>
+          <p class="muted">
+            Ha a számlálót véletlenül nullázták vagy rossz értékre állították, itt beállíthatod az <b>utoljára kiadott sorszámot</b>
+            az aktuális előtaghoz (<b>{{ state.prefix }}</b>). A következő jegy ennél eggyel nagyobb számot kap.
+            Az érték nem lehet kisebb a már kiadott legnagyobb sorszámnál ({{ minCounter | number:'1.0-0' }}), mert az duplikált jegyszámot okozna.
+          </p>
+
+          <div class="suggest" *ngIf="state.previous_prefix_last">
+            Az előző előtag (<b>{{ state.previous_prefix_last.prefix }}</b>) utolsó jegye:
+            <b class="mono">{{ state.previous_prefix_last.number }}</b>
+            <button type="button" class="btn small" (click)="useSuggestion()">Használd: {{ state.previous_prefix_last.seq | number:'1.0-0' }}</button>
+          </div>
+
+          <label class="field">
+            <span>Utoljára kiadott sorszám (jelenleg: {{ state.last_number | number:'1.0-0' }})</span>
+            <input type="number" [(ngModel)]="counterValue" [min]="minCounter" [max]="state.max_counter" step="1" />
+          </label>
+
+          <label class="field">
+            <span>A te jelszavad (biztonsági megerősítés)</span>
+            <input type="password" [(ngModel)]="counterPassword" autocomplete="new-password" />
+          </label>
+
+          <div *ngIf="counterError" class="alert">{{ counterError }}</div>
+          <button type="button" class="btn primary" [disabled]="!canPrepareCounter" (click)="prepareCounter()">
+            {{ counterBusy ? 'Ellenőrzés...' : 'Tovább a megerősítéshez →' }}
+          </button>
+        </section>
+      </ng-container>
+    </main>
+
+    <main class="content" *ngIf="section === 'backups'">
+      <app-backups-panel></app-backups-panel>
+    </main>
+  </div>
+
+  <!-- Megerősítő ablak -->
+  <div class="backdrop" *ngIf="plan" (click)="cancelConfirm()"></div>
+  <div class="confirm" *ngIf="plan" role="dialog" aria-modal="true">
+    <h2>⚠️ Módosítás megerősítése</h2>
+
+    <ul class="summary">
+      <li *ngFor="let line of plan.summary">{{ line }}</li>
+    </ul>
+
+    <div class="warnings" *ngIf="plan.warnings.length">
+      <div *ngFor="let w of plan.warnings">• {{ w }}</div>
+    </div>
+
+    <div class="timer" [class.expired]="secondsLeft === 0">
+      {{ secondsLeft > 0 ? 'A megerősítés érvényes még: ' + (secondsLeft / 60 | number:'1.0-0') + ' perc ' + (secondsLeft % 60) + ' mp' : 'A megerősítés lejárt, kezdd újra.' }}
+    </div>
+
+    <label class="field">
+      <span>A végrehajtáshoz írd be pontosan: <b class="phrase">{{ plan.phrase }}</b></span>
+      <input type="text" [(ngModel)]="confirmPhrase" autocomplete="off" spellcheck="false" [class.match]="phraseMatches" />
+    </label>
+
+    <label class="field">
+      <span>Jelszavad (még egyszer)</span>
+      <input type="password" [(ngModel)]="confirmPassword" autocomplete="new-password" />
+    </label>
+
+    <div *ngIf="confirmError" class="alert">{{ confirmError }}</div>
+
+    <div class="actions">
+      <button type="button" class="btn" (click)="cancelConfirm()">Mégsem</button>
+      <button type="button" class="btn danger" [disabled]="!canApply" (click)="apply()">
+        {{ confirmBusy ? 'Végrehajtás...' : 'Végrehajtás' }}
+      </button>
+    </div>
+  </div>
+</div>

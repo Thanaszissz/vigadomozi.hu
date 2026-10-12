@@ -27,6 +27,8 @@ class SeatMapService
                 $query->whereNull('expires_at')
                     ->orWhere('expires_at', '>', now());
             })
+            // Az eladott székek zárolása végleges, de azok "eladottként" látszanak, nem "foglaltként"
+            ->whereHas('reservation', fn($q) => $q->where('status', 'PENDING'))
             ->pluck('seat_key')
             ->toArray();
 

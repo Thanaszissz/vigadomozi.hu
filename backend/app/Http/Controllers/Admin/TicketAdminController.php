@@ -47,7 +47,7 @@ class TicketAdminController extends Controller
             ->groupBy('payment_method')
             ->get();
 
-        $page = $query->orderByDesc('ticket_seq')->paginate(50);
+        $page = $query->orderByDesc('id')->paginate(50);
 
         return response()->json([
             'year' => $year,
@@ -81,11 +81,13 @@ class TicketAdminController extends Controller
 
         ActivityLogger::log('report.daily_close', "Napi zárás megtekintése: {$date}", null, ['date' => $date]);
 
+        $scope = $this->closeScope($request);
+
         $tickets = Ticket::query()
             ->whereBetween('sold_at', [$from, $to])
+            ->when($scope === 'own', fn($q) => $q->where('sold_by_user_id', $request->user()->id))
             ->orderBy('sold_at')
-            ->orderBy('ticket_year')
-            ->orderBy('ticket_seq')
+            ->orderBy('id')
             ->get();
 
         $summarize = function ($rows) {
@@ -118,6 +120,7 @@ class TicketAdminController extends Controller
         return response()->json([
             'date' => $date,
             'generated_at' => now(),
+            'scope' => $scope,
             'totals' => $summarize($tickets),
             'sellers' => $sellers,
         ]);
@@ -133,13 +136,22 @@ class TicketAdminController extends Controller
         $date = $request->query('date') ?: now()->timezone('Europe/Budapest')->toDateString();
         [$from, $to] = $this->dayRange($date);
 
+        $scope = $this->closeScope($request);
+
         $logs = SalesLog::query()
             ->whereBetween('occurred_at', [$from, $to])
+            ->when($scope === 'own', fn($q) => $q->where('user_id', $request->user()->id))
             ->orderBy('occurred_at')
             ->orderBy('id')
             ->get();
 
-        return response()->json(['date' => $date, 'logs' => $logs]);
+        return response()->json(['date' => $date, 'scope' => $scope, 'logs' => $logs]);
+    }
+
+    /** A pénztáros csak a saját eladásait látja, a vezető és az adminisztrátor mindenkiét. */
+    private function closeScope(Request $request): string
+    {
+        return $request->user()->hasPermission('daily_close.all') ? 'all' : 'own';
     }
 
     private function dayRange(string $date): array
@@ -168,7 +180,7 @@ class TicketAdminController extends Controller
             fwrite($out, "\xEF\xBB\xBF");
             fputcsv($out, ['Jegyszám', 'Eladva', 'Film', 'Előadás kezdete', 'Terem', 'Sor', 'Szék', 'Ár (Ft)', 'Fizetés', 'Értékesítő'], ';');
 
-            Ticket::where('ticket_year', $year)->orderBy('ticket_seq')->chunk(500, function ($tickets) use ($out, $methods) {
+            Ticket::where('ticket_year', $year)->orderBy('id')->chunk(500, function ($tickets) use ($out, $methods) {
                 foreach ($tickets as $t) {
                     fputcsv($out, [
                         $t->ticket_number,

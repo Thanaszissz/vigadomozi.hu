@@ -3,12 +3,17 @@ import { environment } from '../../environments/environment';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
 
+export interface AuthUser {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+  role_label: string;
+  permissions: string[];
+}
+
 export interface LoginResponse {
-  user: {
-    id: number;
-    name: string;
-    email: string;
-  };
+  user: AuthUser;
   token: string;
   message: string;
 }
@@ -47,6 +52,24 @@ export class AuthService {
     localStorage.removeItem('admin_token');
     localStorage.removeItem('admin_user');
     this.tokenSubject.next(null);
+  }
+
+  /** Helyi munkamenet törlése (a szerver már érvénytelenítette a tokent). */
+  clearSession(): void {
+    localStorage.removeItem('admin_token');
+    localStorage.removeItem('admin_user');
+    this.tokenSubject.next(null);
+  }
+
+  /** A szerepkör jogainak frissítése a szerverről (a szerepkör időközben változhatott). */
+  refreshUser(): Observable<AuthUser> {
+    return this.http.get<AuthUser>(`${this.apiUrl}/me`).pipe(
+      tap(user => localStorage.setItem('admin_user', JSON.stringify(user)))
+    );
+  }
+
+  can(permission: string): boolean {
+    return !!this.getCurrentUser()?.permissions?.includes(permission);
   }
 
   isLoggedIn(): boolean {

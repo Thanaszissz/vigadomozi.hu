@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Models\Auditorium;
+use App\Models\EmailTemplate;
 use App\Models\Movie;
 use App\Models\Showtime;
 use App\Models\TheaterShow;
@@ -25,7 +26,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        foreach ([Movie::class, TheaterShow::class, Showtime::class, Auditorium::class, User::class] as $model) {
+        foreach ([Movie::class, TheaterShow::class, Showtime::class, Auditorium::class, User::class, EmailTemplate::class] as $model) {
             $model::observe(AuditObserver::class);
         }
     }

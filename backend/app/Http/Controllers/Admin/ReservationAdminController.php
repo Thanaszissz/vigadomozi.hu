@@ -2,13 +2,15 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Exceptions\SeatUnavailableException;
 use App\Http\Controllers\Controller;
 use App\Models\Reservation;
-use App\Models\SeatLock;
 use App\Models\Showtime;
 use App\Services\ActivityLogger;
+use App\Services\SeatClaimService;
 use App\Services\TicketService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ReservationAdminController extends Controller
 {
@@ -54,15 +56,22 @@ class ReservationAdminController extends Controller
         }
 
         if ($data['method'] === 'cash') {
-            $reservation->update([
-                'status' => 'PAID',
-                'payment_provider' => 'cash',
-                'payment_ref' => 'admin-cash',
-                'expires_at' => null,
-                'handled_by_admin_id' => $request->user()->id,
-            ]);
+            try {
+                DB::transaction(function () use ($reservation, $request) {
+                    // A székek zárolása véglegessé válik; ha közben másé lett a szék, a kifizetés nem véglegesíthető
+                    app(SeatClaimService::class)->finalizeClaims($reservation);
 
-            SeatLock::where('reservation_id', $reservation->id)->delete();
+                    $reservation->update([
+                        'status' => 'PAID',
+                        'payment_provider' => 'cash',
+                        'payment_ref' => 'admin-cash',
+                        'expires_at' => null,
+                        'handled_by_admin_id' => $request->user()->id,
+                    ]);
+                });
+            } catch (SeatUnavailableException $e) {
+                return response()->json(['message' => $e->getMessage()], $e->status);
+            }
 
             app(TicketService::class)->issueForReservation($reservation, 'cash', $request->user(), 'admin');
 

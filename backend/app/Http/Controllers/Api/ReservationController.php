@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Exceptions\SeatUnavailableException;
 use App\Http\Controllers\Controller;
 use App\Models\Reservation;
+use App\Services\SeatClaimService;
 use App\Services\StripeService;
 use Illuminate\Http\Request;
 
@@ -35,6 +37,13 @@ class ReservationController extends Controller
         }
 
         $reservation->load('items');
+
+        // Ne indíthassunk fizetést olyan foglaláshoz, amelynek székei közben felszabadultak és másé lehettek
+        try {
+            app(SeatClaimService::class)->assertStillHeld($reservation);
+        } catch (SeatUnavailableException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->status);
+        }
 
         $checkoutUrl = $stripeService->createCheckoutSession($reservation);
 

@@ -3,6 +3,7 @@
 namespace App\Observers;
 
 use App\Models\Auditorium;
+use App\Models\EmailTemplate;
 use App\Models\Movie;
 use App\Models\Showtime;
 use App\Models\TheaterShow;
@@ -20,7 +21,7 @@ class AuditObserver
 
     // Érzékeny vagy nagy mezők: csak a tényük kerül a naplóba, az értékük nem
     private const REDACTED = ['password', 'remember_token'];
-    private const SUMMARIZED = ['layout_json', 'style_json', 'pricing_override_json'];
+    private const SUMMARIZED = ['layout_json', 'style_json', 'pricing_override_json', 'body'];
 
     public function created(Model $model): void
     {
@@ -79,6 +80,7 @@ class AuditObserver
             $model instanceof TheaterShow => ['theater_show', 'Színházi előadás', (string) $model->title],
             $model instanceof Auditorium => ['auditorium', 'Terem', (string) $model->name],
             $model instanceof User => ['user', 'Felhasználó', $model->name . ' (' . $model->email . ')'],
+            $model instanceof EmailTemplate => ['email_template', 'E-mail sablon', (string) $model->name],
             $model instanceof Showtime => ['showtime', 'Előadás', $this->showtimeLabel($model)],
             default => [strtolower(class_basename($model)), class_basename($model), '#' . $model->getKey()],
         };

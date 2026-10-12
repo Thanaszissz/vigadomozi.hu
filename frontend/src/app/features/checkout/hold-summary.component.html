@@ -78,6 +78,7 @@
           <ul>
             <li>A foglalás <strong>nincs lejárati idővel</strong> - amíg nem fizeti ki, a székek foglaltak maradnak</li>
             <li>A fizetést az <strong>admin felületen</strong> lehet véglegesíteni készpénzzel vagy kártyával</li>
+            <li>Visszaigazoló e-mailt küldtünk a megadott címre: <strong>{{ reservation.customer_email }}</strong></li>
             <li>Foglalási azonosító: <strong>#{{ reservation.id }}</strong></li>
           </ul>
         </div>
@@ -89,21 +90,4 @@
     </div>
   </section>
 
-  <footer class="footer">
-    <div class="footer-col">
-      <h4>Információk</h4>
-      <a routerLink="/hazirend">Házirend</a>
-      <a routerLink="/fizetesi-tajekoztato">Fizetési tájékoztató</a>
-      <a routerLink="/adatkezelesi-tajekoztato">Adatkezelési tájékoztató</a>
-    </div>
-    <div class="footer-col">
-      <h4>Elérhetőség</h4>
-      <p>📞 +36 1 234 5678</p>
-      <p>📧 info&#64;vigadomozi.hu</p>
-    </div>
-    <div class="footer-col">
-      <h4>Nyitvatartás</h4>
-      <p>Hétfő-Vasárnap: 10:00-22:00</p>
-    </div>
-  </footer>
 </div>

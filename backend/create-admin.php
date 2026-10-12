@@ -2,6 +2,7 @@ User::create([
     'name' => 'Admin',
     'email' => 'admin@vigado.hu',
     'password' => bcrypt('admin123'),
+    'role' => 'admin',
     'email_verified_at' => now()
 ]);
 

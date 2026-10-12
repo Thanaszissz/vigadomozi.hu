@@ -182,43 +182,84 @@
 
 .showtimes-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
 }
 
 .showtime-card {
-  background: #5c3d2e;
-  border: 1px solid #d4a574;
-  padding: 14px;
-  border-radius: 6px;
+  position: relative;
+  background: linear-gradient(160deg, #6b4833 0%, #4a3020 100%);
+  border: 1px solid rgba(212, 165, 116, 0.55);
+  padding: 18px 16px 16px;
+  border-radius: 14px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
+  box-shadow: 0 4px 14px rgba(44, 24, 16, 0.25);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.showtime-card:hover {
+  transform: translateY(-3px);
+  border-color: #d4a574;
+  box-shadow: 0 10px 22px rgba(44, 24, 16, 0.38);
+}
+
+.showtime-date {
+  color: #d9bd98;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
 }
 
 .showtime-time {
-  color: #2c1810;
-  font-weight: 600;
+  color: #fff4e0;
+  font-size: 34px;
+  font-weight: 800;
+  line-height: 1.1;
 }
 
 .showtime-auditorium {
-  color: #5c3d2e;
+  align-self: flex-start;
+  margin: 8px 0 14px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(212, 165, 116, 0.18);
+  color: #ecd2ac;
   font-size: 12px;
+  font-weight: 600;
 }
 
-.btn {
-  padding: 8px 10px;
-  background: #8b6f47;
-  color: #fff;
-  border-radius: 4px;
-  text-align: center;
+.book-btn {
+  margin-top: auto;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 11px 14px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #e6bd89 0%, #c8955d 100%);
+  color: #2c1810;
   text-decoration: none;
-  font-weight: 700;
-  font-size: 12px;
+  font-weight: 800;
+  font-size: 14px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+  transition: filter 0.2s ease, box-shadow 0.2s ease;
 }
 
-.btn:hover {
-  background: #6b4e3d;
+.book-btn .arrow {
+  font-size: 18px;
+  transition: transform 0.2s ease;
+}
+
+.book-btn:hover {
+  filter: brightness(1.07);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+}
+
+.book-btn:hover .arrow {
+  transform: translateX(4px);
 }
 
 .footer {
@@ -555,42 +596,67 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  margin-top: 10px;
+  gap: 18px;
+  margin-top: 16px;
 }
 
 .ctrl {
-  width: 32px;
-  height: 32px;
-  border-radius: 4px;
-  border: 1px solid #6b4e3d;
-  background: #2c1810;
-  color: #d4a574;
-  font-size: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1.5px solid rgba(212, 165, 116, 0.55);
+  background: linear-gradient(180deg, #4a3020 0%, #2c1810 100%);
+  color: #e6bd89;
+  font-size: 26px;
+  line-height: 1;
+  padding-bottom: 3px;
   cursor: pointer;
-  transition: background 0.2s;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
+  transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .ctrl:hover {
-  background: #3d2817;
+  transform: translateY(-2px) scale(1.06);
+  background: linear-gradient(180deg, #e6bd89 0%, #c8955d 100%);
+  border-color: #e6bd89;
+  color: #2c1810;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.45);
+  opacity: 1;
+}
+
+.ctrl:active {
+  transform: scale(0.96);
 }
 
 .dots {
   display: flex;
-  gap: 6px;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(44, 24, 16, 0.55);
 }
 
 .dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #5c3d2e;
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: #6b4e3d;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: width 0.3s ease, background 0.3s ease;
+}
+
+.dot:hover {
+  background: #a67c52;
 }
 
 .dot.active {
-  background: #d4a574;
+  width: 26px;
+  background: linear-gradient(90deg, #e6bd89, #c8955d);
 }
 
 /* Trailer Modal Styles */
