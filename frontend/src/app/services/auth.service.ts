@@ -37,6 +37,13 @@ export class AuthService {
   }
 
   logout(): void {
+    const token = this.getToken();
+    if (token) {
+      // A szerveroldali kijelentkezés érvényteleníti a tokent és bekerül a tevékenységnaplóba
+      this.http.post(`${this.apiUrl}/logout`, {}, { headers: { Authorization: `Bearer ${token}` } })
+        .subscribe({ error: () => {} });
+    }
+
     localStorage.removeItem('admin_token');
     localStorage.removeItem('admin_user');
     this.tokenSubject.next(null);

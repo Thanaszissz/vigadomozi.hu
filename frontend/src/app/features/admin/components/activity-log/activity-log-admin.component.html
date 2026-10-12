@@ -1,0 +1,129 @@
+<div class="log-container">
+  <div class="header">
+    <h1>📜 Tevékenységnapló</h1>
+    <button (click)="goBack()" class="btn-back">← Vissza a dashboardra</button>
+  </div>
+
+  <div class="filters">
+    <label>
+      <span>Ettől</span>
+      <input type="date" [(ngModel)]="from" (ngModelChange)="load()" />
+    </label>
+    <label>
+      <span>Eddig</span>
+      <input type="date" [(ngModel)]="to" (ngModelChange)="load()" />
+    </label>
+    <label>
+      <span>Felhasználó</span>
+      <select [(ngModel)]="userId" (ngModelChange)="load()">
+        <option value="">Mind</option>
+        <option value="none">Ismeretlen (sikertelen belépés)</option>
+        <option *ngFor="let u of meta.users" [value]="u.id">{{ u.name }}</option>
+      </select>
+    </label>
+    <label>
+      <span>Kategória</span>
+      <select [(ngModel)]="category" (ngModelChange)="onCategoryChange()">
+        <option value="">Mind</option>
+        <option *ngFor="let c of meta.categories" [value]="c.key">{{ c.label }}</option>
+      </select>
+    </label>
+    <label>
+      <span>Művelet</span>
+      <select [(ngModel)]="action" (ngModelChange)="load()">
+        <option value="">Mind</option>
+        <option *ngFor="let a of actionOptions" [value]="a.key">{{ a.label }}</option>
+      </select>
+    </label>
+    <label class="grow">
+      <span>Keresés (leírás, név, e-mail)</span>
+      <input type="text" [(ngModel)]="query" (keyup.enter)="load()" placeholder="pl. Digger vagy 2026-000123" />
+    </label>
+    <button type="button" class="btn" (click)="load()">Szűrés</button>
+    <button type="button" class="btn" (click)="reset()">Alaphelyzet</button>
+  </div>
+
+  <div class="quick">
+    <span>Időszak:</span>
+    <button type="button" (click)="setRange(0)">Ma</button>
+    <button type="button" (click)="setRange(6)">Elmúlt 7 nap</button>
+    <button type="button" (click)="setRange(29)">Elmúlt 30 nap</button>
+    <button type="button" (click)="clearRange()">Összes</button>
+  </div>
+
+  <div *ngIf="error" class="alert">{{ error }}</div>
+  <div *ngIf="loading" class="muted">Betöltés...</div>
+
+  <div class="count" *ngIf="result && !loading">{{ result.total | number:'1.0-0' }} bejegyzés</div>
+
+  <div class="table-wrap" *ngIf="result && !loading">
+    <div *ngIf="result.logs.data.length === 0" class="muted">Nincs a szűrésnek megfelelő bejegyzés.</div>
+
+    <table *ngIf="result.logs.data.length > 0">
+      <thead>
+        <tr>
+          <th>Időpont</th>
+          <th>Felhasználó</th>
+          <th>Kategória</th>
+          <th>Művelet</th>
+          <th>Leírás</th>
+          <th>IP</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <ng-container *ngFor="let e of result.logs.data">
+          <tr [class.open]="expandedId === e.id" [class.failed]="e.action === 'auth.login_failed'">
+            <td class="time">{{ e.occurred_at | date:'yyyy.MM.dd. HH:mm:ss' }}</td>
+            <td>{{ actor(e) }}</td>
+            <td><span class="cat" [attr.data-cat]="e.category">{{ categoryLabel(e.category) }}</span></td>
+            <td>{{ actionLabel(e.action) }}</td>
+            <td class="desc">{{ e.description }}</td>
+            <td class="ip">{{ e.ip_address || '—' }}</td>
+            <td>
+              <button type="button" class="btn small" *ngIf="hasDetails(e)" (click)="toggle(e)">
+                {{ expandedId === e.id ? '▲' : '▼' }}
+              </button>
+            </td>
+          </tr>
+          <tr class="details" *ngIf="expandedId === e.id">
+            <td colspan="7">
+              <div class="detail-grid">
+                <div *ngIf="changeRows(e).length">
+                  <h4>Módosítások</h4>
+                  <table class="inner">
+                    <tr *ngFor="let c of changeRows(e)">
+                      <td class="k">{{ c.field }}</td>
+                      <td *ngIf="c.note" colspan="3" class="note">{{ c.note }}</td>
+                      <ng-container *ngIf="!c.note">
+                        <td class="old">{{ c.old }}</td>
+                        <td class="arrow">→</td>
+                        <td class="new">{{ c.next }}</td>
+                      </ng-container>
+                    </tr>
+                  </table>
+                </div>
+                <div *ngIf="extraRows(e).length">
+                  <h4>Részletek</h4>
+                  <table class="inner">
+                    <tr *ngFor="let r of extraRows(e)"><td class="k">{{ r.key }}</td><td>{{ r.value }}</td></tr>
+                  </table>
+                </div>
+                <div *ngIf="e.user_agent">
+                  <h4>Böngésző</h4>
+                  <div class="ua">{{ e.user_agent }}</div>
+                </div>
+              </div>
+            </td>
+          </tr>
+        </ng-container>
+      </tbody>
+    </table>
+
+    <div class="pager" *ngIf="result.logs.last_page > 1">
+      <button type="button" class="btn small" [disabled]="page <= 1" (click)="load(page - 1)">‹ Előző</button>
+      <span>{{ result.logs.current_page }} / {{ result.logs.last_page }}</span>
+      <button type="button" class="btn small" [disabled]="page >= result.logs.last_page" (click)="load(page + 1)">Következő ›</button>
+    </div>
+  </div>
+</div>

@@ -52,4 +52,9 @@ class Reservation extends Model
     {
         return $this->hasMany(SeatLock::class);
     }
+
+    public function tickets()
+    {
+        return $this->hasMany(Ticket::class);
+    }
 }

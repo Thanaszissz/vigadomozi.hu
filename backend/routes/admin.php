@@ -8,6 +8,9 @@ use App\Http\Controllers\Admin\ReservationAdminController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\UserAdminController;
 use App\Http\Controllers\Admin\TheaterShowAdminController;
+use App\Http\Controllers\Admin\PosController;
+use App\Http\Controllers\Admin\TicketAdminController;
+use App\Http\Controllers\Admin\ActivityLogController;
 
 // User management
 Route::apiResource('users', UserAdminController::class);
@@ -38,3 +41,21 @@ Route::get('showtimes/{showtime}/reservations/export', [ReservationAdminControll
 
 // Reports
 Route::get('reports/daily', [ReportController::class, 'dailyReport']);
+
+// Helyszíni jegyeladás (pénztár)
+Route::post('pos/sell', [PosController::class, 'sell']);
+Route::post('pos/reservations/{reservation}/pay', [PosController::class, 'payReservation']);
+Route::get('pos/reservations/{reservation}/tickets', [PosController::class, 'reservationTickets']);
+
+// Tevékenységnapló (csak olvasható felület, törlés/módosítás nincs)
+Route::get('activity-logs/meta', [ActivityLogController::class, 'meta']);
+Route::get('activity-logs', [ActivityLogController::class, 'index']);
+Route::post('activity-logs/event', [ActivityLogController::class, 'clientEvent']);
+
+// Eladott jegyek évenkénti archívuma
+Route::get('tickets/years', [TicketAdminController::class, 'years']);
+Route::get('tickets/export', [TicketAdminController::class, 'export']);
+Route::get('tickets/daily-close', [TicketAdminController::class, 'dailyClose']);
+Route::get('tickets/sales-log', [TicketAdminController::class, 'salesLog']);
+Route::get('tickets', [TicketAdminController::class, 'index']);
+Route::get('tickets/{ticket}', [TicketAdminController::class, 'show'])->whereNumber('ticket');

@@ -54,8 +54,63 @@ h1 {
 
 .subtitle {
   color: #d4a574;
-  margin-bottom: 40px;
+  margin-bottom: 24px;
   font-size: 16px;
+}
+
+.featured-card {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 28px 32px;
+  margin-bottom: 32px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #d4a574 0%, #a8763e 100%);
+  color: #2a1810;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.featured-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.55);
+}
+
+.featured-icon {
+  font-size: 56px;
+  line-height: 1;
+}
+
+.featured-text {
+  flex: 1;
+}
+
+.featured-text h2 {
+  margin: 0 0 6px;
+  font-size: 28px;
+}
+
+.featured-text p {
+  margin: 0;
+  font-size: 15px;
+}
+
+.featured-action {
+  font-weight: 800;
+  font-size: 16px;
+  background: #2a1810;
+  color: #e8d5b7;
+  padding: 12px 20px;
+  border-radius: 8px;
+  white-space: nowrap;
+}
+
+@media (max-width: 720px) {
+  .featured-card {
+    flex-direction: column;
+    text-align: center;
+  }
 }
 
 .dashboard-grid {

@@ -1,0 +1,315 @@
+:host {
+  display: block;
+  background: #3d2817;
+  min-height: 100vh;
+  color: #e8d5b7;
+}
+
+.pos-container {
+  padding: 20px;
+  max-width: 1500px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+h1 { margin: 0; color: #e8d5b7; }
+
+.btn-back {
+  padding: 10px 20px;
+  background: #d4a574;
+  color: #2c1810;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.header-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.btn-back.secondary { background: #4a3425; color: #e8d5b7; border: 1px solid #5c3d2e; }
+
+.panel {
+  background: #2c1810;
+  border: 1px solid #5c3d2e;
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin-bottom: 18px;
+}
+
+.panel h2 {
+  margin: 0 0 14px;
+  font-size: 18px;
+  color: #fdf7ed;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.panel h2 small {
+  font-size: 13px;
+  color: #a08060;
+  font-weight: 400;
+}
+
+.panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.step {
+  display: inline-flex;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #d4a574;
+  color: #2c1810;
+  font-weight: 800;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.muted { color: #a08060; padding: 6px 0; }
+
+.alert {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid #ef4444;
+  color: #fecaca;
+  padding: 10px 12px;
+  border-radius: 6px;
+  margin: 10px 0;
+  font-size: 14px;
+}
+
+/* Előadás választó */
+.day-tabs, .mode-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.day-tab, .mode-tabs button {
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid #5c3d2e;
+  background: #4a3425;
+  color: #e8d5b7;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.day-tab.active, .mode-tabs button.active {
+  background: #d4a574;
+  color: #2c1810;
+  border-color: #d4a574;
+}
+
+.showtime-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 10px;
+}
+
+.showtime-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-areas: "time title" "time meta";
+  column-gap: 12px;
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #5c3d2e;
+  background: #3d2817;
+  color: #e8d5b7;
+  cursor: pointer;
+}
+
+.showtime-card:hover { border-color: #d4a574; }
+.showtime-card.active { border-color: #d4a574; background: #5c3d2e; }
+.st-time { grid-area: time; font-size: 22px; font-weight: 800; color: #d4a574; align-self: center; }
+.st-title { grid-area: title; font-weight: 700; }
+.st-meta { grid-area: meta; font-size: 12px; color: #a08060; }
+
+/* Eladás */
+.sale-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  gap: 18px;
+  align-items: start;
+}
+
+.btn-small {
+  padding: 7px 14px;
+  border-radius: 6px;
+  border: 1px solid #5c3d2e;
+  background: #4a3425;
+  color: #e8d5b7;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.btn-small.primary { background: #d4a574; color: #2c1810; border-color: #d4a574; }
+
+.reservation-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.reservation-card {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 2fr auto;
+  gap: 10px;
+  align-items: center;
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #5c3d2e;
+  background: #3d2817;
+  color: #e8d5b7;
+  cursor: pointer;
+}
+
+.reservation-card.active { border-color: #d4a574; background: #5c3d2e; }
+.r-name { font-weight: 700; }
+.r-phone { color: #a08060; font-size: 13px; }
+.r-total { font-weight: 800; color: #d4a574; }
+.r-seats { display: flex; gap: 4px; flex-wrap: wrap; }
+.chip { background: #4a3425; border-radius: 4px; padding: 1px 6px; font-size: 12px; }
+
+.screen {
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #8b6f47;
+  padding: 8px;
+  border: 1px solid #d4a574;
+  border-radius: 999px;
+  width: 140px;
+  margin: 8px auto 14px;
+}
+
+.section-group { padding: 6px 0; overflow-x: auto; }
+.section-title {
+  font-weight: 700;
+  color: #e8d5b7;
+  text-align: center;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.seats-container { display: flex; flex-direction: column; gap: 8px; align-items: center; min-width: max-content; margin: 0 auto; }
+.seat-row { display: flex; gap: 10px; align-items: center; }
+.row-label { width: 22px; color: #a08060; font-weight: 600; text-align: center; }
+.seats-line { display: flex; gap: 6px; }
+
+.seat {
+  width: 34px;
+  height: 34px;
+  border-radius: 6px 6px 2px 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  border: 1px solid #5c3d2e;
+  user-select: none;
+}
+
+.seat.aisle { background: transparent; border-color: transparent; }
+.seat.available { background: #22c55e; color: #fff; cursor: pointer; }
+.seat.available:hover { filter: brightness(1.15); }
+.seat.booked { background: #ef4444; color: #fff; cursor: not-allowed; }
+.seat.locked { background: #f59e0b; color: #1f2937; cursor: not-allowed; }
+.seat.selected { background: #8b6f47; color: #fff; outline: 2px solid #e8d5b7; cursor: pointer; }
+.seat.reserved-pick { background: #3b82f6; color: #fff; outline: 2px solid #e8d5b7; }
+
+.legend { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; margin-top: 14px; color: #a08060; font-size: 12px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sq { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+.sq.available { background: #22c55e; }
+.sq.booked { background: #ef4444; }
+.sq.locked { background: #f59e0b; }
+.sq.selected { background: #8b6f47; }
+
+/* Fizetés */
+.summary { position: static; }
+@media (min-height: 900px) {
+  .summary { position: sticky; top: 12px; }
+}
+.item-list { list-style: none; margin: 0 0 10px; padding: 0; max-height: 220px; overflow-y: auto; }
+.item-list li { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #4a3425; }
+.item-list li.who { color: #a08060; font-size: 13px; }
+.total { display: flex; justify-content: space-between; font-size: 22px; margin: 12px 0; }
+.total b { color: #d4a574; }
+
+.field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; font-size: 13px; color: #a08060; }
+.field input {
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 1px solid #5c3d2e;
+  background: #4a3425;
+  color: #e8d5b7;
+  font-size: 16px;
+}
+
+.pay-methods { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+.pay-btn {
+  padding: 14px 8px;
+  border-radius: 8px;
+  border: 2px solid #5c3d2e;
+  background: #4a3425;
+  color: #e8d5b7;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.pay-btn.active.cash { border-color: #22c55e; background: rgba(34, 197, 94, 0.2); }
+.pay-btn.active.card { border-color: #3b82f6; background: rgba(59, 130, 246, 0.2); }
+
+.change { font-size: 18px; margin-bottom: 10px; }
+.change b { color: #22c55e; }
+.change.short b { color: #ef4444; }
+.card-box { background: rgba(59, 130, 246, 0.12); border: 1px solid #3b82f6; border-radius: 6px; padding: 10px 12px; margin-bottom: 10px; font-size: 14px; }
+
+.btn-confirm {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 8px;
+  background: #22c55e;
+  color: #052e16;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.btn-confirm:disabled { background: #4a3425; color: #a08060; cursor: not-allowed; }
+
+.sold-box {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid #22c55e;
+  border-radius: 8px;
+  background: rgba(34, 197, 94, 0.1);
+}
+.sold-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+
+@media (max-width: 1100px) {
+  .sale-grid { grid-template-columns: 1fr; }
+  .summary { position: static; }
+  .reservation-card { grid-template-columns: 1fr 1fr; }
+}

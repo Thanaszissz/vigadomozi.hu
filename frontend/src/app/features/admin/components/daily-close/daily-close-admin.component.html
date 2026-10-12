@@ -1,0 +1,119 @@
+<div class="close-container">
+  <div class="header">
+    <h1>🧾 Napi zárás</h1>
+    <button (click)="goBack()" class="btn-back">← Vissza a dashboardra</button>
+  </div>
+
+  <div class="filters">
+    <button type="button" class="btn small" (click)="shiftDay(-1)">‹</button>
+    <label>
+      <span>Nap</span>
+      <input type="date" [(ngModel)]="date" (ngModelChange)="load()" />
+    </label>
+    <button type="button" class="btn small" (click)="shiftDay(1)">›</button>
+
+    <label *ngIf="close && close.sellers.length > 1">
+      <span>Eladó</span>
+      <select [(ngModel)]="sellerFilter">
+        <option value="all">Minden eladó</option>
+        <option *ngFor="let s of close.sellers" [value]="s.user_id ?? 0">{{ s.user_name }}</option>
+      </select>
+    </label>
+
+    <span class="spacer"></span>
+    <button type="button" class="btn primary" (click)="print()" [disabled]="!close || loading">🖨️ Napi zárás nyomtatása</button>
+  </div>
+
+  <div class="tabs">
+    <button type="button" [class.active]="tab === 'close'" (click)="tab = 'close'">Napi zárás</button>
+    <button type="button" [class.active]="tab === 'log'" (click)="tab = 'log'">Eladási napló ({{ logs.length }})</button>
+  </div>
+
+  <div *ngIf="loading" class="muted">Betöltés...</div>
+  <div *ngIf="error" class="alert">{{ error }}</div>
+
+  <ng-container *ngIf="tab === 'close' && close && !loading">
+    <div class="summary">
+      <div class="card"><span>Eladott jegyek</span><b>{{ visibleTotals.tickets }} db</b></div>
+      <div class="card"><span>Készpénz</span><b>{{ visibleTotals.cash | number:'1.0-0' }} Ft</b></div>
+      <div class="card"><span>Bankkártya</span><b>{{ visibleTotals.card | number:'1.0-0' }} Ft</b></div>
+      <div class="card" *ngIf="visibleTotals.other > 0"><span>Egyéb (online)</span><b>{{ visibleTotals.other | number:'1.0-0' }} Ft</b></div>
+      <div class="card total"><span>Mindösszesen</span><b>{{ visibleTotals.amount | number:'1.0-0' }} Ft</b></div>
+    </div>
+
+    <div *ngIf="visibleSellers.length === 0" class="muted">Ezen a napon nem volt jegyeladás.</div>
+
+    <section class="seller" *ngFor="let seller of visibleSellers">
+      <h2>
+        {{ seller.user_name }}
+        <small>{{ seller.tickets.length }} jegy • {{ seller.totals.amount | number:'1.0-0' }} Ft</small>
+      </h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Jegyszám</th>
+              <th>Idő</th>
+              <th>Film</th>
+              <th>Előadás</th>
+              <th>Sor / szék</th>
+              <th>Fizetés</th>
+              <th class="r">Ár</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let t of seller.tickets">
+              <td class="num">{{ t.ticket_number }}</td>
+              <td>{{ t.sold_at | date:'HH:mm' }}</td>
+              <td>{{ t.movie_title }}</td>
+              <td>{{ t.starts_at | date:'yyyy.MM.dd. HH:mm' }}</td>
+              <td>{{ t.row_label }} / {{ t.seat_number ?? '—' }}</td>
+              <td><span class="badge" [class.cash]="t.payment_method === 'cash'" [class.card]="t.payment_method === 'card'">{{ paymentLabel(t.payment_method) }}</span></td>
+              <td class="r">{{ t.price_amount | number:'1.0-0' }} Ft</td>
+            </tr>
+            <tr class="subtotal">
+              <td colspan="5">Összesen</td>
+              <td>
+                Készpénz: {{ sellerSums(seller.tickets).cash | number:'1.0-0' }} Ft •
+                Kártya: {{ sellerSums(seller.tickets).card | number:'1.0-0' }} Ft
+              </td>
+              <td class="r">{{ sellerSums(seller.tickets).amount | number:'1.0-0' }} Ft</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </ng-container>
+
+  <ng-container *ngIf="tab === 'log' && !loading">
+    <div *ngIf="logs.length === 0" class="muted">Ezen a napon nincs naplózott jegyeladás.</div>
+    <div class="table-wrap" *ngIf="logs.length > 0">
+      <table>
+        <thead>
+          <tr>
+            <th>Idő</th>
+            <th>Eladó</th>
+            <th>Csatorna</th>
+            <th>Film / előadás</th>
+            <th>Jegyek</th>
+            <th>Fizetés</th>
+            <th class="r">Összeg</th>
+            <th>IP</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let l of logs">
+            <td>{{ l.occurred_at | date:'HH:mm:ss' }}</td>
+            <td>{{ l.user_name || 'Online / rendszer' }}</td>
+            <td>{{ channelLabel(l.channel) }}</td>
+            <td>{{ l.movie_title }} <span class="muted" *ngIf="l.starts_at">({{ l.starts_at | date:'MM.dd. HH:mm' }})</span></td>
+            <td class="num">{{ l.ticket_numbers }}</td>
+            <td>{{ paymentLabel(l.payment_method) }}</td>
+            <td class="r">{{ l.total_amount | number:'1.0-0' }} Ft</td>
+            <td>{{ l.ip_address || '—' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </ng-container>
+</div>

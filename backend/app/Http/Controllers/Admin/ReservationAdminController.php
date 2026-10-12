@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Reservation;
 use App\Models\SeatLock;
 use App\Models\Showtime;
+use App\Services\ActivityLogger;
+use App\Services\TicketService;
 use Illuminate\Http\Request;
 
 class ReservationAdminController extends Controller
@@ -62,6 +64,8 @@ class ReservationAdminController extends Controller
 
             SeatLock::where('reservation_id', $reservation->id)->delete();
 
+            app(TicketService::class)->issueForReservation($reservation, 'cash', $request->user(), 'admin');
+
             return response()->json([
                 'status' => 'paid',
                 'reservation' => $reservation->load(['items', 'showtime.movie', 'showtime.auditorium']),
@@ -82,6 +86,14 @@ class ReservationAdminController extends Controller
             'handled_by_admin_id' => $request->user()->id,
         ]);
 
+        ActivityLogger::log(
+            'reservation.payment',
+            "Kártyás fizetés indítva: foglalás #{$reservation->id}",
+            $reservation,
+            ['method' => 'card', 'amount' => $reservation->total_amount],
+            subjectLabel: "Foglalás #{$reservation->id}"
+        );
+
         return response()->json([
             'status' => 'checkout',
             'checkout_url' => $demoCheckoutUrl,
@@ -92,13 +104,21 @@ class ReservationAdminController extends Controller
     public function export(Showtime $showtime, Request $request)
     {
         $format = $request->query('format', 'json');
-        
+
         $reservations = Reservation::where('showtime_id', $showtime->id)
             ->where('status', 'PAID')
             ->with(['items', 'showtime.movie', 'showtime.auditorium'])
             ->get();
 
         if ($format === 'csv') {
+            ActivityLogger::log(
+                'report.export_reservations',
+                'Foglalások exportálása (CSV): előadás #' . $showtime->id,
+                $showtime,
+                ['rows' => $reservations->count()],
+                subjectLabel: $showtime->movie?->title
+            );
+
             return $this->exportCSV($reservations, $showtime);
         }
 

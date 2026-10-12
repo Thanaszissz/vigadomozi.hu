@@ -1,0 +1,90 @@
+<div class="tickets-container">
+  <div class="header">
+    <h1>🧾 Eladott jegyek archívuma</h1>
+    <button (click)="goBack()" class="btn-back">← Vissza a dashboardra</button>
+  </div>
+
+  <div class="filters">
+    <label>
+      <span>Év</span>
+      <select [(ngModel)]="year" (ngModelChange)="changeYear()">
+        <option *ngFor="let y of years" [ngValue]="y">{{ y }}</option>
+        <option *ngIf="!years.includes(year)" [ngValue]="year">{{ year }}</option>
+      </select>
+    </label>
+    <label>
+      <span>Nap (eladás)</span>
+      <input type="date" [(ngModel)]="date" (ngModelChange)="load()" />
+    </label>
+    <label>
+      <span>Fizetés</span>
+      <select [(ngModel)]="paymentMethod" (ngModelChange)="load()">
+        <option value="">Mind</option>
+        <option value="cash">Készpénz</option>
+        <option value="card">Bankkártya</option>
+        <option value="stripe">Online</option>
+      </select>
+    </label>
+    <label class="grow">
+      <span>Keresés (jegyszám / film)</span>
+      <input type="text" [(ngModel)]="query" (keyup.enter)="load()" placeholder="pl. 2026-000123" />
+    </label>
+    <button type="button" class="btn" (click)="load()">Szűrés</button>
+    <button type="button" class="btn primary" (click)="exportCsv()" [disabled]="exporting">
+      {{ exporting ? 'Exportálás...' : '⬇ CSV export (' + year + ')' }}
+    </button>
+  </div>
+
+  <div *ngIf="error" class="alert">{{ error }}</div>
+
+  <div class="summary" *ngIf="result">
+    <div class="card"><span>Jegyek ({{ result.year }})</span><b>{{ result.summary.tickets | number:'1.0-0' }} db</b></div>
+    <div class="card"><span>Bevétel</span><b>{{ result.summary.amount | number:'1.0-0' }} Ft</b></div>
+    <div class="card"><span>Készpénz</span><b>{{ methodSummary('cash').tickets }} db • {{ methodSummary('cash').amount | number:'1.0-0' }} Ft</b></div>
+    <div class="card"><span>Bankkártya</span><b>{{ methodSummary('card').tickets }} db • {{ methodSummary('card').amount | number:'1.0-0' }} Ft</b></div>
+    <div class="card" *ngIf="methodSummary('stripe').tickets > 0"><span>Online</span><b>{{ methodSummary('stripe').tickets }} db • {{ methodSummary('stripe').amount | number:'1.0-0' }} Ft</b></div>
+  </div>
+
+  <div *ngIf="loading" class="muted">Betöltés...</div>
+
+  <div class="table-wrap" *ngIf="result && !loading">
+    <div *ngIf="result.tickets.data.length === 0" class="muted">Nincs a szűrésnek megfelelő jegy.</div>
+
+    <table *ngIf="result.tickets.data.length > 0">
+      <thead>
+        <tr>
+          <th>Jegyszám</th>
+          <th>Eladva</th>
+          <th>Film</th>
+          <th>Előadás</th>
+          <th>Sor / szék</th>
+          <th>Ár</th>
+          <th>Fizetés</th>
+          <th>Értékesítő</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let t of result.tickets.data">
+          <td class="num">{{ t.ticket_number }}</td>
+          <td>{{ t.sold_at | date:'yyyy.MM.dd. HH:mm' }}</td>
+          <td>{{ t.movie_title }}</td>
+          <td>{{ t.starts_at | date:'yyyy.MM.dd. HH:mm' }}</td>
+          <td>{{ t.row_label }} / {{ t.seat_number ?? '—' }}</td>
+          <td>{{ t.price_amount | number:'1.0-0' }} Ft</td>
+          <td><span class="badge" [class.cash]="t.payment_method === 'cash'" [class.card]="t.payment_method === 'card'">{{ paymentLabel(t.payment_method) }}</span></td>
+          <td>{{ t.sold_by_name || '—' }}</td>
+          <td><button type="button" class="btn small" (click)="print(t)">🖨️</button></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="pager" *ngIf="result.tickets.last_page > 1">
+      <button type="button" class="btn small" [disabled]="page <= 1" (click)="load(page - 1)">‹ Előző</button>
+      <span>{{ result.tickets.current_page }} / {{ result.tickets.last_page }}</span>
+      <button type="button" class="btn small" [disabled]="page >= result.tickets.last_page" (click)="load(page + 1)">Következő ›</button>
+    </div>
+  </div>
+
+  <app-ticket-print *ngIf="printTickets.length > 0" [tickets]="printTickets" (close)="closePrint()"></app-ticket-print>
+</div>

@@ -8,6 +8,10 @@ import { ReportsAdminComponent } from './components/reports/reports-admin.compon
 import { ShowtimesAdminComponent } from './components/showtimes/showtimes-admin.component';
 import { AuditoriaAdminComponent } from './components/auditoria/auditoria-admin.component';
 import { UsersAdminComponent } from './components/users/users-admin.component';
+import { PosAdminComponent } from './components/pos/pos-admin.component';
+import { TicketsAdminComponent } from './components/tickets/tickets-admin.component';
+import { DailyCloseAdminComponent } from './components/daily-close/daily-close-admin.component';
+import { ActivityLogAdminComponent } from './components/activity-log/activity-log-admin.component';
 import { AuthGuard } from '../../services/auth.guard';
 
 export const ADMIN_ROUTES: Routes = [
@@ -18,6 +22,26 @@ export const ADMIN_ROUTES: Routes = [
   {
     path: 'dashboard',
     component: AdminDashboardComponent,
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'pos',
+    component: PosAdminComponent,
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'tickets',
+    component: TicketsAdminComponent,
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'daily-close',
+    component: DailyCloseAdminComponent,
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'activity-log',
+    component: ActivityLogAdminComponent,
     canActivate: [AuthGuard]
   },
   {

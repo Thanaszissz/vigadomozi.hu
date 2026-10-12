@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Reservation;
 use App\Models\SeatLock;
 use App\Services\StripeService;
+use App\Services\TicketService;
 use App\Mail\ReservationConfirmedMail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
@@ -53,6 +54,8 @@ class WebhookController extends Controller
 
             // Remove seat locks (they're now locked via PAID status)
             SeatLock::where('reservation_id', $reservation->id)->delete();
+
+            app(TicketService::class)->issueForReservation($reservation, 'stripe', null, 'online');
 
             // Send confirmation email
             Mail::to($reservation->customer_email)->send(

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\User;
+use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
@@ -21,12 +22,23 @@ class AuthController
         $user = User::where('email', $credentials['email'])->first();
 
         if (!$user || !password_verify($credentials['password'], $user->password)) {
+            ActivityLogger::log(
+                'auth.login_failed',
+                'Sikertelen bejelentkezés: ' . $credentials['email'],
+                null,
+                ['reason' => $user ? 'hibás jelszó' : 'ismeretlen e-mail cím'],
+                user: null,
+                attemptedEmail: $credentials['email']
+            );
+
             throw ValidationException::withMessages([
                 'email' => ['A bejelentkezési adatok helytelenek.'],
             ]);
         }
 
         $token = $user->createToken('admin-token', ['admin:access'])->plainTextToken;
+
+        ActivityLogger::log('auth.login', 'Bejelentkezés', $user, user: $user, subjectLabel: $user->name);
 
         return response()->json([
             'user' => $user,
@@ -40,6 +52,8 @@ class AuthController
      */
     public function logout(Request $request)
     {
+        ActivityLogger::log('auth.logout', 'Kijelentkezés', $request->user(), user: $request->user(), subjectLabel: $request->user()?->name);
+
         $request->user()->currentAccessToken()->delete();
 
         return response()->json(['message' => 'Sikeresen kijelentkeztél.']);

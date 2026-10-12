@@ -13,6 +13,15 @@
     <h1>Üdvözöljük az Admin Panelben!</h1>
     <p class="subtitle">Jó {{greeting}}! 👋</p>
 
+    <div class="featured-card" role="button" tabindex="0" (click)="navigateTo('/admin/pos')" (keyup.enter)="navigateTo('/admin/pos')">
+      <div class="featured-icon">🎟️</div>
+      <div class="featured-text">
+        <h2>Helyszíni jegyeladás</h2>
+        <p>Előadás és székek kiválasztása, foglalások kifizetése készpénzzel vagy kártyával, jegynyomtatás.</p>
+      </div>
+      <span class="featured-action">Pénztár megnyitása →</span>
+    </div>
+
     <div class="dashboard-grid">
       <div class="dashboard-card">
         <h3>🎥 Filmek</h3>
@@ -39,8 +48,26 @@
       </div>
 
       <div class="dashboard-card">
+        <h3>🧾 Eladott jegyek</h3>
+        <p>Sorszámozott jegyek évenkénti archívuma, export</p>
+        <button (click)="navigateTo('/admin/tickets')" class="btn-card">Jegyarchívum</button>
+      </div>
+
+      <div class="dashboard-card">
+        <h3>🧮 Napi zárás</h3>
+        <p>Eladott jegyek eladónként, soronként, nyomtatható zárás és eladási napló</p>
+        <button (click)="navigateTo('/admin/daily-close')" class="btn-card">Napi zárás</button>
+      </div>
+
+      <div class="dashboard-card">
+        <h3>📜 Tevékenységnapló</h3>
+        <p>Ki, mikor, mit csinált: bejelentkezés, jegyeladás, terem-, film- és felhasználókezelés</p>
+        <button (click)="navigateTo('/admin/activity-log')" class="btn-card">Napló megnyitása</button>
+      </div>
+
+      <div class="dashboard-card">
         <h3>📊 Riportok</h3>
-        <p>Napi zárás és bevételi riportok</p>
+        <p>Bevételi riportok és összesítők</p>
         <button (click)="navigateTo('/admin/reports')" class="btn-card">Riportok</button>
       </div>
 

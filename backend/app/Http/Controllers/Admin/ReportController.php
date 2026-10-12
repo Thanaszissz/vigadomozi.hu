@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Reservation;
+use App\Services\ActivityLogger;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -12,6 +13,8 @@ class ReportController extends Controller
     public function dailyReport(Request $request)
     {
         $date = $request->query('date', now()->toDateString());
+
+        ActivityLogger::log('report.daily_report', "Napi riport megtekintése: {$date}", null, ['date' => $date]);
         
         $startDate = Carbon::parse($date)->startOfDay();
         $endDate = Carbon::parse($date)->endOfDay();
