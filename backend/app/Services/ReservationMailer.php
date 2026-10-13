@@ -108,6 +108,12 @@ class ReservationMailer
     /** @param array<int, array{name:string, data:string, mime:string}> $attachments */
     private function send(string $to, string $subject, string $html, string $text, array $attachments = []): void
     {
+        // A logó a levélbe beágyazva megy (nem külső képként), így a Gmail akkor is megjeleníti, ha a levél spam mappába kerül
+        $logo = $this->logoData();
+        if ($logo !== null) {
+            $html = str_replace($this->logoUrl(), 'cid:' . self::LOGO_CID, $html);
+        }
+
         $signer = $this->dkimSigner();
         if ($signer) {
             try {
@@ -118,6 +124,7 @@ class ReservationMailer
                     ->html($html)
                     ->text($text);
                 $this->applyHeaders($email);
+                $this->embedLogo($email, $logo);
                 foreach ($attachments as $a) {
                     $email->attach($a['data'], $a['name'], $a['mime']);
                 }
@@ -131,14 +138,36 @@ class ReservationMailer
             }
         }
 
-        Mail::html($html, function ($message) use ($to, $subject, $text, $attachments) {
+        Mail::html($html, function ($message) use ($to, $subject, $text, $attachments, $logo) {
             $message->to($to)->subject($subject);
             $message->text($text);
             $this->applyHeaders($message->getSymfonyMessage());
+            $this->embedLogo($message->getSymfonyMessage(), $logo);
             foreach ($attachments as $a) {
                 $message->attachData($a['data'], $a['name'], ['mime' => $a['mime']]);
             }
         });
+    }
+
+    private const LOGO_CID = 'vigado-logo';
+
+    private function logoUrl(): string
+    {
+        return rtrim((string) config('app.frontend_url'), '/') . '/assets/email-logo.png';
+    }
+
+    private function logoData(): ?string
+    {
+        $path = resource_path('mail/logo.png');
+
+        return is_file($path) ? (string) file_get_contents($path) : null;
+    }
+
+    private function embedLogo(Email $email, ?string $logo): void
+    {
+        if ($logo !== null) {
+            $email->embed($logo, self::LOGO_CID, 'image/png');
+        }
     }
 
     /**
