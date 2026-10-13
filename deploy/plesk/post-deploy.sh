@@ -9,7 +9,11 @@
 # A backend/.env nincs a repóban: a szerveren egyszer kell létrehozni (lásd: deploy/plesk/env.production.example).
 set -euo pipefail
 
-here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# A Plesk szűkített környezetben futtatja (nincs PATH), ezért az útvonalat itt állítjuk be.
+export PATH="/usr/local/bin:/usr/bin:/bin:/opt/plesk/php/8.3/bin:${PATH:-}"
+
+script_path="${BASH_SOURCE[0]}"
+here="$(cd "${script_path%/*}" && pwd)"
 root="$(cd "$here/../.." && pwd)"
 backend="$root/backend"
 
