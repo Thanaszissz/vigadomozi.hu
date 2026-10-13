@@ -64,6 +64,7 @@
               <div class="payment-actions" *ngIf="reservation.status === 'PENDING'">
                 <button class="btn-pay btn-card" type="button" (click)="startCardPayment(reservation)">Kártya</button>
                 <button class="btn-pay btn-cash" type="button" (click)="markPaidCash(reservation)">Készpénz</button>
+                <button class="btn-pay btn-delete" type="button" (click)="askDelete(reservation)">Törlés</button>
               </div>
               <div *ngIf="reservation.status !== 'PENDING'" class="paid-info">
                 <span>
@@ -88,6 +89,23 @@
       <div class="modal-actions">
         <button class="btn-pay btn-card" type="button" (click)="confirmCashPayment()">Igen</button>
         <button class="btn-pay btn-cash" type="button" (click)="closeCashConfirm()">Mégsem</button>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="deleteConfirmOpen" class="modal-backdrop" (click)="closeDeleteConfirm()"></div>
+  <div *ngIf="deleteConfirmOpen" class="modal" role="dialog" aria-modal="true" (click)="closeDeleteConfirm()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <h3>Foglalás törlése</h3>
+      <p>
+        Biztosan törlöd a(z) #{{ pendingDeleteReservation?.id }} foglalást
+        ({{ pendingDeleteReservation?.customer_name || 'N/A' }}, {{ pendingDeleteReservation?.items?.length || 0 }} ülés)?
+        A székek újra szabadok lesznek.
+      </p>
+      <div *ngIf="deleteError" class="modal-error">{{ deleteError }}</div>
+      <div class="modal-actions">
+        <button class="btn-pay btn-delete" type="button" [disabled]="deleting" (click)="confirmDelete()">Igen, törlöm</button>
+        <button class="btn-pay btn-cash" type="button" [disabled]="deleting" (click)="closeDeleteConfirm()">Mégsem</button>
       </div>
     </div>
   </div>

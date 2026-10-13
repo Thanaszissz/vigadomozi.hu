@@ -435,6 +435,10 @@ export class AdminService {
     return this.http.post<any>(`${this.apiUrl}/reservations/${reservationId}/start-payment`, { method });
   }
 
+  deleteReservation(reservationId: number): Observable<any> {
+    return this.http.delete<any>(`${this.apiUrl}/reservations/${reservationId}`);
+  }
+
   // Reports
   getDailyReport(date: string): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/reports/daily?date=${date}`);

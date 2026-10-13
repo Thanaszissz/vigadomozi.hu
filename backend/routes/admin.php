@@ -46,6 +46,7 @@ Route::middleware('permission:reservations.manage')->group(function () {
     Route::get('reservations', [ReservationAdminController::class, 'index']);
     Route::get('reservations/grouped', [ReservationAdminController::class, 'grouped']);
     Route::post('reservations/{reservation}/start-payment', [ReservationAdminController::class, 'startPayment']);
+    Route::delete('reservations/{reservation}', [ReservationAdminController::class, 'destroy']);
     Route::get('showtimes/{showtime}/reservations', [ReservationAdminController::class, 'index']);
 });
 

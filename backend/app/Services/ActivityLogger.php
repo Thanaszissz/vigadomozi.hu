@@ -34,6 +34,7 @@ class ActivityLogger
         'ticket.print' => ['ticket', 'Jegynyomtatás'],
 
         'reservation.created' => ['reservation', 'Helyszíni foglalás rögzítése'],
+        'reservation.cancelled' => ['reservation', 'Foglalás törlése'],
         'reservation.payment' => ['reservation', 'Foglalás kifizetése'],
         'reservation.payment_conflict' => ['reservation', 'Fizetési ütközés (visszatérítés szükséges)'],
 

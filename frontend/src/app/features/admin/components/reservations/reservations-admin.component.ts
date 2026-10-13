@@ -18,6 +18,10 @@ export class ReservationsAdminComponent implements OnInit {
   cashConfirmOpen = false;
   pendingCashReservation: any | null = null;
   cashPaymentError: string | null = null;
+  deleteConfirmOpen = false;
+  pendingDeleteReservation: any | null = null;
+  deleteError: string | null = null;
+  deleting = false;
 
   constructor(
     private adminService: AdminService,
@@ -110,6 +114,45 @@ export class ReservationsAdminComponent implements OnInit {
     this.cashConfirmOpen = false;
     this.pendingCashReservation = null;
     this.cashPaymentError = null;
+  }
+
+  askDelete(reservation: any): void {
+    if (!reservation || reservation.status !== 'PENDING') {
+      return;
+    }
+    this.pendingDeleteReservation = reservation;
+    this.deleteError = null;
+    this.deleteConfirmOpen = true;
+  }
+
+  confirmDelete(): void {
+    const reservation = this.pendingDeleteReservation;
+    if (!reservation || this.deleting) {
+      return;
+    }
+
+    this.deleting = true;
+    this.adminService.deleteReservation(reservation.id).subscribe({
+      next: (result) => {
+        reservation.status = result?.status ?? 'CANCELLED';
+        this.deleting = false;
+        this.closeDeleteConfirm();
+      },
+      error: (err) => {
+        this.deleteError = err?.error?.message || 'A foglalás törlése sikertelen.';
+        this.deleting = false;
+        console.error('Error deleting reservation:', err);
+      }
+    });
+  }
+
+  closeDeleteConfirm(): void {
+    if (this.deleting) {
+      return;
+    }
+    this.deleteConfirmOpen = false;
+    this.pendingDeleteReservation = null;
+    this.deleteError = null;
   }
 
   printReceipt(reservation: any): void {

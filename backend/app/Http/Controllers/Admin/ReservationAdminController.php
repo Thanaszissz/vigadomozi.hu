@@ -7,7 +7,9 @@ use App\Http\Controllers\Controller;
 use App\Models\Reservation;
 use App\Models\Showtime;
 use App\Services\ActivityLogger;
+use App\Models\SeatLock;
 use App\Services\SeatClaimService;
+use App\Services\SimplePayService;
 use App\Services\TicketService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -108,6 +110,47 @@ class ReservationAdminController extends Controller
             'checkout_url' => $demoCheckoutUrl,
             'reservation_id' => $reservation->id,
         ], 200);
+    }
+
+    /**
+     * Függő (ki nem fizetett) foglalás törlése: a foglalás lemondott lesz, a székek felszabadulnak.
+     * Kifizetett foglalás nem törölhető, mert már sorszámozott jegyek tartoznak hozzá.
+     */
+    public function destroy(Reservation $reservation, Request $request)
+    {
+        $result = DB::transaction(function () use ($reservation, $request) {
+            $locked = Reservation::whereKey($reservation->id)->lockForUpdate()->first();
+
+            if (!$locked || $locked->status !== 'PENDING') {
+                return ['message' => 'Csak függő (ki nem fizetett) foglalás törölhető.', 'status' => 409];
+            }
+
+            if ($locked->payment_provider === SimplePayService::PROVIDER) {
+                return ['message' => 'Az online fizetés alatt álló foglalás nem törölhető.', 'status' => 409];
+            }
+
+            $seats = $locked->items()->pluck('seat_key')->all();
+
+            $locked->update(['status' => 'CANCELLED', 'expires_at' => null]);
+            SeatLock::where('reservation_id', $locked->id)->delete();
+
+            ActivityLogger::log(
+                'reservation.cancelled',
+                sprintf('Foglalás törölve: #%d, %s, %d szék (%s)', $locked->id, $locked->customer_name ?? 'N/A', count($seats), implode(', ', $seats)),
+                $locked,
+                ['seats' => $seats, 'amount' => $locked->total_amount, 'showtime_id' => $locked->showtime_id],
+                $request->user(),
+                "Foglalás #{$locked->id}"
+            );
+
+            return ['reservation' => $locked->load(['items', 'showtime.movie', 'showtime.auditorium'])];
+        });
+
+        if (isset($result['message'])) {
+            return response()->json(['message' => $result['message']], $result['status']);
+        }
+
+        return response()->json($result['reservation']);
     }
 
     public function export(Showtime $showtime, Request $request)

@@ -203,6 +203,16 @@ h1 {
   color: #2c1810;
 }
 
+.btn-delete {
+  background: #c0392b;
+  color: #ffffff;
+}
+
+.btn-delete:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
 .modal-backdrop {
   position: fixed;
   inset: 0;
