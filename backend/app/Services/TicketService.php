@@ -28,9 +28,9 @@ class TicketService
         string $channel = 'pos'
     ): Collection {
         return DB::transaction(function () use ($reservation, $paymentMethod, $seller, $channel) {
-            $existing = Ticket::where('reservation_id', $reservation->id)->orderBy('id')->get();
+            $existing = Ticket::withoutGlobalScopes()->where('reservation_id', $reservation->id)->orderBy('id')->get();
             if ($existing->isNotEmpty()) {
-                return $existing;
+                return $existing->whereNull('voided_at')->values();
             }
 
             $reservation->loadMissing('items', 'showtime.movie', 'showtime.auditorium');

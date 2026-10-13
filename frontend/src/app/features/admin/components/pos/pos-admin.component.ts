@@ -12,7 +12,7 @@ interface DayTab {
   showtimes: Showtime[];
 }
 
-type SaleMode = 'seats' | 'reservations';
+type SaleMode = 'seats' | 'reservations' | 'void';
 
 @Component({
   selector: 'app-pos-admin',
@@ -125,6 +125,7 @@ export class PosAdminComponent implements OnInit {
     // A korábbi előadás termét és székeit azonnal eltávolítjuk, hogy ne maradjon félrevezető adat
     this.showtime = null;
     this.pendingReservations = [];
+    this.soldList = [];
     this.requestedShowtimeId = showtime.id;
     this.loadShowtime(showtime.id);
   }
@@ -144,6 +145,7 @@ export class PosAdminComponent implements OnInit {
         this.selectedSeats = this.selectedSeats.filter(sel => this.findSeat(sel.key)?.status === 'available');
         this.loadingShowtime = false;
         this.loadPendingReservations();
+        this.loadSoldTickets();
       },
       error: () => {
         if (this.requestedShowtimeId !== id) return;
@@ -260,6 +262,61 @@ export class PosAdminComponent implements OnInit {
     this.soldTickets = [];
     this.cancelEdit();
     this.resetPayment();
+  }
+
+  // ---- Sztornó ----
+
+  soldList: Array<Ticket & { voidable: boolean }> = [];
+  voidTarget: (Ticket & { voidable: boolean }) | null = null;
+  voidReason = '';
+  voidError: string | null = null;
+
+  private loadSoldTickets(): void {
+    if (!this.showtime) return;
+
+    const showtimeId = this.showtime.id;
+    this.admin.posShowtimeTickets(showtimeId).subscribe({
+      next: (tickets) => {
+        if (this.showtime?.id === showtimeId) this.soldList = tickets;
+      },
+      error: () => { this.soldList = []; }
+    });
+  }
+
+  askVoid(ticket: Ticket & { voidable: boolean }): void {
+    this.voidTarget = ticket;
+    this.voidReason = '';
+    this.voidError = null;
+    this.heldNotice = null;
+    this.error = null;
+  }
+
+  closeVoid(): void {
+    if (this.processing) return;
+    this.voidTarget = null;
+  }
+
+  confirmVoid(): void {
+    const ticket = this.voidTarget;
+    if (!ticket || this.processing) return;
+
+    this.processing = true;
+    this.voidError = null;
+
+    this.admin.posVoidTicket(ticket.id, this.voidReason.trim() || undefined).subscribe({
+      next: (result) => {
+        this.processing = false;
+        this.voidTarget = null;
+        this.heldNotice = `↩️ A(z) ${ticket.ticket_number} jegy sztornózva, a(z) ${ticket.seat_key} szék újra szabad.`
+          + (result.nav_correction_needed ? ' Figyelem: erre a napra már volt NAV-beküldés, ezért helyesbítést kell beküldeni.' : '');
+        this.refresh();
+      },
+      error: (err) => {
+        this.processing = false;
+        this.voidError = err?.error?.message || 'A sztornózás sikertelen. Próbálja újra.';
+        if (err?.status === 409) this.refresh();
+      }
+    });
   }
 
   // ---- Foglalás módosítása / törlése ----

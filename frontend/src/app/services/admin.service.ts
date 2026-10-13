@@ -477,6 +477,14 @@ export class AdminService {
     return this.http.put<{ reservation: any; tickets: Ticket[] }>(`${this.apiUrl}/pos/reservations/${reservationId}`, payload);
   }
 
+  posVoidTicket(ticketId: number, reason?: string): Observable<{ voided: string; nav_correction_needed: boolean }> {
+    return this.http.post<{ voided: string; nav_correction_needed: boolean }>(`${this.apiUrl}/pos/tickets/${ticketId}/void`, { reason });
+  }
+
+  posShowtimeTickets(showtimeId: number): Observable<Array<Ticket & { voidable: boolean }>> {
+    return this.http.get<Array<Ticket & { voidable: boolean }>>(`${this.apiUrl}/pos/showtimes/${showtimeId}/tickets`);
+  }
+
   posDeleteReservation(reservationId: number): Observable<any> {
     return this.http.delete<any>(`${this.apiUrl}/pos/reservations/${reservationId}`);
   }

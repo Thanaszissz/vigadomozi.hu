@@ -67,7 +67,7 @@ class TicketNumberingService
 
     public function maxIssued(string $prefix): int
     {
-        return (int) Ticket::where('ticket_prefix', $prefix)->max('ticket_seq');
+        return (int) Ticket::withoutGlobalScopes()->where('ticket_prefix', $prefix)->max('ticket_seq');
     }
 
     public function counterOf(string $prefix): int
@@ -86,10 +86,10 @@ class TicketNumberingService
         $prefix = $this->currentPrefix();
         $last = $this->lastNumber($prefix);
 
-        $latest = Ticket::orderByDesc('id')->first();
-        $previous = Ticket::where('ticket_prefix', '!=', $prefix)->orderByDesc('id')->first();
+        $latest = Ticket::withoutGlobalScopes()->orderByDesc('id')->first();
+        $previous = Ticket::withoutGlobalScopes()->where('ticket_prefix', '!=', $prefix)->orderByDesc('id')->first();
 
-        $stats = Ticket::query()
+        $stats = Ticket::withoutGlobalScopes()
             ->selectRaw('ticket_prefix, count(*) as tickets, max(ticket_seq) as max_seq, max(sold_at) as last_sold_at')
             ->groupBy('ticket_prefix')
             ->get()

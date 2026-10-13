@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\UserAdminController;
 use App\Http\Controllers\Admin\TheaterShowAdminController;
 use App\Http\Controllers\Admin\PosController;
 use App\Http\Controllers\Admin\TicketAdminController;
+use App\Http\Controllers\Admin\TicketVoidController;
 use App\Http\Controllers\Admin\ActivityLogController;
 use App\Http\Controllers\Admin\EmailTemplateController;
 use App\Http\Controllers\Admin\SettingsController;
@@ -63,7 +64,13 @@ Route::middleware('permission:pos.sell')->group(function () {
     Route::post('pos/reservations/{reservation}/pay', [PosController::class, 'payReservation']);
     Route::put('pos/reservations/{reservation}', [PosController::class, 'updateReservation']);
     Route::delete('pos/reservations/{reservation}', [ReservationAdminController::class, 'destroy']);
+    Route::get('pos/showtimes/{showtime}/tickets', [TicketVoidController::class, 'index']);
     Route::get('pos/reservations/{reservation}/tickets', [PosController::class, 'reservationTickets']);
+});
+
+// Eladott jegy sztornózása (pénztáros, vezető, adminisztrátor)
+Route::middleware('permission:tickets.void')->group(function () {
+    Route::post('pos/tickets/{ticket}/void', [TicketVoidController::class, 'void'])->whereNumber('ticket');
 });
 
 // Beállítások: jegyszámozás (csak adminisztrátor; a módosítás jelszóval és kétlépcsős megerősítéssel védett)

@@ -19,6 +19,7 @@ final class Roles
 
     public const PERMISSIONS = [
         'pos.sell' => 'Helyszíni jegyeladás',
+        'tickets.void' => 'Eladott jegy sztornózása',
         'reservations.manage' => 'Foglalások kezelése és kifizetése',
         'daily_close.view' => 'Napi zárás (a saját eladásokról)',
         'daily_close.all' => 'Napi zárás (minden eladóról)',
@@ -31,7 +32,7 @@ final class Roles
         'activity.view' => 'Tevékenységnapló megtekintése',
     ];
 
-    private const CASHIER_PERMISSIONS = ['pos.sell', 'reservations.manage', 'daily_close.view'];
+    private const CASHIER_PERMISSIONS = ['pos.sell', 'tickets.void', 'reservations.manage', 'daily_close.view'];
 
     private const MANAGER_EXTRA = ['daily_close.all', 'catalog.manage', 'tickets.archive', 'reports.view', 'email.manage'];
 
