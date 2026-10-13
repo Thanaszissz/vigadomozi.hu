@@ -59,7 +59,8 @@ HTML,
             'subject' => 'Jegyei – {{film}} ({{idopont}})',
             'body' => <<<'HTML'
 <p>Kedves {{nev}}!</p>
-<p>Köszönjük a vásárlást! A bankkártyás fizetés sikeres volt, az alábbiakban találja a jegyeit. Az előadásra a jegyszám megmutatásával (kinyomtatva vagy telefonon) léphet be.</p>
+<p>Köszönjük a vásárlást! A bankkártyás fizetés sikeres volt. A jegyeit PDF-ben csatoltuk a levélhez: nyomtassa ki, vagy mutassa meg telefonon az előadás előtt.</p>
+<p>A jegyek:</p>
 {{jegyek}}
 <p>Fizetett összeg: <b>{{osszeg}}</b> ({{fizetesi_mod}})</p>
 <p>Jó szórakozást kívánunk!<br>{{mozi_neve}}</p>
@@ -233,61 +234,22 @@ HTML;
         return new HtmlString($html . '</table>');
     }
 
-    /** @param Collection<int, mixed> $tickets Ticket modellek vagy tömbök */
+    /**
+     * A jegyek tömör felsorolása a levél szövegében (a jegyek maguk a csatolt PDF-ben vannak).
+     *
+     * @param Collection<int, mixed> $tickets Ticket modellek vagy tömbök
+     */
     private function ticketCards(Collection $tickets): string
     {
-        $cards = '';
+        $rows = '';
         foreach ($tickets as $t) {
             $get = fn(string $k) => data_get($t, $k);
-            $when = $get('starts_at');
-            $when = is_string($when) ? $when : $this->formatTime($when);
-            $title = (string) $get('movie_title');
             $seat = (string) ($get('seat_number') ?? '—');
-            $hall = (string) ($get('auditorium_name') ?: '—');
-            $row = (string) $get('row_label');
-            $money = $this->money((int) $get('price_amount'));
-            $len = mb_strlen($title);
-            $titleSize = $len <= 20 ? 24 : ($len <= 30 ? 20 : ($len <= 44 ? 16 : 14));
-
-            $serif = "font-family:Georgia,'Times New Roman',serif;color:#111111;";
-            $fact = fn(string $label, string $value, int $w) => '<td width="' . $w . '" align="center" valign="top" style="width:' . $w . 'px;' . $serif . '"><div style="font-family:Arial,Helvetica,sans-serif;font-size:8px;letter-spacing:1px;text-transform:uppercase;color:#555555;line-height:11px;">' . e($label) . '</div><div style="font-size:16px;font-weight:700;line-height:20px;">' . e($value) . '</div></td>';
-
-            // A 210 x 100 mm-es jegysablon (ticket-base.png) a háttér, a szöveg a sablon üres részeire kerül
-            $main = '<table role="presentation" width="414" cellpadding="0" cellspacing="0" style="width:414px;">'
-                . '<tr><td height="89" style="height:89px;line-height:89px;font-size:1px;">&nbsp;</td></tr>'
-                . '<tr><td height="40" align="center" valign="middle" style="height:40px;font-size:' . $titleSize . 'px;font-weight:700;line-height:1.1;' . $serif . '">' . e($title) . '</td></tr>'
-                . '<tr><td height="24" align="center" valign="middle" style="height:24px;font-size:15px;' . $serif . '">' . e((string) $when) . '</td></tr>'
-                . '<tr><td><table role="presentation" cellpadding="0" cellspacing="0" style="margin-left:25px;"><tr>'
-                . $fact('Terem', $hall, 80) . $fact('Sor', $row, 75)
-                . '<td width="62" style="width:62px;font-size:1px;">&nbsp;</td>'
-                . $fact('Szék', $seat, 75) . $fact('Ár', $money, 80)
-                . '</tr></table></td></tr></table>';
-
-            $stub = '<table role="presentation" width="134" cellpadding="0" cellspacing="0" style="width:134px;">'
-                . '<tr><td height="122" style="height:122px;line-height:122px;font-size:1px;">&nbsp;</td></tr>'
-                . '<tr><td align="center" style="' . $serif . '">'
-                . '<div style="font-size:11px;font-weight:700;line-height:12px;max-height:24px;overflow:hidden;">' . e($title) . '</div>'
-                . '<div style="font-size:10px;line-height:13px;margin-top:2px;">' . e((string) $when) . '</div>'
-                . '<div style="font-size:10px;line-height:13px;">' . e($hall) . ' • <b>' . e($row) . '. sor ' . e($seat) . '. szék</b></div>'
-                . '<div style="font-size:11px;font-weight:700;letter-spacing:.5px;font-family:\'Courier New\',monospace;margin-top:4px;">' . e((string) $get('ticket_number')) . '</div>'
-                . '<div style="font-size:11px;font-weight:700;margin-top:1px;">' . e($money) . '</div>'
-                . '</td></tr></table>';
-
-            $image = $this->ticketBaseUrl();
-            $cards .= '<table role="presentation" width="552" cellpadding="0" cellspacing="0" style="width:552px;max-width:100%;margin:0 0 14px;"><tr>'
-                . '<td width="552" height="263" valign="top" background="' . e($image) . '" bgcolor="#ffffff" style="width:552px;height:263px;background:#ffffff url(\'' . e($image) . '\') no-repeat 0 0;background-size:552px 263px;">'
-                . '<table role="presentation" width="552" cellpadding="0" cellspacing="0" style="width:552px;"><tr>'
-                . '<td width="414" valign="top" style="width:414px;">' . $main . '</td>'
-                . '<td width="138" valign="top" style="width:138px;padding-left:4px;">' . $stub . '</td>'
-                . '</tr></table></td></tr></table>';
+            $rows .= '<tr><td style="padding:6px 0;"><span style="font-family:\'Courier New\',monospace;font-weight:700;">' . e((string) $get('ticket_number')) . '</span> – '
+                . e((string) $get('row_label')) . '. sor ' . e($seat) . '. szék</td></tr>';
         }
 
-        return $cards;
-    }
-
-    private function ticketBaseUrl(): string
-    {
-        return rtrim((string) (config('app.frontend_url') ?: config('app.url')), '/') . '/assets/ticket-base.png';
+        return '<table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:12px 0;font-family:Arial,Helvetica,sans-serif;font-size:15px;">' . $rows . '</table>';
     }
 
     private function formatTime($value): string

@@ -60,7 +60,7 @@ class ReservationMailer
                 $this->templates->variablesFor($reservation, $tickets)
             );
 
-            $this->send($to, $subject, $html, $text);
+            $this->send($to, $subject, $html, $text, $this->ticketAttachments($key, $reservation, $tickets));
 
             ActivityLogger::log(
                 'email.sent',
@@ -84,7 +84,29 @@ class ReservationMailer
         }
     }
 
-    private function send(string $to, string $subject, string $html, string $text): void
+    /** @return array<int, array{name:string, data:string, mime:string}> */
+    private function ticketAttachments(string $key, Reservation $reservation, ?Collection $tickets): array
+    {
+        if ($key !== 'tickets_paid' || !$tickets || $tickets->isEmpty()) {
+            return [];
+        }
+
+        try {
+            return [[
+                'name' => 'vigado-mozi-jegyek-' . $reservation->id . '.pdf',
+                'data' => app(TicketPdfService::class)->render($tickets),
+                'mime' => 'application/pdf',
+            ]];
+        } catch (\Throwable $e) {
+            // A jegyszámok a levél szövegében is benne vannak, ezért a levél PDF nélkül is kimegy
+            Log::error('A jegyek PDF-je nem készült el: ' . $e->getMessage());
+
+            return [];
+        }
+    }
+
+    /** @param array<int, array{name:string, data:string, mime:string}> $attachments */
+    private function send(string $to, string $subject, string $html, string $text, array $attachments = []): void
     {
         $signer = $this->dkimSigner();
         if ($signer) {
@@ -95,6 +117,9 @@ class ReservationMailer
                     ->subject($subject)
                     ->html($html)
                     ->text($text);
+                foreach ($attachments as $a) {
+                    $email->attach($a['data'], $a['name'], $a['mime']);
+                }
 
                 Mail::mailer()->getSymfonyTransport()->send($signer->sign($email));
 
@@ -105,9 +130,12 @@ class ReservationMailer
             }
         }
 
-        Mail::html($html, function ($message) use ($to, $subject, $text) {
+        Mail::html($html, function ($message) use ($to, $subject, $text, $attachments) {
             $message->to($to)->subject($subject);
             $message->text($text);
+            foreach ($attachments as $a) {
+                $message->attachData($a['data'], $a['name'], ['mime' => $a['mime']]);
+            }
         });
     }
 
