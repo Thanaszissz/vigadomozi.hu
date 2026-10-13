@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ApiService, Reservation } from '../../core/api/api.service';
@@ -10,7 +10,7 @@ import { ApiService, Reservation } from '../../core/api/api.service';
   templateUrl: './checkout.component.html',
   styleUrls: ['./checkout.component.css']
 })
-export class CheckoutComponent implements OnInit {
+export class CheckoutComponent implements OnInit, OnDestroy {
   reservation: Reservation | null = null;
   loading = false;
   error: string | null = null;
@@ -19,12 +19,36 @@ export class CheckoutComponent implements OnInit {
   isProcessingPayment = false;
   paymentError: string | null = null;
   paymentNotice: string | null = null;
+  remaining = '';
+  remainingSeconds: number | null = null;
+  private timer: ReturnType<typeof setInterval> | null = null;
 
   constructor(
     private apiService: ApiService,
     private route: ActivatedRoute,
     private router: Router
   ) {}
+
+  ngOnDestroy() {
+    if (this.timer) clearInterval(this.timer);
+  }
+
+  private startCountdown() {
+    if (this.timer) clearInterval(this.timer);
+    const tick = () => {
+      const expires = this.reservation?.expires_at ? new Date(this.reservation.expires_at).getTime() : NaN;
+      if (isNaN(expires)) {
+        this.remaining = '';
+        this.remainingSeconds = null;
+        return;
+      }
+      const s = Math.max(0, Math.floor((expires - Date.now()) / 1000));
+      this.remainingSeconds = s;
+      this.remaining = s > 0 ? `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}` : '';
+    };
+    tick();
+    this.timer = setInterval(tick, 1000);
+  }
 
   ngOnInit() {
     this.route.params.subscribe(params => {
@@ -51,6 +75,7 @@ export class CheckoutComponent implements OnInit {
       next: (data) => {
         this.reservation = data;
         this.loading = false;
+        this.startCountdown();
       },
       error: (err) => {
         this.error = 'Foglalás betöltése sikertelen.';

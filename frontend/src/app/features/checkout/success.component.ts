@@ -90,7 +90,7 @@ export class SuccessComponent implements OnInit {
       let pdf: InstanceType<typeof jsPDF> | null = null;
       const nodes = Array.from(host.querySelectorAll<HTMLElement>('.dl-ticket'));
       for (const node of nodes) {
-        const canvas = await html2canvas(node, { scale: 2, backgroundColor: '#ffffff' });
+        const canvas = await html2canvas(node, { scale: 3, backgroundColor: '#ffffff' });
         const h = (canvas.height / canvas.width) * (pageW - 10);
         const format: [number, number] = [pageW, h + 10];
         if (!pdf) {
@@ -98,7 +98,7 @@ export class SuccessComponent implements OnInit {
         } else {
           pdf.addPage(format);
         }
-        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 5, 5, pageW - 10, h);
+        pdf.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', 5, 5, pageW - 10, h, undefined, 'FAST');
       }
 
       pdf?.save(`vigado-mozi-jegyek-${this.reservationId}.pdf`);
