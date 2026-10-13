@@ -6,10 +6,20 @@ DirectoryIndex index.html
 <IfModule mod_rewrite.c>
     RewriteEngine On
 
-    # Létező fájlok és könyvtárak közvetlenül, minden más az Angular alkalmazásé
+    # A sitemap dinamikusan készül (a műsoron lévő filmekből)
+    RewriteRule ^sitemap\.xml$ sitemap.php [L]
+
+    # Létező fájlok és könyvtárak közvetlenül
     RewriteCond %{REQUEST_FILENAME} -f [OR]
     RewriteCond %{REQUEST_FILENAME} -d
     RewriteRule ^ - [L]
+
+    # Közösségi megosztás előnézete (Facebook, Messenger, WhatsApp, X, LinkedIn, Viber, Telegram...): ezek a robotok
+    # nem futtatnak JavaScriptet, ezért oldalanként saját cím/leírás/kép kerül nekik (share.php)
+    RewriteCond %{HTTP_USER_AGENT} (facebookexternalhit|facebot|meta-externalagent|twitterbot|linkedinbot|whatsapp|telegrambot|slackbot|discordbot|pinterest|skypeuripreview|viber|redditbot|embedly|vkshare|applebot) [NC]
+    RewriteRule ^(.*)$ share.php?path=/$1 [L]
+
+    # Minden más az Angular alkalmazásé
     RewriteRule ^ index.html [L]
 </IfModule>
 

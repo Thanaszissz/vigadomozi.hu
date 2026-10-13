@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { NavigationEnd, Router, RouterOutlet, RouterLink } from '@angular/router';
 import { SiteHeaderComponent } from './shared/site-header.component';
 import { SiteFooterComponent } from './shared/site-footer.component';
+import { SeoService } from './core/seo/seo.service';
+import { seoForPath } from './core/seo/seo-routes';
 
 @Component({
   selector: 'app-root',
@@ -38,12 +40,17 @@ export class AppComponent {
   title = 'Jegyfoglalási Rendszer';
   showHeader = true;
 
-  constructor(router: Router) {
+  constructor(router: Router, private seo: SeoService) {
     this.showHeader = !router.url.startsWith('/admin');
     router.events.subscribe(event => {
       if (event instanceof NavigationEnd) {
         this.showHeader = !event.urlAfterRedirects.startsWith('/admin');
+        this.updateSeo(event.urlAfterRedirects);
       }
     });
+  }
+
+  private updateSeo(url: string): void {
+    this.seo.update(url, seoForPath(url));
   }
 }

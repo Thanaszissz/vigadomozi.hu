@@ -1,0 +1,7 @@
+User-agent: *
+Disallow: /admin
+Disallow: /checkout/
+Disallow: /hold-summary/
+Disallow: /success/
+
+Sitemap: https://vigadomozi.hu/sitemap.xml

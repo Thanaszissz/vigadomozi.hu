@@ -3,6 +3,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ApiService, Movie, Showtime } from '../../core/api/api.service';
+import { SeoService } from '../../core/seo/seo.service';
 
 @Component({
   selector: 'app-movie-detail',
@@ -36,7 +37,8 @@ export class MovieDetailComponent implements OnInit, OnDestroy {
   constructor(
     private apiService: ApiService,
     private route: ActivatedRoute,
-    private sanitizer: DomSanitizer
+    private sanitizer: DomSanitizer,
+    private seo: SeoService
   ) {}
 
   ngOnInit() {
@@ -129,6 +131,7 @@ export class MovieDetailComponent implements OnInit, OnDestroy {
     this.apiService.getMovieById(this.movieId).subscribe({
       next: (data) => {
         this.movie = data;
+        this.seo.setMovie(data, this.showtimes);
         this.trailerEmbedUrl = data.trailer_youtube_url
           ? this.getYouTubeEmbedUrl(data.trailer_youtube_url)
           : null;
@@ -146,6 +149,9 @@ export class MovieDetailComponent implements OnInit, OnDestroy {
     this.apiService.getShowtimes({ movie_id: this.movieId }).subscribe({
       next: (data) => {
         this.showtimes = data;
+        if (this.movie && this.movie.id === this.movieId) {
+          this.seo.setMovie(this.movie, data);
+        }
       },
       error: (err) => {
         console.error('Showtimes betöltése sikertelen:', err);

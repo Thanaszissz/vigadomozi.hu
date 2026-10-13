@@ -20,6 +20,8 @@
             "assets": [
               "src/favicon.ico",
               "src/assets",
+              "src/robots.txt",
+              { "glob": "*.php", "input": "src", "output": "/" },
               { "glob": ".htaccess", "input": "src", "output": "/" }
             ],
             "styles": ["src/styles.css"],

@@ -2,5 +2,6 @@
 // Ugyanazon a domainen futó telepítéshez a "same-origin" konfiguráció (environment.same-origin.ts) használható.
 export const environment = {
   production: true,
-  apiUrl: 'https://api.vigadomozi.hu/api'
+  apiUrl: 'https://api.vigadomozi.hu/api',
+  siteUrl: 'https://vigadomozi.hu'
 };
