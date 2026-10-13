@@ -94,14 +94,16 @@ class MailCheck extends Command
         $record = collect($this->txt("{$selector}._domainkey.{$cfg['domain']}"))->first(fn($r) => str_contains($r, 'v=DKIM1'));
 
         if (!$record) {
-            $this->bad("DKIM: nincs {$selector}._domainkey.{$cfg['domain']} TXT rekord a DNS-ben (vagy még nem terjedt el).");
+            $this->bad("DKIM: nincs {$selector}._domainkey.{$cfg['domain']} TXT rekord a DNS-ben (vagy még nem terjedt el). Add hozzá:");
+            $this->line("       Név:   {$selector}._domainkey.{$cfg['domain']}");
+            $this->line("       Érték: v=DKIM1; k=rsa; p={$publicB64}");
 
             return false;
         }
 
         $dnsKey = preg_replace('/\s+/', '', (string) (preg_match('/p=([A-Za-z0-9+\/=]+)/', str_replace(['" "', '"'], '', $record), $m) ? $m[1] : ''));
         if ($dnsKey !== $publicB64) {
-            $this->bad("DKIM: a DNS-ben lévő publikus kulcs NEM egyezik a MAIL_DKIM_PRIVATE_KEY kulccsal ({$selector}).");
+            $this->bad("DKIM: a DNS-ben lévő publikus kulcs NEM egyezik a MAIL_DKIM_PRIVATE_KEY kulccsal ({$selector}). A helyes érték: v=DKIM1; k=rsa; p={$publicB64}");
 
             return false;
         }
