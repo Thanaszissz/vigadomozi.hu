@@ -58,7 +58,8 @@ if [[ "$env_content" != *$'\nAPP_KEY=base64:'* ]]; then
 fi
 
 echo "== migrációk"
-"$php_bin" artisan migrate --force
+# a jailben nincs MySQL unix socket, ezért itt TCP-n kapcsolódunk (csak erre a parancsra érvényes)
+DB_HOST=127.0.0.1 "$php_bin" artisan migrate --force
 
 echo "== gyorsítótárak újraépítése"
 "$php_bin" artisan config:clear
