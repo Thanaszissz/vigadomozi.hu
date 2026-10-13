@@ -61,11 +61,12 @@ echo "== migrációk"
 # a jailben nincs MySQL unix socket, ezért itt TCP-n kapcsolódunk (csak erre a parancsra érvényes)
 DB_HOST=127.0.0.1 "$php_bin" artisan migrate --force
 
-echo "== gyorsítótárak újraépítése"
+echo "== gyorsítótárak törlése"
+# A jailben a cache-ek jail-relatív (/httpdocs/...) útvonalakat tartalmaznának, amik a webszerveren hibásak,
+# ezért itt csak törlünk (a storage:link-et is egyszer, a Laravel Toolkit Artisan felületén kell futtatni).
 "$php_bin" artisan config:clear
-"$php_bin" artisan config:cache
-"$php_bin" artisan route:cache
-"$php_bin" artisan event:cache
-"$php_bin" artisan storage:link 2>/dev/null || true
+"$php_bin" artisan route:clear
+"$php_bin" artisan event:clear
+"$php_bin" artisan view:clear
 
 printf 'KÉSZ: %(%Y-%m-%d %H:%M:%S)T\n' -1
