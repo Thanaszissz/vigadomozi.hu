@@ -54,12 +54,6 @@ import { AuthService } from '../../services/auth.service';
             <span *ngIf="!loading">🔓 Bejelentkezés</span>
           </button>
         </form>
-
-        <div class="test-credentials">
-          <p><strong>Teszt bejelentkezés:</strong></p>
-          <p>📧 Email: admin&#64;vigado.hu</p>
-          <p>🔑 Jelszó: admin123</p>
-        </div>
       </div>
     </div>
   `,

@@ -119,20 +119,3 @@ label {
   opacity: 0.6;
   cursor: not-allowed;
 }
-
-.test-credentials {
-  background: #2a1810;
-  padding: 15px;
-  border-radius: 6px;
-  font-size: 12px;
-  color: #d4a574;
-  border: 1px solid #d4a574;
-}
-
-.test-credentials p {
-  margin: 5px 0;
-}
-
-.test-credentials strong {
-  color: #e8d5b7;
-}
