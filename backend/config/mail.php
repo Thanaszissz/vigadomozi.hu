@@ -115,6 +115,12 @@ return [
         'name' => env('MAIL_FROM_NAME', 'Example'),
     ],
 
+    // A válaszok címe: az ügyfél válasza a mozi valódi postafiókjába érkezzen (MAIL_REPLY_TO_ADDRESS, alapból info@vigadomozi.hu)
+    'reply_to' => [
+        'address' => env('MAIL_REPLY_TO_ADDRESS', 'info@vigadomozi.hu'),
+        'name' => env('MAIL_REPLY_TO_NAME', 'Vigadó Mozi'),
+    ],
+
     /*
     | DKIM-aláírás az alkalmazásból, ha a kiszolgáló nem írja alá a kimenő leveleket.
     | A privát kulcs base64-kódolt PEM (MAIL_DKIM_PRIVATE_KEY), a publikus kulcs a DNS-ben

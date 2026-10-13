@@ -117,6 +117,7 @@ class ReservationMailer
                     ->subject($subject)
                     ->html($html)
                     ->text($text);
+                $this->applyHeaders($email);
                 foreach ($attachments as $a) {
                     $email->attach($a['data'], $a['name'], $a['mime']);
                 }
@@ -133,10 +134,31 @@ class ReservationMailer
         Mail::html($html, function ($message) use ($to, $subject, $text, $attachments) {
             $message->to($to)->subject($subject);
             $message->text($text);
+            $this->applyHeaders($message->getSymfonyMessage());
             foreach ($attachments as $a) {
                 $message->attachData($a['data'], $a['name'], ['mime' => $a['mime']]);
             }
         });
+    }
+
+    /**
+     * A tranzakciós levél jelzései a fogadó szűrőinek: a válasz a mozi valódi címére megy (nem no-reply),
+     * és a levél automatikus (nem tömeges hírlevél).
+     */
+    private function applyHeaders(Email $email): void
+    {
+        $replyTo = (string) config('mail.reply_to.address');
+        if ($replyTo !== '' && !$email->getReplyTo()) {
+            $email->replyTo(new Address($replyTo, (string) config('mail.reply_to.name')));
+        }
+
+        $headers = $email->getHeaders();
+        if (!$headers->has('Auto-Submitted')) {
+            $headers->addTextHeader('Auto-Submitted', 'auto-generated');
+        }
+        if (!$headers->has('X-Auto-Response-Suppress')) {
+            $headers->addTextHeader('X-Auto-Response-Suppress', 'OOF, AutoReply');
+        }
     }
 
     private function dkimSigner(): ?DkimSigner
