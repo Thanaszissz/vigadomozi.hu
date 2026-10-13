@@ -1,6 +1,8 @@
-import { Component, EventEmitter, Input, Output, ElementRef } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Ticket, AdminService } from '../../../../services/admin.service';
+import { TICKET_CSS, TICKET_PRINT_SCALE, ticketMarkup, waitForImages } from '../../../../core/ticket/ticket-template';
 
 export function paymentLabel(method: string): string {
   switch (method) {
@@ -12,37 +14,23 @@ export function paymentLabel(method: string): string {
   }
 }
 
-// A jegy kinézete: a párbeszédablakban és a nyomtatáshoz használt külön ablakban is ez érvényes
-const TICKET_CSS = `
-  .tp-ticket {
-    background: #fff; color: #111; padding: 14px 16px; text-align: center;
-    border: 2px dashed #8b6f47; font-family: Arial, Helvetica, sans-serif; box-sizing: border-box;
-  }
-  .tp-cinema { font-size: 20px; font-weight: 800; letter-spacing: 3px; }
-  .tp-place { font-size: 11px; color: #555; margin-bottom: 8px; }
-  .tp-kind { font-size: 12px; font-weight: 700; letter-spacing: 2px; border-top: 1px solid #111; border-bottom: 1px solid #111; padding: 3px 0; margin-bottom: 10px; }
-  .tp-movie { font-size: 20px; font-weight: 800; line-height: 1.2; }
-  .tp-when { font-size: 15px; margin: 4px 0 10px; }
-  .tp-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 10px; }
-  .tp-grid div { display: flex; flex-direction: column; border: 1px solid #ccc; border-radius: 4px; padding: 4px 2px; }
-  .tp-grid span { font-size: 10px; color: #666; text-transform: uppercase; }
-  .tp-grid b { font-size: 15px; }
-  .tp-number { font-size: 22px; font-weight: 800; letter-spacing: 2px; font-family: 'Courier New', monospace; margin: 6px 0; }
-  .tp-foot { font-size: 11px; color: #555; }
-`;
-
+// Nyomtatáskor jegyenként egy 210 mm x 100 mm-es oldal
 const PRINT_PAGE_CSS = `
-  @page { margin: 6mm; }
+  @page { size: 210mm 100mm; margin: 0; }
   html, body { margin: 0; padding: 0; background: #fff; }
   ${TICKET_CSS}
-  .tp-ticket { width: 86mm; margin: 0 auto; border: 1px dashed #000; page-break-after: always; break-after: page; }
-  .tp-ticket:last-child { page-break-after: auto; break-after: auto; }
+  .tk-box { width: 210mm !important; height: 99.9mm !important; page-break-after: always; break-after: page; }
+  .tk-box:last-child { page-break-after: auto; break-after: auto; }
 `;
+
+// Az előnézet a 840 px-es jegy kicsinyített mása
+const PREVIEW_SCALE = 0.6;
 
 @Component({
   selector: 'app-ticket-print',
   standalone: true,
   imports: [CommonModule],
+  encapsulation: ViewEncapsulation.None,
   template: `
     <div class="tp-backdrop" (click)="close.emit()"></div>
     <div class="tp-dialog" role="dialog" aria-modal="true">
@@ -56,22 +44,7 @@ const PRINT_PAGE_CSS = `
 
       <div class="tp-area">
         <div class="tp-ticket" *ngFor="let t of tickets">
-          <div class="tp-cinema">VIGADÓ MOZI</div>
-          <div class="tp-place">Kisújszállás • Szabadság tér 7.</div>
-          <div class="tp-kind">BELÉPŐJEGY</div>
-
-          <div class="tp-movie">{{ t.movie_title }}</div>
-          <div class="tp-when">{{ t.starts_at | date:'yyyy.MM.dd. HH:mm' }}</div>
-
-          <div class="tp-grid">
-            <div><span>Terem</span><b>{{ t.auditorium_name || '—' }}</b></div>
-            <div><span>Sor</span><b>{{ t.row_label }}</b></div>
-            <div><span>Szék</span><b>{{ t.seat_number ?? '—' }}</b></div>
-            <div><span>Ár</span><b>{{ t.price_amount | number:'1.0-0' }} Ft</b></div>
-          </div>
-
-          <div class="tp-number">{{ t.ticket_number }}</div>
-
+          <div [innerHTML]="markup(t, previewScale)"></div>
           <div class="tp-foot">
             {{ paymentLabel(t.payment_method) }} • {{ t.sold_at | date:'yyyy.MM.dd. HH:mm' }}
             <span *ngIf="t.sold_by_name"> • {{ t.sold_by_name }}</span>
@@ -86,7 +59,7 @@ const PRINT_PAGE_CSS = `
     }
     .tp-dialog {
       position: fixed; z-index: 2001; top: 50%; left: 50%; transform: translate(-50%, -50%);
-      width: min(520px, 94vw); max-height: 92vh; display: flex; flex-direction: column;
+      width: min(560px, 96vw); max-height: 92vh; display: flex; flex-direction: column;
       background: #2c1810; border: 1px solid #5c3d2e; border-radius: 12px; overflow: hidden;
     }
     .tp-toolbar {
@@ -100,9 +73,11 @@ const PRINT_PAGE_CSS = `
       color: #e8d5b7; font-weight: 600; cursor: pointer;
     }
     .tp-btn-primary { background: #d4a574; color: #2c1810; border-color: #d4a574; }
-    .tp-area { overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+    .tp-area { overflow: auto; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+    .tp-ticket { width: fit-content; margin: 0 auto; }
+    .tp-ticket .tk-box { border-radius: 6px; }
+    .tp-foot { margin-top: 4px; font-size: 12px; color: #c9b79a; text-align: center; }
     ${TICKET_CSS}
-    .tp-ticket { border-radius: 8px; }
   `]
 })
 export class TicketPrintComponent {
@@ -110,13 +85,18 @@ export class TicketPrintComponent {
   @Output() close = new EventEmitter<void>();
 
   paymentLabel = paymentLabel;
+  previewScale = PREVIEW_SCALE;
 
-  constructor(private host: ElementRef<HTMLElement>, private admin: AdminService) {}
+  constructor(private admin: AdminService, private sanitizer: DomSanitizer) {}
+
+  // A jegy HTML-je saját, escape-elt sablonból készül, ezért biztonságos
+  markup(t: Ticket, scale: number): SafeHtml {
+    return this.sanitizer.bypassSecurityTrustHtml(ticketMarkup(t, scale));
+  }
 
   // A jegyeket külön, rejtett keretben nyomtatjuk, így az admin felület nem kerül rá a lapra
-  print(): void {
-    const area = this.host.nativeElement.querySelector('.tp-area');
-    if (!area) return;
+  async print(): Promise<void> {
+    if (!this.tickets.length) return;
 
     const numbers = this.tickets.map(t => t.ticket_number);
     this.admin.logClientEvent('ticket.print', `Jegynyomtatás: ${numbers.join(', ')}`, { tickets: numbers });
@@ -127,13 +107,15 @@ export class TicketPrintComponent {
 
     const doc = frame.contentDocument!;
     doc.open();
-    doc.write(`<!doctype html><html><head><meta charset="utf-8"><title>Jegyek</title><style>${PRINT_PAGE_CSS}</style></head><body>${area.innerHTML}</body></html>`);
+    const pages = this.tickets.map(t => ticketMarkup(t, TICKET_PRINT_SCALE)).join('');
+    doc.write(`<!doctype html><html><head><meta charset="utf-8"><title>Jegyek</title><style>${PRINT_PAGE_CSS}</style></head><body>${pages}</body></html>`);
     doc.close();
 
+    await waitForImages(doc);
     setTimeout(() => {
       frame.contentWindow?.focus();
       frame.contentWindow?.print();
       setTimeout(() => frame.remove(), 1000);
-    }, 150);
+    }, 100);
   }
 }
