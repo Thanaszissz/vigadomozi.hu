@@ -32,6 +32,12 @@ echo "PHP: $("$php_bin" -r 'echo PHP_VERSION;') ($php_bin)"
 
 cd "$backend"
 
+# A Plesk csak a hibakimenetet jeleníti meg, ezért minden lépést naplózunk is.
+mkdir -p storage/logs
+exec > >(tee -a storage/logs/deploy.log >&2) 2>&1
+trap 'echo "HIBA: a(z) $LINENO. sorban (kilépési kód: $?)" >&2' ERR
+echo "=== telepítés: $(date '+%Y-%m-%d %H:%M:%S')"
+
 if [ ! -f .env ]; then
     echo "HIBA: a backend/.env hiányzik. Hozd létre a deploy/plesk/env.production.example alapján." >&2
     exit 1
