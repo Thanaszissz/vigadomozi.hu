@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AdminService } from '../../../../services/admin.service';
+import { escapeHtml } from '../../../../core/util/html';
 
 @Component({
   selector: 'app-reports-admin',
@@ -208,8 +209,8 @@ export class ReportsAdminComponent implements OnInit {
             <tbody>
               ${this.summary.by_admin.map((item: any) => `
                 <tr>
-                  <td>${item.admin_name}</td>
-                  <td>${item.admin_email}</td>
+                  <td>${escapeHtml(item.admin_name)}</td>
+                  <td>${escapeHtml(item.admin_email)}</td>
                   <td style="text-align: center;">${item.reservations_count}</td>
                   <td style="text-align: center;">${item.tickets_count}</td>
                   <td class="amount">${item.total_amount.toLocaleString('hu-HU')} Ft</td>
@@ -245,9 +246,9 @@ export class ReportsAdminComponent implements OnInit {
             <tbody>
               ${this.summary.by_showtime.map((item: any) => `
                 <tr>
-                  <td>${item.movie_title}</td>
+                  <td>${escapeHtml(item.movie_title)}</td>
                   <td>${new Date(item.starts_at).toLocaleString('hu-HU')}</td>
-                  <td>${item.auditorium_name}</td>
+                  <td>${escapeHtml(item.auditorium_name)}</td>
                   <td style="text-align: center;">${item.reservations_count}</td>
                   <td style="text-align: center;">${item.tickets_count}</td>
                   <td class="amount">${item.total_amount.toLocaleString('hu-HU')} Ft</td>
@@ -273,7 +274,7 @@ export class ReportsAdminComponent implements OnInit {
               ${this.summary.by_payment_method.map((item: any) => `
                 <tr>
                   <td>
-                    ${item.method === 'cash' ? '💵 Készpénz' : item.method === 'card' ? '💳 Kártya' : item.method}
+                    ${item.method === 'cash' ? '💵 Készpénz' : item.method === 'card' ? '💳 Kártya' : escapeHtml(item.method)}
                   </td>
                   <td style="text-align: center;">${item.count}</td>
                   <td class="amount">${item.amount.toLocaleString('hu-HU')} Ft</td>

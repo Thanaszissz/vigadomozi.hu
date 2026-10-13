@@ -13,9 +13,10 @@ AddType image/webp .webp
     RewriteRule ^storage/(.+)$ backend/storage/app/public/$1 [END]
 
     # Belső mappák és fájlok nem érhetők el
-    RewriteRule ^(backend|app|bootstrap|config|database|docs|resources|routes|storage|tests|vendor)(/|$) - [F,L]
+    RewriteRule ^(backend|app|bootstrap|config|database|docs|resources|routes|storage|tests|vendor|deploy)(/|$) - [F,L]
     RewriteRule (^|/)\.(?!well-known) - [F,L]
-    RewriteRule ^(artisan|composer\.(json|lock)|README\.md|phpunit\.xml|package\.json|vite\.config\.js)$ - [F,L]
+    RewriteRule ^(artisan|composer\.(json|lock|phar)|composer-setup\.php|install-composer\.(php|bat)|README\.md|phpunit\.xml|package\.json|vite\.config\.js)$ - [F,L]
+    RewriteRule \.(sh|md|bat|log|sql|sqlite|sqlite3|bak|zip|rar|7z|gz|tar)$ - [F,L,NC]
 
     # API -> Laravel
     RewriteRule ^(api|up)(/|$) index.php [L]
@@ -28,6 +29,12 @@ AddType image/webp .webp
 </IfModule>
 
 <IfModule mod_headers.c>
+    Header always set Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://api.vigadomozi.hu data: blob:; frame-src https://www.youtube.com https://www.youtube-nocookie.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "DENY"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()"
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
     <FilesMatch "^index\.html$">
         Header set Cache-Control "no-cache"
     </FilesMatch>

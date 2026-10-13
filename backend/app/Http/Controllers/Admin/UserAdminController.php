@@ -34,12 +34,18 @@ class UserAdminController extends Controller
         );
     }
 
+    /** Erős jelszó: legalább 12 karakter, kis- és nagybetű, szám. */
+    private function passwordRule(): Password
+    {
+        return Password::min(12)->mixedCase()->numbers();
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'unique:users,email'],
-            'password' => ['required', Password::min(8)],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'password' => ['required', $this->passwordRule()],
             'role' => ['required', Rule::in(Roles::all())],
         ]);
 
@@ -49,6 +55,14 @@ class UserAdminController extends Controller
             'password' => Hash::make($validated['password']),
             'role' => $validated['role'],
         ]);
+
+        ActivityLogger::log(
+            'user.created',
+            sprintf('Felhasználó felvéve: %s (%s, %s)', $user->name, $user->email, Roles::label($user->role)),
+            $user,
+            ['role' => $user->role],
+            subjectLabel: $user->name
+        );
 
         return response()->json($user, 201);
     }
@@ -62,8 +76,8 @@ class UserAdminController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'unique:users,email,' . $user->id],
-            'password' => ['nullable', Password::min(8)],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email,' . $user->id],
+            'password' => ['nullable', $this->passwordRule()],
             'role' => ['sometimes', Rule::in(Roles::all())],
         ]);
 
@@ -84,13 +98,30 @@ class UserAdminController extends Controller
             }
         }
 
+        $emailChanged = $user->email !== $validated['email'];
+        $passwordChanged = !empty($validated['password']);
+
         $user->update([
             'name' => $validated['name'],
             'email' => $validated['email'],
         ]);
 
-        if (!empty($validated['password'])) {
+        if ($passwordChanged) {
             $user->update(['password' => Hash::make($validated['password'])]);
+        }
+
+        // Jelszó vagy e-mail változásakor minden korábbi munkamenet érvénytelen (a saját jelenlegi tokent kivéve)
+        if ($passwordChanged || $emailChanged) {
+            $current = $request->user()->id === $user->id ? $request->user()->currentAccessToken()?->id : null;
+            $user->tokens()->when($current, fn($q) => $q->where('id', '!=', $current))->delete();
+
+            ActivityLogger::log(
+                'user.updated',
+                sprintf('Felhasználó módosítva: %s%s%s', $user->name, $passwordChanged ? ' (jelszó csere)' : '', $emailChanged ? ' (e-mail csere)' : ''),
+                $user,
+                ['password_changed' => $passwordChanged, 'email_changed' => $emailChanged],
+                subjectLabel: $user->name
+            );
         }
 
         if ($roleChanged) {
@@ -124,7 +155,11 @@ class UserAdminController extends Controller
             return response()->json(['message' => 'Az utolsó adminisztrátor nem törölhető.'], 422);
         }
 
+        $label = sprintf('%s (%s)', $user->name, $user->email);
+        $user->tokens()->delete();
         $user->delete();
+
+        ActivityLogger::log('user.deleted', 'Felhasználó törölve: ' . $label, null, ['email' => $user->email], subjectLabel: $label);
 
         return response()->json(
             ['message' => 'User deleted successfully.'],

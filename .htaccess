@@ -5,6 +5,13 @@
 
     RewriteEngine On
 
+    # Belső mappák és fájlok nem érhetők el közvetlenül (.env, naplók, mentések, forráskód, telepítő szkriptek)
+    RewriteRule ^backend/(?!public/) - [F,L]
+    RewriteRule ^(deploy|vendor|node_modules|\.git)(/|$) - [F,L]
+    RewriteRule ^(artisan|composer\.(json|lock|phar)|composer-setup\.php|install-composer\.(php|bat)|public_index\.php)$ - [F,L]
+    RewriteRule \.(sh|md|bat|log|sql|sqlite|sqlite3|bak|env|example|zip|rar|7z|gz|tar)$ - [F,L,NC]
+    RewriteRule (^|/)\.(?!well-known) - [F,L]
+
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
@@ -18,4 +25,11 @@
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
+</IfModule>
+
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "DENY"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
 </IfModule>

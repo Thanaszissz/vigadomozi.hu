@@ -3,6 +3,7 @@ import { RouterLink } from "@angular/router";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { ApiService } from "../../core/api/api.service";
+import { youtubeId } from "../../core/util/html";
 import { DomSanitizer, SafeResourceUrl } from "@angular/platform-browser";
 
 interface ShowtimeWithMovie {
@@ -206,17 +207,8 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   private getYouTubeEmbedUrl(url: string): SafeResourceUrl {
-    let videoId = "";
-
-    if (url.includes("youtube.com/watch")) {
-      const params = new URL(url).searchParams;
-      videoId = params.get("v") || "";
-    } else if (url.includes("youtu.be/")) {
-      videoId = url.split("youtu.be/")[1].split("?")[0];
-    } else if (url.includes("youtube.com/embed/")) {
-      videoId = url.split("youtube.com/embed/")[1].split("?")[0];
-    }
-
+    // Csak szabályos YouTube-azonosító kerülhet az iframe címébe
+    const videoId = youtubeId(url) ?? '';
     const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
     return this.sanitizer.bypassSecurityTrustResourceUrl(embedUrl);
   }

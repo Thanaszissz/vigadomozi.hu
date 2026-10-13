@@ -58,9 +58,10 @@ class SeatLockController extends Controller
     private function validated(Request $request): array
     {
         return $request->validate([
-            'email' => ['required', 'email'],
-            'name' => ['required', 'string', 'max:255'],
-            'phone' => ['required', 'string', 'max:20'],
+            'email' => ['required', 'email', 'max:255'],
+            // Nincs HTML/vezérlőkarakter a nevekben: az adat később admin felületen és e-mailben is megjelenik
+            'name' => ['required', 'string', 'max:255', 'regex:/^[^<>\x00-\x1F\x7F]+$/u'],
+            'phone' => ['required', 'string', 'max:20', 'regex:/^[0-9+()\-\s\/.]{6,20}$/'],
             'seatKeys' => ['required', 'array', 'min:1', 'max:20'],
             'seatKeys.*' => ['string', 'max:32', 'distinct'],
         ]);

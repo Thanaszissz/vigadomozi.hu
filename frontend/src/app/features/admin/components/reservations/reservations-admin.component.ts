@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { AdminService } from '../../../../services/admin.service';
+import { escapeHtml } from '../../../../core/util/html';
 
 @Component({
   selector: 'app-reservations-admin',
@@ -197,28 +198,28 @@ export class ReservationsAdminComponent implements OnInit {
 
         <div class="section">
           <div class="label">Ügyfél</div>
-          <div class="value">${reservation.customer_name || 'N/A'} • ${reservation.customer_email || 'N/A'} • ${reservation.customer_phone || 'N/A'}</div>
+          <div class="value">${escapeHtml(reservation.customer_name || 'N/A')} • ${escapeHtml(reservation.customer_email || 'N/A')} • ${escapeHtml(reservation.customer_phone || 'N/A')}</div>
         </div>
 
         <div class="section">
           <div class="label">Előadás</div>
-          <div class="value">${showtime?.movie?.title || 'N/A'}</div>
-          <div class="value">${showtimeDate} • ${showtime?.auditorium?.name || 'N/A'}</div>
+          <div class="value">${escapeHtml(showtime?.movie?.title || 'N/A')}</div>
+          <div class="value">${escapeHtml(showtimeDate)} • ${escapeHtml(showtime?.auditorium?.name || 'N/A')}</div>
         </div>
 
         <div class="section">
           <div class="label">Ülések</div>
-          <div class="value">${seats || 'N/A'}</div>
+          <div class="value">${escapeHtml(seats || 'N/A')}</div>
         </div>
 
         <div class="section">
           <div class="label">Fizetés</div>
-          <div class="value">${reservation.payment_provider || '—'} • ${createdAt}</div>
+          <div class="value">${escapeHtml(reservation.payment_provider || '—')} • ${escapeHtml(createdAt)}</div>
         </div>
 
         <div class="divider"></div>
 
-        <div class="total">Összesen: ${totalAmount} Ft</div>
+        <div class="total">Összesen: ${escapeHtml(totalAmount)} Ft</div>
 
         <div class="no-print" style="margin-top: 20px;">
           <button onclick="window.print()">Nyomtatás / PDF</button>

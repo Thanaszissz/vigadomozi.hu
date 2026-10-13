@@ -12,7 +12,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\TheaterShowController;
 
 // Auth routes (public)
-Route::post('/login', [AuthController::class, 'login']);
+Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:30,1');
 
 // Public routes
 Route::get('/movies', [MovieController::class, 'index']);
@@ -25,19 +25,19 @@ Route::get('/showtimes', [ShowtimeController::class, 'index']);
 Route::get('/showtimes/{showtime}', [ShowtimeController::class, 'show']);
 
 // Seat locking and reservation (a hold e-mailt is küld, ezért korlátozzuk a gyakoriságát)
-Route::post('/showtimes/{showtime}/lock', [SeatLockController::class, 'lock']);
+Route::post('/showtimes/{showtime}/lock', [SeatLockController::class, 'lock'])->middleware('throttle:20,1');
 Route::post('/showtimes/{showtime}/hold', [SeatLockController::class, 'hold'])->middleware('throttle:10,1');
 
 // Reservation management
 Route::get('/reservations/{reservation}', [ReservationController::class, 'show'])
-    ->whereNumber('reservation');
+    ->whereNumber('reservation')->middleware('throttle:60,1');
 Route::get('/reservations/{reservation}/tickets', [ReservationController::class, 'tickets'])
     ->whereNumber('reservation')->middleware('throttle:30,1');
 Route::post('/reservations/{reservation}/pay', [ReservationController::class, 'pay'])
-    ->whereNumber('reservation');
+    ->whereNumber('reservation')->middleware('throttle:20,1');
 
 // Protected routes (auth required)
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['auth:sanctum', 'abilities:admin:access'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
 

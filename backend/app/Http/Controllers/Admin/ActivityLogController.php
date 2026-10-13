@@ -102,7 +102,8 @@ class ActivityLogController extends Controller
         $data = $request->validate([
             'action' => ['required', Rule::in(self::CLIENT_EVENTS)],
             'description' => ['required', 'string', 'max:400'],
-            'details' => ['nullable', 'array'],
+            'details' => ['nullable', 'array', 'max:10'],
+            'details.*' => ['nullable', 'string', 'max:200'],
         ]);
 
         ActivityLogger::log($data['action'], $data['description'], null, $data['details'] ?? []);

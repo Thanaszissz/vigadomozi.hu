@@ -18,13 +18,14 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Admin felhasználó létrehozása
-        User::create([
-            'name' => 'Admin',
-            'email' => 'admin@vigadomozi.hu',
-            'password' => bcrypt('admin123'),
-            'role' => 'admin',
-        ]);
+        // Demóadatok csak fejlesztői környezetben; az admin jelszó itt sem szerepel a kódban
+        if (app()->environment('production')) {
+            $this->command?->error('A demóadatok betöltése éles környezetben le van tiltva. Admin létrehozásához: php artisan db:seed --class=AdminSeeder');
+
+            return;
+        }
+
+        $this->call(AdminSeeder::class);
 
         // Terem létrehozása
         $auditorium = Auditorium::create([

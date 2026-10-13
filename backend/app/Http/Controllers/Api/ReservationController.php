@@ -16,12 +16,52 @@ use Illuminate\Support\Facades\Log;
 
 class ReservationController extends Controller
 {
+    /**
+     * A foglalás nyilvános adatai a fizetési és visszaigazoló oldalakhoz. Az azonosító sorszámszerű (kitalálható),
+     * ezért a vásárló személyes adatai csak elmaszkolva szerepelnek, így a végigpróbálgatás nem gyűjt be adatot.
+     */
     public function show(Reservation $reservation)
     {
-        return response()->json(
-            $reservation->load('items', 'showtime.movie', 'showtime.auditorium'),
-            200
-        );
+        $reservation->load('items', 'showtime.movie', 'showtime.auditorium');
+        $data = $reservation->toArray();
+
+        $data['customer_name'] = self::maskName($reservation->customer_name);
+        $data['customer_email'] = self::maskEmail($reservation->customer_email);
+        $data['customer_phone'] = self::maskPhone($reservation->customer_phone);
+        unset($data['payment_ref'], $data['handled_by_admin_id']);
+
+        return response()->json($data, 200);
+    }
+
+    private static function maskName(?string $name): ?string
+    {
+        if ($name === null || $name === '') {
+            return $name;
+        }
+
+        return collect(preg_split('/\s+/u', trim($name)))
+            ->map(fn($part) => mb_substr($part, 0, 1) . '***')
+            ->implode(' ');
+    }
+
+    private static function maskEmail(?string $email): ?string
+    {
+        if (!$email || !str_contains($email, '@')) {
+            return $email;
+        }
+
+        [$local, $domain] = explode('@', $email, 2);
+
+        return mb_substr($local, 0, 2) . '***@' . mb_substr($domain, 0, 1) . '***' . (str_contains($domain, '.') ? substr($domain, strrpos($domain, '.')) : '');
+    }
+
+    private static function maskPhone(?string $phone): ?string
+    {
+        if (!$phone) {
+            return $phone;
+        }
+
+        return str_repeat('*', max(0, mb_strlen($phone) - 3)) . mb_substr($phone, -3);
     }
 
     /** A kifizetett foglalás jegyei letöltéshez; csak a fizetés utáni átirányításban kapott kulccsal kérhető. */

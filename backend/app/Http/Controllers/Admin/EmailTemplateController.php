@@ -46,6 +46,8 @@ class EmailTemplateController extends Controller
 
         $template->update($data);
 
+        ActivityLogger::log('email_template.updated', "E-mail sablon módosítva: {$key}", null, ['template' => $key], subjectLabel: $key);
+
         return response()->json($template->fresh());
     }
 
@@ -97,6 +99,51 @@ class EmailTemplateController extends Controller
         ]);
     }
 
+    /**
+     * A sablon HTML törzsének tisztítása mentés előtt: aktív tartalom (script, iframe, űrlap stb.), eseménykezelő
+     * attribútumok és javascript:/data: hivatkozások nem maradhatnak benne. A megengedett jelölés változatlan.
+     */
+    private function sanitizeBody(string $html): string
+    {
+        $dangerous = ['script', 'iframe', 'frame', 'frameset', 'object', 'embed', 'applet', 'form', 'input', 'button', 'textarea', 'select', 'meta', 'link', 'base', 'svg', 'math'];
+
+        $doc = new \DOMDocument();
+        $previous = libxml_use_internal_errors(true);
+        $doc->loadHTML('<?xml encoding="utf-8" ?><div id="tpl-root">' . $html . '</div>', LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+        libxml_clear_errors();
+        libxml_use_internal_errors($previous);
+
+        foreach ($dangerous as $tag) {
+            foreach (iterator_to_array($doc->getElementsByTagName($tag)) as $node) {
+                $node->parentNode?->removeChild($node);
+            }
+        }
+
+        $xpath = new \DOMXPath($doc);
+        foreach ($xpath->query('//@*') as $attr) {
+            $name = strtolower($attr->nodeName);
+            $value = strtolower(preg_replace('/[\x00-\x20]+/', '', html_entity_decode($attr->nodeValue, ENT_QUOTES | ENT_HTML5)));
+
+            $isUrl = in_array($name, ['href', 'src', 'xlink:href', 'action', 'formaction', 'background', 'poster'], true);
+            if (str_starts_with($name, 'on') || ($isUrl && preg_match('/^(javascript|vbscript|data):/', $value))) {
+                $attr->ownerElement?->removeAttributeNode($attr);
+            }
+        }
+
+        $root = $doc->getElementById('tpl-root') ?? $xpath->query('//div[@id="tpl-root"]')->item(0);
+        if (!$root) {
+            return strip_tags($html);
+        }
+
+        $out = '';
+        foreach ($root->childNodes as $child) {
+            $out .= $doc->saveHTML($child);
+        }
+
+        // A libxml a hivatkozásokban a {{változó}} jelölést is százalékkódolja: visszaállítjuk
+        return str_replace(['%7B%7B', '%7D%7D'], ['{{', '}}'], $out);
+    }
+
     private function validated(Request $request, bool $withActive): array
     {
         $rules = [
@@ -108,6 +155,7 @@ class EmailTemplateController extends Controller
         }
 
         $data = $request->validate($rules);
+        $data['body'] = $this->sanitizeBody($data['body']);
 
         if ($this->templates->hasMalformedBraces($data['subject'], $data['body'])) {
             abort(response()->json([

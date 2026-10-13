@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ApiService, Movie, Showtime } from '../../core/api/api.service';
 import { SeoService } from '../../core/seo/seo.service';
+import { youtubeId } from '../../core/util/html';
 
 @Component({
   selector: 'app-movie-detail',
@@ -191,17 +192,8 @@ export class MovieDetailComponent implements OnInit, OnDestroy {
   }
 
   getYouTubeEmbedUrl(url: string): SafeResourceUrl {
-    let videoId = '';
-    
-    if (url.includes('youtube.com/watch')) {
-      const params = new URL(url).searchParams;
-      videoId = params.get('v') || '';
-    } else if (url.includes('youtu.be/')) {
-      videoId = url.split('youtu.be/')[1].split('?')[0];
-    } else if (url.includes('youtube.com/embed/')) {
-      videoId = url.split('youtube.com/embed/')[1].split('?')[0];
-    }
-    
+    // Csak szabályos YouTube-azonosító kerülhet az iframe címébe
+    const videoId = youtubeId(url) ?? '';
     const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
     return this.sanitizer.bypassSecurityTrustResourceUrl(embedUrl);
   }

@@ -180,19 +180,35 @@ class ReservationAdminController extends Controller
     private function exportCSV($reservations, $showtime)
     {
         $headers = [
-            'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="reservations_' . $showtime->id . '.csv"',
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="reservations_' . (int) $showtime->id . '.csv"',
+            'X-Content-Type-Options' => 'nosniff',
         ];
 
-        $csv = "Foglalás ID,Név,Telefon,Email,Sor,Szék,Ár (Ft)\n";
-        
+        // Táblázatkezelőben a képletként értelmezhető cellák (=, +, -, @) elé aposztróf kerül, így nem futtathatók
+        $safe = fn($value) => preg_match('/^[=+\-@\t\r]/', (string) $value) ? "'" . $value : $value;
+
+        $out = fopen('php://temp', 'w+');
+        fwrite($out, "\xEF\xBB\xBF");
+        fputcsv($out, ['Foglalás ID', 'Név', 'Telefon', 'Email', 'Sor', 'Szék', 'Ár (Ft)'], ';');
+
         foreach ($reservations as $res) {
             foreach ($res->items as $item) {
-                $name = $res->customer_name ?? '';
-                $phone = $res->customer_phone ?? '';
-                $csv .= "{$res->id},{$name},{$phone},{$res->customer_email},{$item->row_label},{$item->seat_number},{$item->price_amount}\n";
+                fputcsv($out, [
+                    $res->id,
+                    $safe($res->customer_name ?? ''),
+                    $safe($res->customer_phone ?? ''),
+                    $safe($res->customer_email),
+                    $item->row_label,
+                    $item->seat_number,
+                    $item->price_amount,
+                ], ';');
             }
         }
+
+        rewind($out);
+        $csv = stream_get_contents($out);
+        fclose($out);
 
         return response($csv, 200, $headers);
     }

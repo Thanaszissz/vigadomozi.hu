@@ -24,6 +24,15 @@ DirectoryIndex index.html
 </IfModule>
 
 <IfModule mod_headers.c>
+    # Biztonsági fejlécek (a tokent kezelő admin felület védelme XSS és beágyazás ellen)
+    Header always set Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://api.vigadomozi.hu data: blob:; frame-src https://www.youtube.com https://www.youtube-nocookie.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "DENY"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()"
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+    Header always set Cross-Origin-Opener-Policy "same-origin-allow-popups"
+
     # Az index.html mindig friss, a hash-elt fájlok hosszan gyorsítótárazhatók
     <FilesMatch "^index\.html$">
         Header set Cache-Control "no-cache"

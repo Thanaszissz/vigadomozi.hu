@@ -17,17 +17,23 @@ return [
 
     'paths' => ['api/*', 'sanctum/csrf-cookie'],
 
-    'allowed_methods' => ['*'],
+    'allowed_methods' => ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
 
-    'allowed_origins' => ['*'],
+    // Csak a saját weboldal hívhatja az API-t böngészőből (CORS_ALLOWED_ORIGINS-szel felülírható, vesszővel elválasztva)
+    'allowed_origins' => array_values(array_filter(array_map('trim', explode(',', (string) env(
+        'CORS_ALLOWED_ORIGINS',
+        env('APP_ENV') === 'production'
+            ? 'https://vigadomozi.hu,https://www.vigadomozi.hu'
+            : 'https://vigadomozi.hu,https://www.vigadomozi.hu,http://localhost:4200,http://127.0.0.1:4200,http://localhost:4201'
+    ))))),
 
     'allowed_origins_patterns' => [],
 
-    'allowed_headers' => ['*'],
+    'allowed_headers' => ['Authorization', 'Content-Type', 'Accept', 'X-Requested-With', 'Origin'],
 
-    'exposed_headers' => [],
+    'exposed_headers' => ['Retry-After'],
 
-    'max_age' => 0,
+    'max_age' => 600,
 
     'supports_credentials' => false,
 
