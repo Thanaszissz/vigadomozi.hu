@@ -217,7 +217,6 @@ HTML,
 <title>{$title}</title>
 </head>
 <body style="margin:0;padding:0;background:#efe7dc;-webkit-text-size-adjust:100%;">
-<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:#efe7dc;font-size:1px;line-height:1px;">{$title}&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;</div>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#efe7dc" style="background:#efe7dc;">
 <tr><td align="center" style="padding:28px 12px;">
   <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;border-radius:12px;overflow:hidden;background:#ffffff;box-shadow:0 6px 24px rgba(44,24,16,0.18);">
