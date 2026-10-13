@@ -24,14 +24,13 @@ backend/public/uploads/
 backend/database.sqlite
 backend/database.sqlite-shm
 backend/database.sqlite-wal
-backend/composer.lock
 
 # Frontend
 frontend/node_modules/
-frontend/dist/
+frontend/dist/*
+!frontend/dist/cinema-booking/
 frontend/.angular/
 frontend/out-tsc/
-frontend/src/environments/environment.prod.ts
 
 # OS
 Thumbs.db

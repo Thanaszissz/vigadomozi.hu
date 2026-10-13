@@ -95,9 +95,16 @@ class SimplePayService
         return $c['enabled'] && $c['merchant'] !== '' && !empty($c['secret_key']);
     }
 
+    /** Az API nyilvános címe (a SimplePay erre tér vissza és erre küld értesítést). */
     public function siteUrl(): string
     {
         return $this->config()['site_url'];
+    }
+
+    /** A vásárló fizetés utáni oldalai: külön frontend domain esetén a FRONTEND_URL, egyébként ugyanaz a cím. */
+    public function frontendUrl(): string
+    {
+        return rtrim((string) (config('app.frontend_url') ?: $this->siteUrl()), '/');
     }
 
     /** A SimplePay kereskedői felületén megadandó és a kérésekben küldött címek. */

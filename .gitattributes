@@ -1,0 +1,2 @@
+*.sh text eol=lf
+deploy/plesk/env.production.example text eol=lf

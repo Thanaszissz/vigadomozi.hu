@@ -25,7 +25,7 @@ class SimplePayController extends Controller
      */
     public function back(Request $request): RedirectResponse
     {
-        $site = $this->simplePay->siteUrl();
+        $site = $this->simplePay->frontendUrl();
 
         try {
             $info = $this->simplePay->parseBack((string) $request->query('r', ''), (string) $request->query('s', ''));

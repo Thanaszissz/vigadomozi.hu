@@ -5,6 +5,7 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
+    "build:same-origin": "ng build --configuration same-origin",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },
