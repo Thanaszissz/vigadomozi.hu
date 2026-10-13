@@ -44,13 +44,14 @@ class EmailTemplateService
             'description' => 'A publikus felületen leadott (fizetés nélküli) foglalás után megy ki a megadott e-mail címre.',
             'subject' => 'Foglalás visszaigazolás – {{film}} ({{idopont}})',
             'body' => <<<'HTML'
+<h2>Foglalását rögzítettük</h2>
 <p>Kedves {{nev}}!</p>
 <p>Köszönjük a foglalását! Az alábbi székeket tartjuk Önnek:</p>
 {{foglalas_tabla}}
-<p>A foglalás <b>fizetés nélkül</b> történt, a jegyeket az előadás előtt a mozi pénztárában tudja kifizetni és átvenni. Kérjük, érkezzen legalább 15 perccel az előadás kezdete előtt.</p>
+<div style="background:#fbf3e4;border-left:4px solid #d4a574;border-radius:4px;padding:14px 18px;margin:0 0 20px;font-size:15px;line-height:1.55;color:#4a3a2a;"><b>A foglalás fizetés nélkül történt.</b> A jegyeket az előadás előtt a mozi pénztárában tudja kifizetni és átvenni. Kérjük, érkezzen legalább 15 perccel az előadás kezdete előtt.</div>
 <p>Foglalás azonosítója: <b>{{foglalas_azonosito}}</b></p>
 <p>Kérdés esetén keressen minket: {{mozi_telefon}}, {{mozi_email}}</p>
-<p>Üdvözlettel,<br>{{mozi_neve}}</p>
+<p style="margin:24px 0 0;font-size:16px;line-height:1.6;color:#2b2018;">Üdvözlettel,<br><b>{{mozi_neve}}</b></p>
 HTML,
         ],
         'tickets_paid' => [
@@ -58,12 +59,15 @@ HTML,
             'description' => 'Sikeres online bankkártyás fizetés után megy ki, a megvásárolt jegyekkel.',
             'subject' => 'Jegyei – {{film}} ({{idopont}})',
             'body' => <<<'HTML'
+<h2>Sikeres fizetés – itt vannak a jegyei</h2>
 <p>Kedves {{nev}}!</p>
 <p>Köszönjük a vásárlást! A bankkártyás fizetés sikeres volt. A jegyeit PDF-ben csatoltuk a levélhez: nyomtassa ki, vagy mutassa meg telefonon az előadás előtt.</p>
-<p>A jegyek:</p>
+{{foglalas_tabla}}
+<h3>Jegyei</h3>
 {{jegyek}}
 <p>Fizetett összeg: <b>{{osszeg}}</b> ({{fizetesi_mod}})</p>
-<p>Jó szórakozást kívánunk!<br>{{mozi_neve}}</p>
+<div style="background:#fbf3e4;border-left:4px solid #d4a574;border-radius:4px;padding:14px 18px;margin:0 0 20px;font-size:15px;line-height:1.55;color:#4a3a2a;">Kérjük, érkezzen legalább <b>15 perccel</b> az előadás kezdete előtt, és a bejáratnál mutassa meg a jegyet (kinyomtatva vagy telefonon).</div>
+<p style="margin:24px 0 0;font-size:16px;line-height:1.6;color:#2b2018;">Jó szórakozást kívánunk!<br><b>{{mozi_neve}}</b></p>
 HTML,
         ],
     ];
@@ -141,7 +145,7 @@ HTML,
     public function compose(string $subject, string $body, array $vars): array
     {
         $subjectText = trim(preg_replace('/\s+/', ' ', $this->fill($subject, $vars, false)));
-        $bodyHtml = $this->fill($body, $vars, true);
+        $bodyHtml = $this->styleBody($this->fill($body, $vars, true));
 
         return [$subjectText, $this->wrap($bodyHtml, $subjectText), $this->toText($bodyHtml)];
     }
@@ -192,25 +196,79 @@ HTML,
     {
         $c = self::CINEMA;
         $title = e($title);
+        $site = rtrim((string) config('app.frontend_url'), '/');
+        $logo = e($site . '/assets/email-logo.png');
+        $siteLabel = e(preg_replace('#^https?://#', '', $site));
+        $name = e($c['mozi_neve']);
+        $address = e($c['mozi_cim']);
+        $phone = e($c['mozi_telefon']);
+        $phoneLink = e(preg_replace('/[^0-9+]/', '', $c['mozi_telefon']));
+        $mail = e($c['mozi_email']);
+        $year = date('Y');
 
         return <<<HTML
 <!doctype html>
-<html lang="hu"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{$title}</title></head>
-<body style="margin:0;padding:0;background:#f1ebe3;">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f1ebe3;"><tr><td align="center" style="padding:24px 12px;">
-  <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:8px;overflow:hidden;">
-    <tr><td style="background:#3d2817;padding:18px 24px;text-align:center;font-family:Arial,Helvetica,sans-serif;color:#e8d5b7;font-size:22px;font-weight:800;letter-spacing:4px;">{$this->e($c['mozi_neve'])}</td></tr>
-    <tr><td style="padding:24px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.55;color:#222222;">{$bodyHtml}</td></tr>
-    <tr><td style="background:#f7f2ea;padding:14px 24px;text-align:center;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#6b5a48;">{$this->e($c['mozi_neve'])} • {$this->e($c['mozi_cim'])}<br>{$this->e($c['mozi_telefon'])} • {$this->e($c['mozi_email'])}</td></tr>
+<html lang="hu" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="x-apple-disable-message-reformatting">
+<meta name="color-scheme" content="light only">
+<title>{$title}</title>
+</head>
+<body style="margin:0;padding:0;background:#efe7dc;-webkit-text-size-adjust:100%;">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:#efe7dc;font-size:1px;line-height:1px;">{$title}&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#efe7dc" style="background:#efe7dc;">
+<tr><td align="center" style="padding:28px 12px;">
+  <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;border-radius:12px;overflow:hidden;background:#ffffff;box-shadow:0 6px 24px rgba(44,24,16,0.18);">
+    <tr><td align="center" bgcolor="#2c1810" style="background:#2c1810;padding:34px 24px 26px;">
+      <a href="{$site}/" style="text-decoration:none;"><img src="{$logo}" width="150" alt="{$name} – Kisújszállás" style="display:block;margin:0 auto;width:150px;max-width:150px;height:auto;border:0;font-family:Georgia,'Times New Roman',serif;font-size:22px;color:#e8d5b7;text-align:center;"></a>
+      <div style="margin-top:14px;font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:4px;text-transform:uppercase;color:#d4a574;">Film &amp; Színház</div>
+    </td></tr>
+    <tr><td height="4" bgcolor="#d4a574" style="background:#d4a574;font-size:0;line-height:0;height:4px;">&nbsp;</td></tr>
+    <tr><td bgcolor="#ffffff" style="background:#ffffff;padding:36px 38px 30px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.6;color:#2b2018;">{$bodyHtml}</td></tr>
+    <tr><td bgcolor="#3d2817" align="center" style="background:#3d2817;padding:26px 24px;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.7;color:#cdb596;">
+      <div style="font-family:Georgia,'Times New Roman',serif;font-size:17px;color:#e8d5b7;letter-spacing:1px;margin-bottom:6px;">{$name}</div>
+      <div>{$address}</div>
+      <div><a href="tel:{$phoneLink}" style="color:#d4a574;text-decoration:none;">{$phone}</a> &nbsp;•&nbsp; <a href="mailto:{$mail}" style="color:#d4a574;text-decoration:none;">{$mail}</a></div>
+      <div style="margin-top:10px;"><a href="{$site}/" style="color:#e8d5b7;text-decoration:underline;">{$siteLabel}</a></div>
+      <div style="margin-top:14px;font-size:11px;color:#a08a70;">&copy; {$year} {$name}, Kisújszállás</div>
+    </td></tr>
   </table>
 </td></tr></table>
 </body></html>
 HTML;
     }
 
+    /** A sablon sima HTML-elemeire (p, h2, a, ul…) beágyazott stílust tesz, hogy a levelezők is egységesen jelenítsék meg. */
+    private function styleBody(string $html): string
+    {
+        $styles = [
+            'h1' => "margin:0 0 18px;font-family:Georgia,'Times New Roman',serif;font-size:26px;line-height:1.25;font-weight:700;color:#3d2817;",
+            'h2' => "margin:0 0 18px;font-family:Georgia,'Times New Roman',serif;font-size:24px;line-height:1.25;font-weight:700;color:#3d2817;",
+            'h3' => "margin:0 0 12px;font-family:Georgia,'Times New Roman',serif;font-size:18px;line-height:1.3;font-weight:700;color:#3d2817;",
+            'p' => 'margin:0 0 16px;font-size:16px;line-height:1.6;color:#2b2018;',
+            'ul' => 'margin:0 0 16px;padding-left:22px;font-size:16px;line-height:1.6;color:#2b2018;',
+            'ol' => 'margin:0 0 16px;padding-left:22px;font-size:16px;line-height:1.6;color:#2b2018;',
+            'li' => 'margin:0 0 6px;',
+            'a' => 'color:#9a5b1f;text-decoration:underline;',
+            'hr' => 'border:0;border-top:1px solid #eadfce;margin:26px 0;',
+        ];
+
+        return preg_replace_callback('/<(h1|h2|h3|p|ul|ol|li|a|hr)(\s[^>]*)?(\/?)>/i', function ($m) use ($styles) {
+            $attrs = $m[2] ?? '';
+            if (stripos($attrs, 'style=') !== false) {
+                return $m[0];
+            }
+
+            return '<' . $m[1] . $attrs . ' style="' . $styles[strtolower($m[1])] . '"' . $m[3] . '>';
+        }, $html);
+    }
+
     private function toText(string $html): string
     {
-        $text = preg_replace('/<\s*(br|\/p|\/div|\/tr|\/h[1-6])\b[^>]*>/i', "\n", $html);
+        $text = preg_replace('/<\/t[dh]>/i', ' ', $html);
+        $text = preg_replace('/<\s*(br|\/p|\/div|\/tr|\/h[1-6])\b[^>]*>/i', "\n", $text);
         $text = html_entity_decode(strip_tags($text), ENT_QUOTES | ENT_HTML5, 'UTF-8');
 
         return trim(preg_replace("/[ \t]+\n|\n{3,}/", "\n\n", $text));
@@ -226,30 +284,48 @@ HTML;
             'Összeg' => $v['osszeg'],
         ];
 
-        $html = '<table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:12px 0;font-family:Arial,Helvetica,sans-serif;font-size:15px;">';
+        $html = '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;margin:6px 0 22px;border:1px solid #eadfce;border-left:5px solid #d4a574;border-radius:8px;background:#fbf7f0;border-collapse:separate;font-family:Arial,Helvetica,sans-serif;">';
+        $last = array_key_last($rows);
         foreach ($rows as $label => $value) {
-            $html .= '<tr><td style="padding:6px 16px 6px 0;color:#6b5a48;">' . e($label) . '</td><td style="padding:6px 0;font-weight:700;">' . e($value) . '</td></tr>';
+            $border = $label === $last ? '' : 'border-bottom:1px solid #eadfce;';
+            $big = $label === 'Film' ? 'font-size:18px;font-family:Georgia,\'Times New Roman\',serif;color:#3d2817;' : 'font-size:15px;color:#2b2018;';
+            $html .= '<tr>'
+                . '<td width="110" valign="middle" style="' . $border . 'padding:11px 8px 11px 18px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#8a7258;">' . e($label) . '</td>'
+                . '<td valign="middle" style="' . $border . 'padding:10px 18px 10px 0;font-weight:700;' . $big . '">' . e($value) . '</td>'
+                . '</tr>';
         }
 
         return new HtmlString($html . '</table>');
     }
 
     /**
-     * A jegyek tömör felsorolása a levél szövegében (a jegyek maguk a csatolt PDF-ben vannak).
+     * A jegyek felsorolása a levél szövegében kártyákon (maguk a jegyek a csatolt PDF-ben vannak).
      *
      * @param Collection<int, mixed> $tickets Ticket modellek vagy tömbök
      */
     private function ticketCards(Collection $tickets): string
     {
-        $rows = '';
+        $html = '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;margin:6px 0 20px;border-collapse:separate;font-family:Arial,Helvetica,sans-serif;">';
         foreach ($tickets as $t) {
             $get = fn(string $k) => data_get($t, $k);
             $seat = (string) ($get('seat_number') ?? '—');
-            $rows .= '<tr><td style="padding:6px 0;"><span style="font-family:\'Courier New\',monospace;font-weight:700;">' . e((string) $get('ticket_number')) . '</span> – '
-                . e((string) $get('row_label')) . '. sor ' . e($seat) . '. szék</td></tr>';
+            $price = $get('price_amount') !== null ? $this->money((int) $get('price_amount')) : '';
+
+            $html .= '<tr><td style="padding:0 0 10px;">'
+                . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border:1px solid #eadfce;border-left:5px solid #3d2817;border-radius:8px;background:#fbf7f0;border-collapse:separate;"><tr>'
+                . '<td valign="middle" style="padding:13px 8px 13px 18px;">'
+                . '<div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#8a7258;">Jegyszám</div>'
+                . '<div style="font-family:\'Courier New\',monospace;font-size:18px;font-weight:700;color:#2c1810;letter-spacing:0.5px;">' . e((string) $get('ticket_number')) . '</div>'
+                . '</td>'
+                . '<td valign="middle" align="right" style="padding:13px 18px 13px 8px;">'
+                . '<div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#8a7258;">Hely</div>'
+                . '<div style="font-size:15px;font-weight:700;color:#2b2018;">' . e((string) $get('row_label')) . '. sor · ' . e($seat) . '. szék</div>'
+                . ($price !== '' ? '<div style="font-size:12px;color:#8a7258;">' . e($price) . '</div>' : '')
+                . '</td>'
+                . '</tr></table></td></tr>';
         }
 
-        return '<table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:12px 0;font-family:Arial,Helvetica,sans-serif;font-size:15px;">' . $rows . '</table>';
+        return $html . '</table>';
     }
 
     private function formatTime($value): string

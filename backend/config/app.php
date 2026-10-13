@@ -54,6 +54,9 @@ return [
 
     'url' => env('APP_URL', 'http://localhost'),
 
+    // A weboldal címe (a levelekben szereplő logó és hivatkozások alapja)
+    'frontend_url' => env('FRONTEND_URL', 'https://vigadomozi.hu'),
+
     // A nyilvános (Angular) alkalmazás címe, ha az az API-tól külön domainen fut (fizetés utáni átirányítások)
     'frontend_url' => env('FRONTEND_URL'),
 
