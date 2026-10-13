@@ -168,8 +168,9 @@ export class PosAdminComponent implements OnInit {
       next: (reservations) => {
         if (this.showtime?.id !== showtimeId) return;
         this.pendingReservations = reservations.filter(r => r.status === 'PENDING');
-        if (this.selectedReservation && !this.pendingReservations.some(r => r.id === this.selectedReservation.id)) {
-          this.selectedReservation = null;
+        if (this.selectedReservation) {
+          this.selectedReservation = this.pendingReservations.find(r => r.id === this.selectedReservation.id) ?? null;
+          if (!this.selectedReservation) this.editing = false;
         }
       },
       error: () => { this.pendingReservations = []; }
@@ -203,6 +204,9 @@ export class PosAdminComponent implements OnInit {
   }
 
   seatClass(seat: Seat): string {
+    if (this.editing) {
+      return this.editSeatKeys.includes(seat.key) ? 'selected' : seat.status;
+    }
     if (this.isSelected(seat)) return 'selected';
     if (this.reservationSeatKeys.has(seat.key)) return 'reserved-pick';
     return seat.status;
@@ -213,6 +217,16 @@ export class PosAdminComponent implements OnInit {
   }
 
   toggleSeat(seat: Seat): void {
+    if (this.editing) {
+      if (this.isAisle(seat) || !seat.bookable) return;
+      if (this.editSeatKeys.includes(seat.key)) {
+        this.editSeatKeys = this.editSeatKeys.filter(k => k !== seat.key);
+      } else if (seat.status === 'available') {
+        this.editSeatKeys = [...this.editSeatKeys, seat.key];
+      }
+      this.error = null;
+      return;
+    }
     if (this.mode !== 'seats' || this.isAisle(seat) || !seat.bookable || seat.status !== 'available') return;
 
     this.selectedSeats = this.isSelected(seat)
@@ -235,6 +249,7 @@ export class PosAdminComponent implements OnInit {
   setMode(mode: SaleMode): void {
     if (this.mode === mode) return;
     this.mode = mode;
+    this.cancelEdit();
     this.selectedSeats = [];
     this.selectedReservation = null;
     this.resetPayment();
@@ -243,7 +258,112 @@ export class PosAdminComponent implements OnInit {
   selectReservation(reservation: any): void {
     this.selectedReservation = this.selectedReservation?.id === reservation.id ? null : reservation;
     this.soldTickets = [];
+    this.cancelEdit();
     this.resetPayment();
+  }
+
+  // ---- Foglalás módosítása / törlése ----
+
+  editing = false;
+  editName = '';
+  editPhone = '';
+  editEmail = '';
+  editSeatKeys: string[] = [];
+  deleteConfirmOpen = false;
+  private readonly walkInEmail = 'helyszini@vigadomozi.hu';
+
+  startEdit(): void {
+    const r = this.selectedReservation;
+    if (!r) return;
+    this.editing = true;
+    this.editName = r.customer_name || '';
+    this.editPhone = r.customer_phone || '';
+    this.editEmail = r.customer_email && r.customer_email !== this.walkInEmail ? r.customer_email : '';
+    this.editSeatKeys = (r.items ?? []).map((i: any) => i.seat_key);
+    this.error = null;
+    this.resetPayment();
+  }
+
+  cancelEdit(): void {
+    this.editing = false;
+    this.editSeatKeys = [];
+    this.error = null;
+  }
+
+  get canSaveEdit(): boolean {
+    const emailOk = !this.editEmail.trim() || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.editEmail.trim());
+    return this.editing && !!this.editName.trim() && !!this.editPhone.trim() && emailOk && this.editSeatKeys.length > 0 && !this.processing;
+  }
+
+  get editTotal(): number {
+    return this.editSeatKeys.reduce((sum, key) => sum + (this.findSeat(key)?.price ?? 0), 0);
+  }
+
+  saveEdit(): void {
+    const r = this.selectedReservation;
+    if (!r || !this.canSaveEdit) return;
+
+    this.processing = true;
+    this.error = null;
+
+    this.admin.posUpdateReservation(r.id, {
+      customer_name: this.editName.trim(),
+      customer_phone: this.editPhone.trim(),
+      customer_email: this.editEmail.trim() || undefined,
+      seatKeys: this.editSeatKeys
+    }).subscribe({
+      next: (response) => {
+        this.processing = false;
+        this.heldNotice = `✏️ A(z) #${response.reservation.id} foglalás módosítva.`;
+        this.editing = false;
+        this.editSeatKeys = [];
+        this.selectedReservation = response.reservation;
+        this.refresh();
+      },
+      error: (err) => {
+        this.processing = false;
+        const errors = err?.error?.errors;
+        this.error = (errors && Object.values(errors as Record<string, string[]>)[0]?.[0]) || err?.error?.message || 'A foglalás módosítása sikertelen.';
+        if (err?.status === 409 || err?.status === 422) {
+          this.refresh();
+        }
+      }
+    });
+  }
+
+  askDelete(): void {
+    if (!this.selectedReservation) return;
+    this.error = null;
+    this.deleteConfirmOpen = true;
+  }
+
+  closeDelete(): void {
+    if (this.processing) return;
+    this.deleteConfirmOpen = false;
+  }
+
+  confirmDelete(): void {
+    const r = this.selectedReservation;
+    if (!r || this.processing) return;
+
+    this.processing = true;
+    this.admin.posDeleteReservation(r.id).subscribe({
+      next: () => {
+        this.processing = false;
+        this.deleteConfirmOpen = false;
+        this.heldNotice = `🗑️ A(z) #${r.id} foglalás törölve, a székek újra szabadok.`;
+        this.selectedReservation = null;
+        this.editing = false;
+        this.resetPayment();
+        this.refresh();
+      },
+      error: (err) => {
+        this.processing = false;
+        this.deleteConfirmOpen = false;
+        this.error = err?.error?.message || 'A foglalás törlése sikertelen.';
+        this.refresh();
+      }
+    });
   }
 
   get reservationSeatKeys(): Set<string> {
@@ -395,6 +515,8 @@ export class PosAdminComponent implements OnInit {
   }
 
   private resetSale(): void {
+    this.cancelEdit();
+    this.deleteConfirmOpen = false;
     this.selectedSeats = [];
     this.selectedReservation = null;
     this.customerName = '';

@@ -116,8 +116,42 @@
           </ng-container>
         </ul>
 
-        <div class="total"><span>Összesen</span><b>{{ total | number:'1.0-0' }} Ft</b></div>
+        <div class="total">
+          <span>Összesen</span>
+          <b>{{ (editing ? editTotal : total) | number:'1.0-0' }} Ft</b>
+        </div>
 
+        <div *ngIf="mode === 'reservations' && selectedReservation && !editing" class="res-actions">
+          <button type="button" class="btn-small" [disabled]="processing" (click)="startEdit()">✏️ Foglalás módosítása</button>
+          <button type="button" class="btn-small danger" [disabled]="processing" (click)="askDelete()">🗑️ Foglalás törlése</button>
+        </div>
+
+        <div *ngIf="editing" class="hold-box">
+          <h3>✏️ Foglalás módosítása</h3>
+          <p class="muted">A székeket a térképen módosíthatja: a saját székre kattintva elveszi, egy szabad székre kattintva hozzáadja.</p>
+          <label class="field">
+            <span>Név *</span>
+            <input type="text" [(ngModel)]="editName" maxlength="255" />
+          </label>
+          <label class="field">
+            <span>Telefonszám *</span>
+            <input type="tel" [(ngModel)]="editPhone" maxlength="20" />
+          </label>
+          <label class="field">
+            <span>E-mail (nem kötelező)</span>
+            <input type="email" [(ngModel)]="editEmail" maxlength="255" />
+          </label>
+          <div class="muted">Székek: {{ editSeatKeys.join(', ') || '—' }}</div>
+          <div *ngIf="error" class="alert">{{ error }}</div>
+          <div class="hold-actions">
+            <button type="button" class="btn-small primary" [disabled]="!canSaveEdit" (click)="saveEdit()">
+              {{ processing ? 'Mentés...' : 'Módosítások mentése' }}
+            </button>
+            <button type="button" class="btn-small" [disabled]="processing" (click)="cancelEdit()">Mégsem</button>
+          </div>
+        </div>
+
+        <ng-container *ngIf="!editing">
         <label class="field" *ngIf="mode === 'seats'">
           <span>Vásárló neve (nem kötelező)</span>
           <input type="text" [(ngModel)]="customerName" maxlength="100" placeholder="Helyszíni vásárló" />
@@ -142,11 +176,12 @@
           Kérje a kártyaterminálon <b>{{ total | number:'1.0-0' }} Ft</b> fizetését, és a sikeres terminálos fizetés után rögzítse az eladást.
         </div>
 
-        <div *ngIf="error && !reserveOpen" class="alert">{{ error }}</div>
+        <div *ngIf="error && !reserveOpen && !editing" class="alert">{{ error }}</div>
 
         <button type="button" class="btn-confirm" [disabled]="!canConfirm" (click)="confirmSale()">
           {{ processing ? 'Feldolgozás...' : 'Fizetés rögzítése és jegyek kiállítása' }}
         </button>
+        </ng-container>
 
         <ng-container *ngIf="mode === 'seats'">
           <button type="button" class="btn-hold" *ngIf="!reserveOpen" [disabled]="processing" (click)="openReserve()">
@@ -196,4 +231,22 @@
   </div>
 
   <app-ticket-print *ngIf="printOpen" [tickets]="soldTickets" (close)="closePrint()"></app-ticket-print>
+
+  <div *ngIf="deleteConfirmOpen && selectedReservation" class="modal-backdrop" (click)="closeDelete()"></div>
+  <div *ngIf="deleteConfirmOpen && selectedReservation" class="modal" role="dialog" aria-modal="true" (click)="closeDelete()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <h3>Foglalás törlése</h3>
+      <p>
+        Biztosan törli a(z) #{{ selectedReservation.id }} foglalást
+        ({{ selectedReservation.customer_name || 'Névtelen' }}, {{ selectedReservation.items?.length || 0 }} szék)?
+        A székek újra szabadok lesznek.
+      </p>
+      <div class="modal-actions">
+        <button type="button" class="btn-small danger" [disabled]="processing" (click)="confirmDelete()">
+          {{ processing ? 'Törlés...' : 'Igen, törlöm' }}
+        </button>
+        <button type="button" class="btn-small" [disabled]="processing" (click)="closeDelete()">Mégsem</button>
+      </div>
+    </div>
+  </div>
 </div>

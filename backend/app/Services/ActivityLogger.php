@@ -35,6 +35,7 @@ class ActivityLogger
 
         'reservation.created' => ['reservation', 'Helyszíni foglalás rögzítése'],
         'reservation.cancelled' => ['reservation', 'Foglalás törlése'],
+        'reservation.updated' => ['reservation', 'Foglalás módosítása'],
         'reservation.payment' => ['reservation', 'Foglalás kifizetése'],
         'reservation.payment_conflict' => ['reservation', 'Fizetési ütközés (visszatérítés szükséges)'],
 

@@ -61,6 +61,8 @@ Route::middleware('permission:pos.sell')->group(function () {
     Route::post('pos/sell', [PosController::class, 'sell']);
     Route::post('pos/hold', [PosController::class, 'hold']);
     Route::post('pos/reservations/{reservation}/pay', [PosController::class, 'payReservation']);
+    Route::put('pos/reservations/{reservation}', [PosController::class, 'updateReservation']);
+    Route::delete('pos/reservations/{reservation}', [ReservationAdminController::class, 'destroy']);
     Route::get('pos/reservations/{reservation}/tickets', [PosController::class, 'reservationTickets']);
 });
 

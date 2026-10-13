@@ -468,6 +468,19 @@ export class AdminService {
     return this.http.post<{ reservation: any; tickets: Ticket[] }>(`${this.apiUrl}/pos/hold`, payload);
   }
 
+  posUpdateReservation(reservationId: number, payload: {
+    customer_name: string;
+    customer_phone: string;
+    customer_email?: string;
+    seatKeys?: string[];
+  }): Observable<{ reservation: any; tickets: Ticket[] }> {
+    return this.http.put<{ reservation: any; tickets: Ticket[] }>(`${this.apiUrl}/pos/reservations/${reservationId}`, payload);
+  }
+
+  posDeleteReservation(reservationId: number): Observable<any> {
+    return this.http.delete<any>(`${this.apiUrl}/pos/reservations/${reservationId}`);
+  }
+
   posPayReservation(reservationId: number, paymentMethod: PaymentMethod): Observable<{ reservation: any; tickets: Ticket[] }> {
     return this.http.post<{ reservation: any; tickets: Ticket[] }>(
       `${this.apiUrl}/pos/reservations/${reservationId}/pay`,

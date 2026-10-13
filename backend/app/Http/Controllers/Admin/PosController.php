@@ -5,10 +5,12 @@ namespace App\Http\Controllers\Admin;
 use App\Exceptions\SeatUnavailableException;
 use App\Http\Controllers\Controller;
 use App\Models\Reservation;
+use App\Models\SeatLock;
 use App\Models\Showtime;
 use App\Services\ActivityLogger;
 use App\Services\ReservationMailer;
 use App\Services\SeatClaimService;
+use App\Services\SimplePayService;
 use App\Services\TicketService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -128,6 +130,81 @@ class PosController extends Controller
         }
 
         return response()->json($this->payload($reservation), 201);
+    }
+
+    /**
+     * Függő foglalás módosítása: vásárlói adatok és/vagy a székek cseréje.
+     * Kifizetett és online fizetés alatt álló foglalás nem módosítható.
+     */
+    public function updateReservation(Reservation $reservation, Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'customer_name' => ['required', 'string', 'max:255'],
+            'customer_phone' => ['required', 'string', 'max:20'],
+            'customer_email' => ['nullable', 'email', 'max:255'],
+            'seatKeys' => ['sometimes', 'array', 'min:1', 'max:20'],
+            'seatKeys.*' => ['string', 'max:32', 'distinct'],
+        ]);
+
+        try {
+            $result = DB::transaction(function () use ($reservation, $data, $request) {
+                $locked = Reservation::whereKey($reservation->id)->lockForUpdate()->first();
+
+                if (!$locked || $locked->status !== 'PENDING') {
+                    return ['message' => 'Csak függő (ki nem fizetett) foglalás módosítható.', 'status' => 409];
+                }
+                if ($locked->payment_provider === SimplePayService::PROVIDER) {
+                    return ['message' => 'Az online fizetés alatt álló foglalás nem módosítható.', 'status' => 409];
+                }
+
+                $locked->load('showtime.movie', 'showtime.auditorium', 'items');
+                $before = $locked->items->pluck('seat_key')->sort()->values()->all();
+                $wanted = isset($data['seatKeys']) ? collect($data['seatKeys'])->sort()->values()->all() : $before;
+                $removed = array_values(array_diff($before, $wanted));
+                $added = array_values(array_diff($wanted, $before));
+
+                if (($removed || $added) && $locked->showtime && ($error = $this->salesClosedReason($locked->showtime))) {
+                    return ['message' => $error, 'status' => 422];
+                }
+
+                $email = trim((string) ($data['customer_email'] ?? ''));
+                $locked->update([
+                    'customer_name' => $data['customer_name'],
+                    'customer_phone' => $data['customer_phone'],
+                    'customer_email' => $email !== '' ? $email : self::WALK_IN_EMAIL,
+                ]);
+
+                if ($removed) {
+                    $locked->items()->whereIn('seat_key', $removed)->delete();
+                    SeatLock::where('reservation_id', $locked->id)->whereIn('seat_key', $removed)->delete();
+                }
+                if ($added) {
+                    $this->claims->claimSeats($locked->showtime, $locked, $added, null);
+                }
+                if ($removed || $added) {
+                    $locked->update(['total_amount' => (int) $locked->items()->sum('price_amount')]);
+                }
+
+                ActivityLogger::log(
+                    'reservation.updated',
+                    sprintf('Foglalás módosítva: #%d, %s%s%s', $locked->id, $data['customer_name'], $added ? ', új székek: ' . implode(', ', $added) : '', $removed ? ', elvett székek: ' . implode(', ', $removed) : ''),
+                    $locked,
+                    ['added' => $added, 'removed' => $removed, 'amount' => $locked->total_amount, 'showtime_id' => $locked->showtime_id],
+                    $request->user(),
+                    "Foglalás #{$locked->id}"
+                );
+
+                return ['reservation' => $locked];
+            });
+        } catch (SeatUnavailableException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->status);
+        }
+
+        if (isset($result['message'])) {
+            return response()->json(['message' => $result['message']], $result['status']);
+        }
+
+        return response()->json($this->payload($result['reservation']->fresh()));
     }
 
     /**
