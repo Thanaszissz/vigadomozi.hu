@@ -122,8 +122,8 @@
         </div>
 
         <div *ngIf="mode === 'reservations' && selectedReservation && !editing" class="res-actions">
-          <button type="button" class="btn-small" [disabled]="processing" (click)="startEdit()">✏️ Foglalás módosítása</button>
-          <button type="button" class="btn-small danger" [disabled]="processing" (click)="askDelete()">🗑️ Foglalás törlése</button>
+          <button type="button" class="btn-small" [disabled]="processing" (click)="startEdit()">✏️ Módosítás</button>
+          <button type="button" class="btn-small danger" [disabled]="processing" (click)="askDelete()">🗑️ Törlés</button>
         </div>
 
         <div *ngIf="editing" class="hold-box">

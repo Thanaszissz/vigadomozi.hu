@@ -163,10 +163,11 @@ h1 { margin: 0; color: #e8d5b7; }
 
 .btn-small.primary { background: linear-gradient(180deg, #e2b985 0%, #c8955d 100%); color: #2c1810; border-color: #d4a574; }
 .btn-small.primary:hover:not(:disabled) { filter: brightness(1.07); }
-.btn-small.danger { background: #c0392b; color: #fff; border-color: #e5584a; }
+.btn-small.danger { background: linear-gradient(180deg, #c9443a 0%, #a8322a 100%); color: #fff; border-color: #e5584a; }
 .btn-small.danger:hover:not(:disabled) { filter: brightness(1.1); }
 .btn-small:disabled { opacity: 0.5; cursor: not-allowed; }
-.res-actions { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
+.res-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 14px 0; }
+.res-actions .btn-small { width: 100%; padding: 12px 8px; font-size: 14px; white-space: nowrap; }
 
 .modal-backdrop { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6); z-index: 2000; }
 .modal { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 2001; padding: 20px; }
