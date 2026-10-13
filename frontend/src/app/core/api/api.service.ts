@@ -6,6 +6,17 @@ import { environment } from 'src/environments/environment';
 
 const API_URL = environment.apiUrl;
 
+export interface PaidTicket {
+  ticket_number: string;
+  movie_title: string;
+  starts_at: string;
+  auditorium_name: string | null;
+  row_label: string;
+  seat_number: number | null;
+  price_amount: number;
+  sold_at: string;
+}
+
 export interface Movie {
   id: number;
   title: string;
@@ -127,6 +138,10 @@ export class ApiService {
 
   getReservation(reservationId: number): Observable<Reservation> {
     return this.http.get<Reservation>(`${API_URL}/reservations/${reservationId}`);
+  }
+
+  getPaidTickets(reservationId: number, key: string): Observable<PaidTicket[]> {
+    return this.http.get<PaidTicket[]>(`${API_URL}/reservations/${reservationId}/tickets`, { params: { k: key } });
   }
 
   initiatePayment(reservationId: number): Observable<{ checkout_url: string }> {

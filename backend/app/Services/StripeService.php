@@ -40,7 +40,7 @@ class StripeService
                 'payment_method_types' => ['card'],
                 'line_items' => $lineItems,
                 'mode' => 'payment',
-                'success_url' => config('app.frontend_url') . '/success/' . $reservation->id,
+                'success_url' => config('app.frontend_url') . '/success/' . $reservation->id . '?k=' . TicketAccess::key($reservation->id),
                 'cancel_url' => config('app.frontend_url') . '/checkout/' . $reservation->id,
                 'customer_email' => $reservation->customer_email,
                 'metadata' => [

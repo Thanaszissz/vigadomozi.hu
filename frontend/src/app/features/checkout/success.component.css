@@ -377,6 +377,20 @@
   color: #f0d9b5;
 }
 
+.actions { flex-wrap: wrap; }
+.btn.download {
+  flex: 1 1 100%;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  color: #fff;
+  background: linear-gradient(180deg, #2fbf6b 0%, #16984d 100%);
+  box-shadow: 0 6px 14px rgba(22, 152, 77, 0.35);
+}
+.btn.download:disabled { cursor: wait; filter: grayscale(0.3) brightness(0.95); transform: none; }
+.btn:not(.download) { flex: 1 1 0; }
+.download-error { margin: -8px 22px 18px; color: #a12b1f; font-weight: 700; text-align: center; }
+
 @media (max-width: 560px) {
   .actions { flex-direction: column; }
   .reservation-details, .next-steps { margin-left: 14px; margin-right: 14px; }

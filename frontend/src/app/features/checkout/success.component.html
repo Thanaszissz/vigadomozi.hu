@@ -76,9 +76,13 @@
         </div>
 
         <div class="actions">
+          <button type="button" class="btn download" *ngIf="reservation.status === 'PAID' && accessKey" [disabled]="downloading" (click)="downloadTickets()">
+            {{ downloading ? '⏳ Jegyek készítése...' : '⬇️ Jegyek letöltése (PDF)' }}
+          </button>
           <a routerLink="/movies" class="btn">🎬 Vissza a filmekhez</a>
           <a routerLink="/" class="btn secondary">🏠 Kezdőoldal</a>
         </div>
+        <p class="download-error" *ngIf="downloadError">{{ downloadError }}</p>
       </div>
     </div>
   </section>

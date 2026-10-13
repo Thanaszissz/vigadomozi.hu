@@ -31,6 +31,8 @@ Route::post('/showtimes/{showtime}/hold', [SeatLockController::class, 'hold'])->
 // Reservation management
 Route::get('/reservations/{reservation}', [ReservationController::class, 'show'])
     ->whereNumber('reservation');
+Route::get('/reservations/{reservation}/tickets', [ReservationController::class, 'tickets'])
+    ->whereNumber('reservation')->middleware('throttle:30,1');
 Route::post('/reservations/{reservation}/pay', [ReservationController::class, 'pay'])
     ->whereNumber('reservation');
 

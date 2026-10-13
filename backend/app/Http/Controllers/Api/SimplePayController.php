@@ -7,6 +7,7 @@ use App\Models\Payment;
 use App\Services\ActivityLogger;
 use App\Services\OnlinePaymentService;
 use App\Services\SimplePayService;
+use App\Services\TicketAccess;
 use App\Exceptions\SimplePayException;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -45,7 +46,7 @@ class SimplePayController extends Controller
         if ($info['e'] === 'SUCCESS') {
             $outcome = $this->payments->markPaid($payment, $info['t'], ['return' => $info]);
 
-            return redirect($site . ($outcome === OnlinePaymentService::STATUS_CONFLICT ? "/checkout/{$id}?payment=conflict" : "/success/{$id}"));
+            return redirect($site . ($outcome === OnlinePaymentService::STATUS_CONFLICT ? "/checkout/{$id}?payment=conflict" : "/success/{$id}?k=" . TicketAccess::key($id)));
         }
 
         $this->payments->markFailed($payment, $info['e'], $info['t'], ['return' => $info]);
