@@ -7,6 +7,9 @@ use App\Models\Reservation;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Symfony\Component\Mime\Address;
+use Symfony\Component\Mime\Crypto\DkimSigner;
+use Symfony\Component\Mime\Email;
 
 class ReservationMailer
 {
@@ -83,10 +86,48 @@ class ReservationMailer
 
     private function send(string $to, string $subject, string $html, string $text): void
     {
+        $signer = $this->dkimSigner();
+        if ($signer) {
+            try {
+                $email = (new Email())
+                    ->from(new Address((string) config('mail.from.address'), (string) config('mail.from.name')))
+                    ->to($to)
+                    ->subject($subject)
+                    ->html($html)
+                    ->text($text);
+
+                Mail::mailer()->getSymfonyTransport()->send($signer->sign($email));
+
+                return;
+            } catch (\Throwable $e) {
+                // Hibás kulcs vagy aláírási hiba esetén aláíratlanul küldünk, hogy a levél így is kimenjen
+                Log::warning('DKIM-aláírás sikertelen, a levél aláírás nélkül megy ki: ' . $e->getMessage());
+            }
+        }
+
         Mail::html($html, function ($message) use ($to, $subject, $text) {
             $message->to($to)->subject($subject);
             $message->text($text);
         });
+    }
+
+    private function dkimSigner(): ?DkimSigner
+    {
+        $cfg = config('mail.dkim');
+        $domain = (string) ($cfg['domain'] ?? '');
+        $key = (string) ($cfg['private_key'] ?? '');
+        if ($domain === '' || $key === '') {
+            return null;
+        }
+
+        $pem = str_contains($key, 'BEGIN') ? $key : (string) base64_decode($key, true);
+        if (!str_contains($pem, 'PRIVATE KEY')) {
+            Log::warning('A MAIL_DKIM_PRIVATE_KEY érvénytelen (base64-kódolt PEM kell).');
+
+            return null;
+        }
+
+        return new DkimSigner($pem, $domain, (string) ($cfg['selector'] ?: 'vigado'));
     }
 
     private function afterResponse(\Closure $callback): void

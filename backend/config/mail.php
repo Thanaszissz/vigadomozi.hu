@@ -115,4 +115,15 @@ return [
         'name' => env('MAIL_FROM_NAME', 'Example'),
     ],
 
+    /*
+    | DKIM-aláírás az alkalmazásból, ha a kiszolgáló nem írja alá a kimenő leveleket.
+    | A privát kulcs base64-kódolt PEM (MAIL_DKIM_PRIVATE_KEY), a publikus kulcs a DNS-ben
+    | a <selector>._domainkey.<domain> TXT rekordban van.
+    */
+    'dkim' => [
+        'domain' => env('MAIL_DKIM_DOMAIN'),
+        'selector' => env('MAIL_DKIM_SELECTOR', 'vigado'),
+        'private_key' => env('MAIL_DKIM_PRIVATE_KEY'),
+    ],
+
 ];
