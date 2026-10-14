@@ -1,0 +1,71 @@
+:host { display: block; color: #e8d5b7; }
+
+.svc-grid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+@media (max-width: 900px) { .svc-grid { grid-template-columns: 1fr; } }
+
+.panel { background: #3d2817; border: 1px solid #5c3d2e; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+.panel h2 { margin: 0 0 8px; font-size: 18px; color: #e8d5b7; }
+.panel h2 small { color: #a08060; font-weight: 400; font-size: 13px; }
+.muted { color: #a08060; font-size: 13px; }
+.alert { background: #5f1f1f; border: 1px solid #ef4444; color: #fca5a5; padding: 10px 12px; border-radius: 6px; margin: 10px 0; font-size: 13px; }
+.notice { background: #1f5f3f; border: 1px solid #22c55e; color: #86efac; padding: 10px 12px; border-radius: 6px; margin: 10px 0; font-size: 13px; }
+
+.svc-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; margin-top: 12px; }
+.svc-card {
+  display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 12px 14px;
+  background: #4a3425; border: 1.5px solid #5c3d2e; border-radius: 10px;
+}
+.svc-card.active { border-color: #d4a574; background: #5c3d2e; }
+.svc-info { display: flex; flex-direction: column; gap: 2px; }
+.svc-name { font-weight: 700; font-size: 15px; }
+.svc-price { color: #d4a574; font-size: 14px; }
+.stepper { display: flex; align-items: center; gap: 8px; }
+.step-btn {
+  width: 36px; height: 36px; border-radius: 8px; border: 1px solid #5c3d2e; background: #3d2817; color: #e8d5b7;
+  font-size: 20px; font-weight: 700; cursor: pointer;
+}
+.step-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.qty { min-width: 24px; text-align: center; font-size: 18px; font-weight: 700; }
+
+.item-list { list-style: none; margin: 8px 0; padding: 0; }
+.item-list li { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; border-bottom: 1px solid #5c3d2e; font-size: 14px; }
+.total { display: flex; justify-content: space-between; font-size: 18px; padding: 10px 0; }
+
+.pay-methods { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0; }
+.pay-btn {
+  padding: 12px; border-radius: 10px; border: 1.5px solid #5c3d2e; background: #4a3425; color: #e8d5b7; font-weight: 700; font-size: 15px; cursor: pointer;
+}
+.pay-btn.active { border-color: #d4a574; background: #5c3d2e; }
+
+.field { display: flex; flex-direction: column; gap: 4px; margin: 10px 0; font-size: 13px; color: #a08060; }
+.field input { padding: 10px 12px; border-radius: 6px; border: 1px solid #5c3d2e; background: #4a3425; color: #e8d5b7; font-size: 16px; }
+.change { font-size: 15px; }
+.change.short { color: #fca5a5; }
+
+.btn-confirm {
+  width: 100%; margin-top: 8px; padding: 14px; border-radius: 10px; border: 0; background: #d4a574; color: #2c1810;
+  font-weight: 800; font-size: 15px; cursor: pointer;
+}
+.btn-confirm:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-small {
+  padding: 7px 12px; border-radius: 6px; border: 1px solid #5c3d2e; background: #4a3425; color: #e8d5b7; font-weight: 600; cursor: pointer; font-size: 13px;
+}
+.btn-small.primary { background: #d4a574; color: #2c1810; border-color: #d4a574; }
+.btn-small.danger { background: #ef4444; border-color: #ef4444; color: #fff; }
+.btn-small:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.sold-box { margin-top: 12px; padding: 12px; border: 1px solid #d4a574; border-radius: 8px; background: rgba(212, 165, 116, 0.12); }
+.sold-actions { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+
+table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+th { text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #a08060; padding: 8px; }
+td { padding: 8px; border-top: 1px solid #5c3d2e; font-size: 14px; }
+td.num { font-family: 'Courier New', monospace; font-weight: 700; }
+td.act { text-align: right; }
+
+.modal-backdrop { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.65); z-index: 1500; }
+.modal { position: fixed; inset: 0; z-index: 1501; display: flex; align-items: center; justify-content: center; padding: 16px; }
+.modal-content { width: min(480px, 100%); background: #2c1810; border: 1px solid #5c3d2e; border-radius: 12px; padding: 20px; }
+.modal-content h3 { margin: 0 0 10px; color: #e8d5b7; }
+.modal-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }

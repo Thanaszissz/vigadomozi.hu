@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\SalesLog;
 use App\Models\Ticket;
 use App\Services\ActivityLogger;
+use App\Support\TicketCategory;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -47,6 +48,11 @@ class TicketAdminController extends Controller
             ->groupBy('payment_method')
             ->get();
 
+        $byCategory = (clone $query)
+            ->select('category', DB::raw('count(*) as tickets'), DB::raw('sum(price_amount) as amount'))
+            ->groupBy('category')
+            ->get();
+
         $page = $query->orderByDesc('id')->paginate(50);
 
         return response()->json([
@@ -56,6 +62,11 @@ class TicketAdminController extends Controller
                 'amount' => (int) $summary->sum('amount'),
                 'by_method' => $summary->map(fn($s) => [
                     'payment_method' => $s->payment_method,
+                    'tickets' => (int) $s->tickets,
+                    'amount' => (int) $s->amount,
+                ])->values(),
+                'by_category' => $byCategory->map(fn($s) => [
+                    'category' => $s->category,
                     'tickets' => (int) $s->tickets,
                     'amount' => (int) $s->amount,
                 ])->values(),
@@ -196,21 +207,23 @@ class TicketAdminController extends Controller
         return response()->stream(function () use ($query, $methods) {
             $out = fopen('php://output', 'w');
             fwrite($out, "\xEF\xBB\xBF");
-            fputcsv($out, ['Jegyszám', 'Eladva', 'Film', 'Előadás kezdete', 'Terem', 'Sor', 'Szék', 'Ár (Ft)', 'Fizetés', 'Értékesítő'], ';');
+            fputcsv($out, ['Jegyszám', 'Eladva', 'Film / szolgáltatás', 'Előadás kezdete', 'Terem', 'Sor', 'Szék', 'Ár (Ft)', 'Fizetés', 'Értékesítő', 'Kategória'], ';');
 
             $query->orderBy('id')->chunk(500, function ($tickets) use ($out, $methods) {
                 foreach ($tickets as $t) {
+                    $service = $t->category === TicketCategory::SERVICE;
                     fputcsv($out, [
                         $t->ticket_number,
                         $t->sold_at->copy()->timezone('Europe/Budapest')->format('Y-m-d H:i'),
                         $t->movie_title,
-                        $t->starts_at->copy()->timezone('Europe/Budapest')->format('Y-m-d H:i'),
+                        $service ? '' : $t->starts_at->copy()->timezone('Europe/Budapest')->format('Y-m-d H:i'),
                         $t->auditorium_name,
-                        $t->row_label,
-                        $t->seat_number,
+                        $service ? '' : $t->row_label,
+                        $service ? '' : $t->seat_number,
                         $t->price_amount,
                         $methods[$t->payment_method] ?? $t->payment_method,
                         $t->sold_by_name,
+                        TicketCategory::label($t->category),
                     ], ';');
                 }
             });

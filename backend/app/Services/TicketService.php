@@ -6,6 +6,7 @@ use App\Models\Reservation;
 use App\Models\SalesLog;
 use App\Models\Ticket;
 use App\Models\User;
+use App\Support\TicketCategory;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -68,10 +69,88 @@ class TicketService
                     'sold_by_user_id' => $seller?->id,
                     'sold_by_name' => $seller?->name,
                     'sold_at' => $soldAt,
+                    'category' => $item->category ?: TicketCategory::STANDARD,
                 ]));
             }
 
             $this->logSale($reservation, $tickets, $paymentMethod, $seller, $channel, $soldAt);
+
+            return $tickets;
+        });
+    }
+
+    /**
+     * Egyéb szolgáltatások értékesítése: szolgáltatásonként és darabonként egy-egy nyugta, a jegyekkel azonos, folyamatos
+     * sorszámozással. A nyugtán a szolgáltatás neve és az akkori ára szerepel (később sem változik).
+     *
+     * @param array<int,array{name:string,price:int}> $lines egy sor = egy nyugta
+     */
+    public function issueForServices(array $lines, string $paymentMethod, ?User $seller): Collection
+    {
+        return DB::transaction(function () use ($lines, $paymentMethod, $seller) {
+            $soldAt = now();
+            $year = (int) $soldAt->copy()->timezone('Europe/Budapest')->year;
+            $prefix = $this->numbering->currentPrefix();
+
+            $tickets = collect();
+            foreach ($lines as $line) {
+                $seq = $this->numbering->nextSequence($prefix);
+
+                $tickets->push(Ticket::create([
+                    'ticket_year' => $year,
+                    'ticket_prefix' => $prefix,
+                    'ticket_seq' => $seq,
+                    'ticket_number' => $this->numbering->format($prefix, $seq),
+                    'reservation_id' => null,
+                    'showtime_id' => null,
+                    'movie_title' => $line['name'],
+                    'starts_at' => $soldAt,
+                    'auditorium_name' => null,
+                    'seat_key' => '-',
+                    'row_label' => '-',
+                    'seat_number' => null,
+                    'price_amount' => (int) $line['price'],
+                    'currency' => 'HUF',
+                    'payment_method' => $paymentMethod,
+                    'channel' => 'pos',
+                    'sold_by_user_id' => $seller?->id,
+                    'sold_by_name' => $seller?->name,
+                    'sold_at' => $soldAt,
+                    'category' => TicketCategory::SERVICE,
+                ]));
+            }
+
+            $numbers = $tickets->pluck('ticket_number')->implode(', ');
+            $total = (int) $tickets->sum('price_amount');
+            $summary = $tickets->groupBy('movie_title')->map(fn($g, $name) => $g->count() . '× ' . $name)->implode(', ');
+
+            SalesLog::create([
+                'occurred_at' => $soldAt,
+                'user_id' => $seller?->id,
+                'user_name' => $seller?->name,
+                'channel' => 'pos',
+                'reservation_id' => null,
+                'showtime_id' => null,
+                'movie_title' => mb_substr('Egyéb szolgáltatás: ' . $summary, 0, 255),
+                'starts_at' => null,
+                'ticket_count' => $tickets->count(),
+                'total_amount' => $total,
+                'payment_method' => $paymentMethod,
+                'ticket_numbers' => $numbers,
+                'ip_address' => request()?->ip(),
+            ]);
+
+            if ($seller) {
+                $method = ['cash' => 'készpénz', 'card' => 'bankkártya'][$paymentMethod] ?? $paymentMethod;
+                ActivityLogger::log(
+                    'ticket.sale',
+                    sprintf('Szolgáltatás eladás: %s, %s Ft, %s [%s]', $summary, number_format($total, 0, ',', ' '), $method, $numbers),
+                    null,
+                    ['tickets' => $tickets->pluck('ticket_number')->all(), 'amount' => $total, 'payment_method' => $paymentMethod, 'category' => TicketCategory::SERVICE],
+                    $seller,
+                    'Egyéb szolgáltatás'
+                );
+            }
 
             return $tickets;
         });

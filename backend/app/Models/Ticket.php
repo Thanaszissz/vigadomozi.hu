@@ -30,6 +30,7 @@ class Ticket extends Model
         'currency',
         'payment_method',
         'channel',
+        'category',
         'sold_by_user_id',
         'sold_by_name',
         'sold_at',

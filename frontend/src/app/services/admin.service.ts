@@ -47,8 +47,22 @@ export interface Ticket {
   currency: string;
   payment_method: string;
   channel: string;
+  category?: TicketCategory;
   sold_by_name: string | null;
   sold_at: string;
+}
+
+export type TicketCategory = 'standard' | 'staff' | 'experience_card' | 'service';
+
+export const CATEGORY_LABELS: Record<TicketCategory, string> = {
+  standard: 'Normál jegy',
+  staff: 'Dolgozó jegy',
+  experience_card: 'Élménykártya',
+  service: 'Egyéb szolgáltatás'
+};
+
+export function categoryLabel(category?: string | null): string {
+  return CATEGORY_LABELS[(category ?? 'standard') as TicketCategory] ?? 'Normál jegy';
 }
 
 export interface TicketPage {
@@ -57,6 +71,7 @@ export interface TicketPage {
     tickets: number;
     amount: number;
     by_method: Array<{ payment_method: string; tickets: number; amount: number }>;
+    by_category?: Array<{ category: TicketCategory; tickets: number; amount: number }>;
   };
   tickets: {
     data: Ticket[];
@@ -292,6 +307,7 @@ export interface ExtraService {
   id: number;
   name: string;
   price: number;
+  kind?: 'service' | 'staff_ticket';
   sort_order: number;
 }
 
@@ -504,8 +520,25 @@ export class AdminService {
     seatKeys: string[];
     payment_method: PaymentMethod;
     customer_name?: string;
+    seat_categories?: Record<string, TicketCategory>;
   }): Observable<{ reservation: any; tickets: Ticket[] }> {
     return this.http.post<{ reservation: any; tickets: Ticket[] }>(`${this.apiUrl}/pos/sell`, payload);
+  }
+
+  // Egyéb szolgáltatások értékesítése (nyugtával)
+  posServices(): Observable<{ services: Array<{ id: number; name: string; price: number }>; staff_price: number }> {
+    return this.http.get<{ services: Array<{ id: number; name: string; price: number }>; staff_price: number }>(`${this.apiUrl}/pos/services`);
+  }
+
+  posSellServices(payload: {
+    items: Array<{ service_id: number; quantity: number }>;
+    payment_method: PaymentMethod;
+  }): Observable<{ tickets: Ticket[]; total: number }> {
+    return this.http.post<{ tickets: Ticket[]; total: number }>(`${this.apiUrl}/pos/services/sell`, payload);
+  }
+
+  posServiceTickets(): Observable<Ticket[]> {
+    return this.http.get<Ticket[]>(`${this.apiUrl}/pos/services/tickets`);
   }
 
   posSearchCustomers(q: string): Observable<Array<{ id: number; name: string; email: string | null; phone: string | null }>> {
@@ -518,6 +551,7 @@ export class AdminService {
     customer_name: string;
     customer_phone: string;
     customer_email?: string;
+    seat_categories?: Record<string, TicketCategory>;
   }): Observable<{ reservation: any; tickets: Ticket[] }> {
     return this.http.post<{ reservation: any; tickets: Ticket[] }>(`${this.apiUrl}/pos/hold`, payload);
   }

@@ -59,6 +59,7 @@
     <div class="card"><span>Bankkártya</span><b>{{ methodSummary('card').tickets }} db • {{ methodSummary('card').amount | number:'1.0-0' }} Ft</b></div>
     <div class="card" *ngIf="methodSummary('stripe').tickets > 0"><span>Online</span><b>{{ methodSummary('stripe').tickets }} db • {{ methodSummary('stripe').amount | number:'1.0-0' }} Ft</b></div>
     <div class="card" *ngIf="methodSummary('simplepay').tickets > 0"><span>Online (SimplePay)</span><b>{{ methodSummary('simplepay').tickets }} db • {{ methodSummary('simplepay').amount | number:'1.0-0' }} Ft</b></div>
+    <div class="card" *ngFor="let c of categoryCards"><span>{{ categoryLabel(c.category) }}</span><b>{{ c.tickets }} db<ng-container *ngIf="c.amount"> • {{ c.amount | number:'1.0-0' }} Ft</ng-container></b></div>
   </div>
 
   <div *ngIf="loading" class="muted">Betöltés...</div>
@@ -73,7 +74,7 @@
         <tr>
           <th>Jegyszám</th>
           <th>Eladva</th>
-          <th>Film</th>
+          <th>Film / szolgáltatás</th>
           <th>Előadás</th>
           <th>Sor / szék</th>
           <th>Ár</th>
@@ -86,9 +87,9 @@
         <tr *ngFor="let t of result.tickets.data">
           <td class="num">{{ t.ticket_number }}</td>
           <td>{{ t.sold_at | date:'yyyy.MM.dd. HH:mm' }}</td>
-          <td>{{ t.movie_title }}</td>
-          <td>{{ t.starts_at | date:'yyyy.MM.dd. HH:mm' }}</td>
-          <td>{{ t.row_label }} / {{ t.seat_number ?? '—' }}</td>
+          <td>{{ t.movie_title }}<small class="cat-tag" *ngIf="t.category && t.category !== 'standard'" [class.svc]="t.category === 'service'"> {{ categoryLabel(t.category) }}</small></td>
+          <td>{{ t.category === 'service' ? '—' : (t.starts_at | date:'yyyy.MM.dd. HH:mm') }}</td>
+          <td>{{ t.category === 'service' ? '—' : (t.row_label + ' / ' + (t.seat_number ?? '—')) }}</td>
           <td>{{ t.price_amount | number:'1.0-0' }} Ft</td>
           <td><span class="badge" [class.cash]="t.payment_method === 'cash'" [class.card]="t.payment_method === 'card'">{{ paymentLabel(t.payment_method) }}</span></td>
           <td>{{ t.sold_by_name || '—' }}</td>

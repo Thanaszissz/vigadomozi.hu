@@ -9,6 +9,8 @@ export interface TicketView {
   row_label: string;
   seat_number: number | null;
   price_amount: number;
+  category?: string | null;
+  sold_at?: string;
 }
 
 export const TICKET_W = 840;
@@ -70,29 +72,48 @@ export function ticketBaseUrl(): string {
 
 /** Egy jegy HTML-je; a scale a 840 px-es vászon kicsinyítése (1 = eredeti méret). */
 export function ticketMarkup(t: TicketView, scale = 1): string {
-  const when = formatWhen(t.starts_at);
+  const service = t.category === 'service';
+  const tag = t.category === 'staff' ? 'Dolgozó jegy' : t.category === 'experience_card' ? 'Élménykártya' : '';
+  // A szolgáltatás-nyugtának nincs előadása: az eladás időpontja szerepel rajta
+  const when = formatWhen(service ? (t.sold_at ?? t.starts_at) : t.starts_at);
+  const whenLine = tag ? `${when} • ${tag}` : when;
   const seat = t.seat_number ?? '—';
   const hall = t.auditorium_name || '—';
 
-  return `<div class="tk-box" style="width:${TICKET_W * scale}px;height:${TICKET_H * scale}px;">
-    <div class="tk" style="transform:scale(${scale});">
-      <img class="tk-bg" src="${esc(ticketBaseUrl())}" alt="">
-      <div class="tk-abs tk-main">
-        <div class="tk-title" style="font-size:${titleSize(t.movie_title)}px;">${esc(t.movie_title)}</div>
-        <div class="tk-when">${esc(when)}</div>
+  const facts = service
+    ? `<div class="tk-abs tk-facts left">
+        <div class="tk-fact"><span>Nyugtaszám</span><b style="font-size:19px;">${esc(t.ticket_number)}</b></div>
       </div>
-      <div class="tk-abs tk-facts left">
+      <div class="tk-abs tk-facts right">
+        <div class="tk-fact"><span>Kategória</span><b style="font-size:19px;">Szolgáltatás</b></div>
+        <div class="tk-fact"><span>Ár</span><b>${esc(formatMoney(t.price_amount))}</b></div>
+      </div>`
+    : `<div class="tk-abs tk-facts left">
         <div class="tk-fact"><span>Terem</span><b>${esc(hall)}</b></div>
         <div class="tk-fact"><span>Sor</span><b>${esc(t.row_label)}</b></div>
       </div>
       <div class="tk-abs tk-facts right">
         <div class="tk-fact"><span>Szék</span><b>${esc(seat)}</b></div>
         <div class="tk-fact"><span>Ár</span><b>${esc(formatMoney(t.price_amount))}</b></div>
+      </div>`;
+
+  const stubSeat = service
+    ? ''
+    : `<div class="tk-stub-line">${esc(hall)} • <b>${esc(t.row_label)}. sor ${esc(seat)}. szék</b></div>`;
+
+  return `<div class="tk-box" style="width:${TICKET_W * scale}px;height:${TICKET_H * scale}px;">
+    <div class="tk" style="transform:scale(${scale});">
+      <img class="tk-bg" src="${esc(ticketBaseUrl())}" alt="">
+      <div class="tk-abs tk-main">
+        <div class="tk-title" style="font-size:${titleSize(t.movie_title)}px;">${esc(t.movie_title)}</div>
+        <div class="tk-when">${esc(whenLine)}</div>
       </div>
+      ${facts}
       <div class="tk-abs tk-stub">
         <div class="tk-stub-title">${esc(t.movie_title)}</div>
         <div class="tk-stub-line">${esc(when)}</div>
-        <div class="tk-stub-line">${esc(hall)} • <b>${esc(t.row_label)}. sor ${esc(seat)}. szék</b></div>
+        ${stubSeat}
+        ${tag ? `<div class="tk-stub-line"><b>${esc(tag)}</b></div>` : ''}
         <div class="tk-stub-number">${esc(t.ticket_number)}</div>
         <div class="tk-stub-price">${esc(formatMoney(t.price_amount))}</div>
       </div>

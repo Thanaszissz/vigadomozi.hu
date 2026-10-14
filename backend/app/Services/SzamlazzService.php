@@ -206,7 +206,7 @@ class SzamlazzService
             throw new \RuntimeException('A foglaláshoz nincs kiállított jegy, így számla sem készíthető.');
         }
 
-        return $tickets->map(fn(Ticket $t) => [
+        $lines = $tickets->map(fn(Ticket $t) => [
             'name' => sprintf(
                 'Mozijegy: %s, %s, %s',
                 $t->movie_title,
@@ -214,7 +214,14 @@ class SzamlazzService
                 $t->seat_key
             ),
             'gross' => (int) round((float) $t->price_amount),
-        ])->all();
+        ])->filter(fn($line) => $line['gross'] > 0)->values()->all();
+
+        // A 0 Ft-os jegyek (Dolgozó jegy, Élménykártya) nem kerülnek a számlára
+        if (!$lines) {
+            throw new \RuntimeException('A foglalásban nincs számlázható (0 Ft-nál nagyobb értékű) jegy.');
+        }
+
+        return $lines;
     }
 
     private function isNumericRate(string $rate): bool

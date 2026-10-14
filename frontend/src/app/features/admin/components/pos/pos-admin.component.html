@@ -7,6 +7,15 @@
     </div>
   </div>
 
+  <!-- Terület: mozijegyek / egyéb szolgáltatások -->
+  <div class="area-tabs">
+    <button type="button" [class.active]="area === 'cinema'" (click)="area = 'cinema'">🎬 Mozijegyek</button>
+    <button type="button" [class.active]="area === 'services'" (click)="area = 'services'">🎫 Egyéb szolgáltatások</button>
+  </div>
+
+  <app-pos-services *ngIf="area === 'services'"></app-pos-services>
+
+  <ng-container *ngIf="area === 'cinema'">
   <!-- 1. lépés: előadás -->
   <section class="panel">
     <h2><span class="step">1</span> Előadás kiválasztása</h2>
@@ -132,14 +141,20 @@
       <ng-container *ngIf="hasSelection">
         <ul class="item-list">
           <ng-container *ngIf="mode === 'seats'">
-            <li *ngFor="let s of selectedSeats">
-              <span>{{ s.key }}</span><b>{{ s.price | number:'1.0-0' }} Ft</b>
+            <li *ngFor="let s of selectedSeats" class="seat-line">
+              <span>{{ s.key }}</span>
+              <select class="cat-select" [ngModel]="categoryOf(s)" (ngModelChange)="setSeatCategory(s, $event)" [disabled]="processing" title="Jegykategória">
+                <option value="standard">Normál jegy</option>
+                <option value="staff">Dolgozó jegy</option>
+                <option value="experience_card">Élménykártya</option>
+              </select>
+              <b>{{ effectivePrice(s) | number:'1.0-0' }} Ft</b>
             </li>
           </ng-container>
           <ng-container *ngIf="mode === 'reservations' && selectedReservation">
             <li class="who">{{ selectedReservation.customer_name }} • {{ selectedReservation.customer_phone }}</li>
             <li *ngFor="let i of selectedReservation.items">
-              <span>{{ i.seat_key }}</span><b>{{ i.price_amount | number:'1.0-0' }} Ft</b>
+              <span>{{ i.seat_key }} <small class="cat-tag" *ngIf="i.category && i.category !== 'standard'">{{ categoryLabel(i.category) }}</small></span><b>{{ i.price_amount | number:'1.0-0' }} Ft</b>
             </li>
           </ng-container>
         </ul>
@@ -185,10 +200,11 @@
           <input type="text" [(ngModel)]="customerName" maxlength="100" placeholder="Helyszíni vásárló" />
         </label>
 
-        <div class="pay-methods">
+        <div class="pay-methods" *ngIf="total > 0">
           <button type="button" class="pay-btn m-cash" [class.active]="paymentMethod === 'cash'" (click)="setPayment('cash')"><span class="pay-icon">💶</span>Készpénz</button>
           <button type="button" class="pay-btn m-card" [class.active]="paymentMethod === 'card'" (click)="setPayment('card')"><span class="pay-icon">💳</span>Bankkártya</button>
         </div>
+        <div *ngIf="total === 0" class="muted free-note">Nincs fizetendő összeg (0 Ft), a jegyek fizetés nélkül kiállíthatók.</div>
 
         <div *ngIf="paymentMethod === 'cash'" class="cash-box">
           <label class="field">
@@ -204,11 +220,11 @@
           Kérje a kártyaterminálon <b>{{ total | number:'1.0-0' }} Ft</b> fizetését, és a sikeres terminálos fizetés után rögzítse az eladást.
         </div>
 
-        <button type="button" class="btn-invoice" *ngIf="invoicingEnabled" [class.active]="invoiceRequested" [disabled]="processing" (click)="toggleInvoice()">
+        <button type="button" class="btn-invoice" *ngIf="invoicingEnabled && total > 0" [class.active]="invoiceRequested" [disabled]="processing" (click)="toggleInvoice()">
           🧾 ÁFÁS számlát kér {{ invoiceRequested ? '✓' : '' }}
         </button>
 
-        <div *ngIf="invoicingEnabled && invoiceRequested" class="hold-box invoice-box">
+        <div *ngIf="invoiceActive" class="hold-box invoice-box">
           <h3>🧾 Számlázási adatok</h3>
           <p class="muted">A számla a vevő alábbi adataival, {{ invoiceVatLabel }} ÁFÁ-val, kifizetettként készül.</p>
           <label class="field">
@@ -243,7 +259,7 @@
         <div *ngIf="error && !reserveOpen && !editing" class="alert">{{ error }}</div>
 
         <button type="button" class="btn-confirm" [disabled]="!canConfirm" (click)="confirmSale()">
-          {{ processing ? 'Feldolgozás...' : (invoiceRequested ? 'Fizetés rögzítése, jegyek és számla kiállítása' : 'Fizetés rögzítése és jegyek kiállítása') }}
+          {{ processing ? 'Feldolgozás...' : (invoiceActive ? 'Fizetés rögzítése, jegyek és számla kiállítása' : 'Fizetés rögzítése és jegyek kiállítása') }}
         </button>
         </ng-container>
 
@@ -311,6 +327,7 @@
   </div>
 
   <app-ticket-print *ngIf="printOpen" [tickets]="soldTickets" (close)="closePrint()"></app-ticket-print>
+  </ng-container>
 
   <div *ngIf="invoiceConfirmOpen" class="modal-backdrop" (click)="closeInvoiceConfirm()"></div>
   <div *ngIf="invoiceConfirmOpen" class="modal" role="dialog" aria-modal="true" (click)="closeInvoiceConfirm()">

@@ -5,8 +5,9 @@ import { Router } from '@angular/router';
 import { Subject, Subscription, of } from 'rxjs';
 import { catchError, debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import { ApiService, Seat, Showtime, ShowtimeDetail } from '../../../../core/api/api.service';
-import { AdminService, InvoiceBuyer, PaymentMethod, PosInvoice, Ticket } from '../../../../services/admin.service';
+import { AdminService, InvoiceBuyer, PaymentMethod, PosInvoice, Ticket, TicketCategory, categoryLabel } from '../../../../services/admin.service';
 import { TicketPrintComponent } from '../ticket-print/ticket-print.component';
+import { PosServicesComponent } from './pos-services.component';
 
 interface DayTab {
   key: string;
@@ -19,7 +20,7 @@ type SaleMode = 'seats' | 'reservations' | 'void';
 @Component({
   selector: 'app-pos-admin',
   standalone: true,
-  imports: [CommonModule, FormsModule, TicketPrintComponent],
+  imports: [CommonModule, FormsModule, TicketPrintComponent, PosServicesComponent],
   templateUrl: './pos-admin.component.html',
   styleUrls: ['./pos-admin.component.css']
 })
@@ -37,7 +38,13 @@ export class PosAdminComponent implements OnInit, OnDestroy {
   loadingShowtime = false;
 
   mode: SaleMode = 'seats';
+  area: 'cinema' | 'services' = 'cinema';
   selectedSeats: Seat[] = [];
+
+  // Székenkénti jegykategória (normál / Dolgozó jegy / Élménykártya) és a Dolgozó jegy beállított ára
+  seatCategories: Record<string, TicketCategory> = {};
+  staffPrice = 0;
+  categoryLabel = categoryLabel;
   pendingReservations: any[] = [];
   selectedReservation: any | null = null;
 
@@ -82,6 +89,10 @@ export class PosAdminComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadShowtimes();
+    this.admin.posServices().subscribe({
+      next: (s) => (this.staffPrice = s.staff_price),
+      error: () => (this.staffPrice = 0)
+    });
     this.admin.posInvoicing().subscribe({
       next: (s) => {
         this.invoicingEnabled = s.enabled;
@@ -285,8 +296,41 @@ export class PosAdminComponent implements OnInit, OnDestroy {
     this.selectedSeats = this.isSelected(seat)
       ? this.selectedSeats.filter(s => s.key !== seat.key)
       : [...this.selectedSeats, seat];
+    // Új kiválasztáskor mindig normál jegyről indul
+    delete this.seatCategories[seat.key];
     this.error = null;
     this.soldTickets = [];
+  }
+
+  categoryOf(seat: Seat): TicketCategory {
+    return this.seatCategories[seat.key] ?? 'standard';
+  }
+
+  setSeatCategory(seat: Seat, category: TicketCategory): void {
+    if (category === 'standard') {
+      delete this.seatCategories[seat.key];
+    } else {
+      this.seatCategories[seat.key] = category;
+    }
+    this.error = null;
+  }
+
+  /** A szék jegyára a kategória szerint: Dolgozó jegy = a beállított ár, Élménykártya = 0 Ft, különben a terem ára. */
+  effectivePrice(seat: Seat): number {
+    switch (this.categoryOf(seat)) {
+      case 'staff': return this.staffPrice;
+      case 'experience_card': return 0;
+      default: return seat.price;
+    }
+  }
+
+  private seatCategoriesPayload(): Record<string, TicketCategory> | undefined {
+    const picked: Record<string, TicketCategory> = {};
+    for (const seat of this.selectedSeats) {
+      const category = this.categoryOf(seat);
+      if (category !== 'standard') picked[seat.key] = category;
+    }
+    return Object.keys(picked).length ? picked : undefined;
   }
 
   private findSeat(key: string): Seat | undefined {
@@ -486,7 +530,7 @@ export class PosAdminComponent implements OnInit, OnDestroy {
     if (this.mode === 'reservations') {
       return this.selectedReservation ? Number(this.selectedReservation.total_amount) : 0;
     }
-    return this.selectedSeats.reduce((sum, seat) => sum + seat.price, 0);
+    return this.selectedSeats.reduce((sum, seat) => sum + this.effectivePrice(seat), 0);
   }
 
   get hasSelection(): boolean {
@@ -499,12 +543,19 @@ export class PosAdminComponent implements OnInit, OnDestroy {
   }
 
   get canConfirm(): boolean {
-    if (!this.hasSelection || !this.paymentMethod || this.processing) return false;
+    if (!this.hasSelection || this.processing) return false;
+    // 0 Ft-os eladásnál (csak Dolgozó jegy / Élménykártya) nincs fizetendő összeg, a fizetési mód nem kötelező
+    if (this.total > 0 && !this.paymentMethod) return false;
     if (this.paymentMethod === 'cash' && this.cashGiven !== null && this.cashGiven !== undefined && this.cashGiven < this.total) {
       return false;
     }
-    if (this.invoiceRequested && !this.invoiceFormValid) return false;
+    if (this.invoiceActive && !this.invoiceFormValid) return false;
     return true;
+  }
+
+  /** Számla csak fizetendő összeg esetén kérhető (a 0 Ft-os eladásokhoz nem készül számla). */
+  get invoiceActive(): boolean {
+    return this.invoicingEnabled && this.invoiceRequested && this.total > 0;
   }
 
   setPayment(method: PaymentMethod): void {
@@ -533,10 +584,11 @@ export class PosAdminComponent implements OnInit, OnDestroy {
   }
 
   get invoiceLineAmounts(): number[] {
-    if (this.mode === 'reservations') {
-      return (this.selectedReservation?.items ?? []).map((i: any) => Math.round(Number(i.price_amount)));
-    }
-    return this.selectedSeats.map(s => Math.round(s.price));
+    // A 0 Ft-os jegyek (Dolgozó jegy, Élménykártya) nem kerülnek a számlára
+    const amounts = this.mode === 'reservations'
+      ? (this.selectedReservation?.items ?? []).map((i: any) => Math.round(Number(i.price_amount)))
+      : this.selectedSeats.map(s => Math.round(this.effectivePrice(s)));
+    return amounts.filter((a: number) => a > 0);
   }
 
   /** A szerverrel azonos számítás: tételenként kerekített nettó és ÁFA. */
@@ -556,7 +608,7 @@ export class PosAdminComponent implements OnInit, OnDestroy {
 
   confirmSale(): void {
     if (!this.canConfirm) return;
-    if (this.invoiceRequested) {
+    if (this.invoiceActive) {
       this.invoiceConfirmOpen = true;
       return;
     }
@@ -618,19 +670,22 @@ export class PosAdminComponent implements OnInit, OnDestroy {
   }
 
   private executeSale(): void {
-    if (!this.canConfirm || !this.showtime || !this.paymentMethod) return;
+    if (!this.canConfirm || !this.showtime) return;
 
+    // 0 Ft-os eladásnál nincs fizetési mód választás: a nyugta készpénzesként kerül rögzítésre
+    const method: PaymentMethod = this.paymentMethod ?? 'cash';
     this.processing = true;
     this.error = null;
-    const buyer = this.invoiceRequested ? this.buyerPayload() : null;
+    const buyer = this.invoiceActive ? this.buyerPayload() : null;
 
     const request$ = this.mode === 'reservations' && this.selectedReservation
-      ? this.admin.posPayReservation(this.selectedReservation.id, this.paymentMethod)
+      ? this.admin.posPayReservation(this.selectedReservation.id, method)
       : this.admin.posSell({
           showtime_id: this.showtime.id,
           seatKeys: this.selectedSeats.map(s => s.key),
-          payment_method: this.paymentMethod,
-          customer_name: this.customerName.trim() || undefined
+          payment_method: method,
+          customer_name: this.customerName.trim() || undefined,
+          seat_categories: this.seatCategoriesPayload()
         });
 
     request$.subscribe({
@@ -696,7 +751,8 @@ export class PosAdminComponent implements OnInit, OnDestroy {
       seatKeys: this.selectedSeats.map(s => s.key),
       customer_name: this.holdName.trim(),
       customer_phone: this.holdPhone.trim(),
-      customer_email: this.holdEmail.trim() || undefined
+      customer_email: this.holdEmail.trim() || undefined,
+      seat_categories: this.seatCategoriesPayload()
     }).subscribe({
       next: (response) => {
         const seats = this.selectedSeats.map(s => s.key).join(', ');
@@ -704,6 +760,7 @@ export class PosAdminComponent implements OnInit, OnDestroy {
           + (this.holdEmail.trim() ? ' A visszaigazoló e-mailt elküldtük.' : '');
         this.processing = false;
         this.selectedSeats = [];
+        this.seatCategories = {};
         this.reserveOpen = false;
         this.holdName = '';
         this.holdPhone = '';

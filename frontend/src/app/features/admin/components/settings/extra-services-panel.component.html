@@ -5,8 +5,8 @@
 <section class="card">
   <h2>🎟️ Egyéb szolgáltatások</h2>
   <p class="muted">
-    A mozijegyeken kívüli szolgáltatások (Sárkányvár, Néprajzi gyűjtemények, élménykártya stb.) árai forintban.
-    Az ár és a név módosítása után a sor végén a <b>Mentés</b> gombbal rögzítsd a változtatást.
+    A mozijegyeken kívüli szolgáltatások (Sárkányvár, Néprajzi gyűjtemények, élménykártya stb.) árai forintban. A helyszíni jegyeladás
+    <b>„Egyéb szolgáltatások”</b> menüjében ezek a tételek értékesíthetők nyugtával. Az ár és a név módosítása után a sor végén a <b>Mentés</b> gombbal rögzítsd a változtatást.
   </p>
 
   <div class="table-wrap" *ngIf="rows.length > 0">
@@ -15,13 +15,16 @@
       <tbody>
         <ng-container *ngFor="let r of rows">
           <tr [class.dirty]="isDirty(r)">
-            <td><input type="text" [(ngModel)]="r.name" maxlength="120" (keyup.enter)="save(r)" /></td>
+            <td>
+              <input type="text" [(ngModel)]="r.name" maxlength="120" (keyup.enter)="save(r)" />
+              <small class="kind" *ngIf="r.kind === 'staff_ticket'">🔒 Székhez kötött: a helyszíni jegyeladásnál a székválasztáskor adható („Dolgozó jegy" kategória), a székhez beállított ár helyett ezen az áron.</small>
+            </td>
             <td class="price-col"><input type="number" min="0" step="50" [(ngModel)]="r.price" (keyup.enter)="save(r)" /></td>
             <td class="row-buttons">
               <button type="button" class="btn small primary" [disabled]="!isDirty(r) || r.busy || !r.name.trim() || r.price === null" (click)="save(r)">
                 {{ r.busy ? '...' : '💾 Mentés' }}
               </button>
-              <button type="button" class="btn small" [disabled]="r.busy" (click)="remove(r)">🗑️</button>
+              <button type="button" class="btn small" [disabled]="r.busy || r.kind === 'staff_ticket'" [title]="r.kind === 'staff_ticket' ? 'Rendszer-tétel, nem törölhető' : 'Törlés'" (click)="remove(r)">🗑️</button>
             </td>
           </tr>
           <tr *ngIf="r.error" class="error-row"><td colspan="3"><div class="alert">{{ r.error }}</div></td></tr>

@@ -5,17 +5,23 @@ namespace App\Http\Controllers\Admin;
 use App\Exceptions\SeatUnavailableException;
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
+use App\Models\ExtraService;
 use App\Models\Reservation;
 use App\Models\SeatLock;
 use App\Models\Showtime;
+use App\Models\Ticket;
 use App\Services\ActivityLogger;
 use App\Services\ReservationMailer;
 use App\Services\SeatClaimService;
 use App\Services\SimplePayService;
 use App\Services\TicketService;
+use App\Support\TicketCategory;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class PosController extends Controller
 {
@@ -40,7 +46,10 @@ class PosController extends Controller
             'payment_method' => ['required', 'string', 'in:cash,card'],
             'customer_name' => ['nullable', 'string', 'max:255', 'regex:/^[^<>\x00-\x1F\x7F]+$/u'],
             'customer_phone' => ['nullable', 'string', 'max:20'],
+            'seat_categories' => ['nullable', 'array'],
+            'seat_categories.*' => ['string', Rule::in(TicketCategory::SEAT)],
         ]);
+        $this->assertCategoriesMatchSeats($data);
 
         $showtime = Showtime::with(['movie', 'auditorium'])->findOrFail($data['showtime_id']);
 
@@ -62,7 +71,7 @@ class PosController extends Controller
                     'expires_at' => null,
                 ]);
 
-                $this->claims->claimSeats($showtime, $reservation, $data['seatKeys'], null);
+                $this->claims->claimSeats($showtime, $reservation, $data['seatKeys'], null, $data['seat_categories'] ?? []);
 
                 return $this->markPaid($reservation, $data['payment_method'], $request);
             });
@@ -86,7 +95,10 @@ class PosController extends Controller
             'customer_name' => ['required', 'string', 'max:255', 'regex:/^[^<>\x00-\x1F\x7F]+$/u'],
             'customer_phone' => ['required', 'string', 'max:20'],
             'customer_email' => ['nullable', 'email', 'max:255'],
+            'seat_categories' => ['nullable', 'array'],
+            'seat_categories.*' => ['string', Rule::in(TicketCategory::SEAT)],
         ]);
+        $this->assertCategoriesMatchSeats($data);
 
         $showtime = Showtime::with(['movie', 'auditorium'])->findOrFail($data['showtime_id']);
 
@@ -109,7 +121,7 @@ class PosController extends Controller
                     'expires_at' => null,
                 ]);
 
-                $this->claims->claimSeats($showtime, $reservation, $data['seatKeys'], null);
+                $this->claims->claimSeats($showtime, $reservation, $data['seatKeys'], null, $data['seat_categories'] ?? []);
 
                 return $reservation;
             });
@@ -133,6 +145,72 @@ class PosController extends Controller
         Customer::remember($data['customer_name'], $data['customer_phone'], $email);
 
         return response()->json($this->payload($reservation), 201);
+    }
+
+    /** A kategóriák csak a kiválasztott székekre vonatkozhatnak. */
+    private function assertCategoriesMatchSeats(array $data): void
+    {
+        $unknown = array_diff(array_keys($data['seat_categories'] ?? []), $data['seatKeys']);
+        if ($unknown) {
+            throw ValidationException::withMessages(['seat_categories' => 'A jegykategória nem kiválasztott székre vonatkozik.']);
+        }
+    }
+
+    /** A pénztár "Egyéb szolgáltatások" menüjének tételei és a Dolgozó jegy beállított ára (a székes eladáshoz). */
+    public function services(): JsonResponse
+    {
+        return response()->json([
+            'services' => ExtraService::where('kind', ExtraService::KIND_SERVICE)->orderBy('sort_order')->orderBy('id')->get(['id', 'name', 'price']),
+            'staff_price' => ExtraService::staffPrice(),
+        ]);
+    }
+
+    /**
+     * Egyéb szolgáltatások értékesítése: minden darabról külön, folyamatos sorszámú nyugta készül, rajta a szolgáltatás
+     * nevével és az árral. Az árat mindig a szerver az adatbázisból veszi.
+     */
+    public function sellServices(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'items' => ['required', 'array', 'min:1', 'max:20'],
+            'items.*.service_id' => ['required', 'integer', 'distinct', 'exists:extra_services,id'],
+            'items.*.quantity' => ['required', 'integer', 'min:1', 'max:20'],
+            'payment_method' => ['required', 'string', 'in:cash,card'],
+        ]);
+
+        $services = ExtraService::whereIn('id', collect($data['items'])->pluck('service_id'))->get()->keyBy('id');
+
+        $lines = [];
+        foreach ($data['items'] as $item) {
+            $service = $services[$item['service_id']];
+            if ($service->kind !== ExtraService::KIND_SERVICE) {
+                return response()->json(['message' => "A(z) {$service->name} székhez kötött, a székválasztásnál adható el."], 422);
+            }
+            for ($i = 0; $i < $item['quantity']; $i++) {
+                $lines[] = ['name' => $service->name, 'price' => $service->price];
+            }
+        }
+        if (count($lines) > 50) {
+            return response()->json(['message' => 'Egyszerre legfeljebb 50 darab adható el.'], 422);
+        }
+
+        $tickets = $this->tickets->issueForServices($lines, $data['payment_method'], $request->user());
+
+        return response()->json(['tickets' => $tickets->values(), 'total' => (int) $tickets->sum('price_amount')], 201);
+    }
+
+    /** A mai szolgáltatás-nyugták (sztornózáshoz): a pénztáros a sajátjait, a vezető mindenkiét látja. */
+    public function serviceTickets(Request $request): JsonResponse
+    {
+        $from = Carbon::now('Europe/Budapest')->startOfDay()->utc();
+
+        $tickets = Ticket::where('category', TicketCategory::SERVICE)
+            ->where('sold_at', '>=', $from)
+            ->when(!$request->user()->hasPermission('daily_close.all'), fn($q) => $q->where('sold_by_user_id', $request->user()->id))
+            ->orderByDesc('id')
+            ->get();
+
+        return response()->json($tickets->values());
     }
 
     /** Vásárlók keresése a helyszíni foglalás névmezőjének javaslataihoz (név, telefonszám vagy e-mail részlet alapján). */

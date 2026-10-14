@@ -61,3 +61,5 @@ tr.subtotal td { font-weight: 700; border-top: 2px solid #5c3d2e; border-bottom:
 .badge { padding: 2px 8px; border-radius: 999px; font-size: 12px; background: #4a3425; }
 .badge.cash { background: rgba(34, 197, 94, 0.2); color: #86efac; }
 .badge.card { background: rgba(59, 130, 246, 0.2); color: #93c5fd; }
+.cat-tag { margin-left: 6px; padding: 1px 7px; border-radius: 8px; background: #d4a574; color: #2c1810; font-weight: 700; font-size: 11px; }
+.cat-tag.svc { background: #3b82f6; color: #fff; }

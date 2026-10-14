@@ -3,10 +3,12 @@
 namespace App\Services;
 
 use App\Exceptions\SeatUnavailableException;
+use App\Models\ExtraService;
 use App\Models\Reservation;
 use App\Models\ReservationItem;
 use App\Models\SeatLock;
 use App\Models\Showtime;
+use App\Support\TicketCategory;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Carbon;
 
@@ -29,10 +31,12 @@ class SeatClaimService
      * Új foglalás székeinek ellenőrzése, a tételek és a zárolások létrehozása. Tranzakcióban hívandó.
      *
      * @param array<int,string> $seatKeys
+     * @param array<string,string> $categories szék kulcs => jegykategória (Dolgozó jegy: a beállított ár, Élménykártya: 0 Ft;
+     *                                          a terem szék-árától függetlenül)
      * @return int a foglalás végösszege
      * @throws SeatUnavailableException
      */
-    public function claimSeats(Showtime $showtime, Reservation $reservation, array $seatKeys, ?Carbon $expiresAt): int
+    public function claimSeats(Showtime $showtime, Reservation $reservation, array $seatKeys, ?Carbon $expiresAt, array $categories = []): int
     {
         $this->releaseStale($showtime);
 
@@ -48,9 +52,15 @@ class SeatClaimService
             }
         }
 
+        $staffPrice = null;
         $total = 0;
         foreach ($seatKeys as $key) {
-            $price = (int) $seats[$key]['price'];
+            $category = TicketCategory::normalizeSeat($categories[$key] ?? null);
+            $price = match ($category) {
+                TicketCategory::STAFF => $staffPrice ??= ExtraService::staffPrice(),
+                TicketCategory::EXPERIENCE_CARD => 0,
+                default => (int) $seats[$key]['price'],
+            };
             [$rowLabel, $number] = array_pad(explode('-', $key), 2, null);
 
             ReservationItem::create([
@@ -59,6 +69,7 @@ class SeatClaimService
                 'row_label' => $rowLabel,
                 'seat_number' => intval($number) ?: null,
                 'price_amount' => $price,
+                'category' => $category,
             ]);
 
             $this->createLock($showtime->id, $reservation->id, $key, $expiresAt);

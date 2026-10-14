@@ -15,6 +15,7 @@ class ReservationItem extends Model
         'row_label',
         'seat_number',
         'price_amount',
+        'category',
     ];
 
     public function reservation()

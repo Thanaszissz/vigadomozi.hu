@@ -119,7 +119,10 @@ class TicketVoidController extends Controller
     /** Az eladási napló sora is csökken (megszűnik, ha már egyetlen jegy sem marad benne), így a napi zárásban sem szerepel. */
     private function adjustSalesLog(Ticket $ticket): void
     {
-        $log = SalesLog::where('reservation_id', $ticket->reservation_id)->orderByDesc('id')->first();
+        // A szolgáltatás-nyugtáknak nincs foglalásuk: az eladási napló sorát a jegyszám alapján keressük meg
+        $log = $ticket->reservation_id
+            ? SalesLog::where('reservation_id', $ticket->reservation_id)->orderByDesc('id')->first()
+            : SalesLog::whereNull('reservation_id')->where('ticket_numbers', 'like', '%' . $ticket->ticket_number . '%')->orderByDesc('id')->first();
         if (!$log) {
             return;
         }

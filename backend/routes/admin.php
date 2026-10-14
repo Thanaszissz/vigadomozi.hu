@@ -72,6 +72,11 @@ Route::middleware('permission:pos.sell')->group(function () {
     Route::post('pos/hold', [PosController::class, 'hold']);
     Route::get('pos/customers', [PosController::class, 'searchCustomers']);
 
+    // Egyéb szolgáltatások (Sárkányvár, Néprajzi gyűjtemények, élménykártya stb.) értékesítése nyugtával
+    Route::get('pos/services', [PosController::class, 'services']);
+    Route::post('pos/services/sell', [PosController::class, 'sellServices'])->middleware('throttle:60,1');
+    Route::get('pos/services/tickets', [PosController::class, 'serviceTickets']);
+
     // ÁFÁS számla kiállítása a kifizetett helyszíni foglaláshoz (Számlázz.hu)
     Route::get('pos/invoicing', [InvoiceController::class, 'status']);
     Route::get('pos/reservations/{reservation}/invoice', [InvoiceController::class, 'show'])->whereNumber('reservation');

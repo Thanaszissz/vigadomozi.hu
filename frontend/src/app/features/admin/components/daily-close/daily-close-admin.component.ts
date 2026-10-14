@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule, formatDate } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { AdminService, DailyClose, SalesLogEntry, Ticket } from '../../../../services/admin.service';
+import { AdminService, DailyClose, SalesLogEntry, Ticket, TicketCategory, categoryLabel } from '../../../../services/admin.service';
 import { AuthService } from '../../../../services/auth.service';
 import { paymentLabel } from '../ticket-print/ticket-print.component';
 
@@ -117,6 +117,28 @@ export class DailyCloseAdminComponent implements OnInit {
     return sums;
   }
 
+  /** Kategóriánkénti darabszám és összeg az elszámoláshoz (normál jegyek: a készpénz/kártya sorokban látszanak). */
+  categorySums(tickets: Ticket[]): Array<{ category: TicketCategory; label: string; tickets: number; amount: number }> {
+    return (['staff', 'experience_card', 'service'] as TicketCategory[])
+      .map(category => {
+        const rows = tickets.filter(t => t.category === category);
+        return { category, label: categoryLabel(category), tickets: rows.length, amount: rows.reduce((s, t) => s + t.price_amount, 0) };
+      })
+      .filter(c => c.tickets > 0);
+  }
+
+  get visibleCategorySums(): Array<{ category: TicketCategory; label: string; tickets: number; amount: number }> {
+    return this.categorySums(this.visibleSellers.flatMap(s => s.tickets));
+  }
+
+  isService(t: Ticket): boolean {
+    return t.category === 'service';
+  }
+
+  categoryTag(t: Ticket): string {
+    return t.category && t.category !== 'standard' && t.category !== 'service' ? categoryLabel(t.category) : '';
+  }
+
   channelLabel(channel: string): string {
     return ({ pos: 'Pénztár', admin: 'Admin', online: 'Online' } as Record<string, string>)[channel] ?? channel;
   }
@@ -165,12 +187,15 @@ export class DailyCloseAdminComponent implements OnInit {
         <tr>
           <td class="num">${esc(t.ticket_number)}</td>
           <td>${esc(tm(t.sold_at))}</td>
-          <td>${esc(t.movie_title)}</td>
-          <td>${esc(dt(t.starts_at))}</td>
-          <td>${esc(t.row_label)} / ${esc(t.seat_number ?? '-')}</td>
+          <td>${esc(t.movie_title)}${this.categoryTag(t) ? ` <i>(${esc(this.categoryTag(t))})</i>` : ''}${this.isService(t) ? ' <i>(szolgáltatás)</i>' : ''}</td>
+          <td>${this.isService(t) ? '-' : esc(dt(t.starts_at))}</td>
+          <td>${this.isService(t) ? '-' : `${esc(t.row_label)} / ${esc(t.seat_number ?? '-')}`}</td>
           <td>${esc(paymentLabel(t.payment_method))}</td>
           <td class="r">${esc(ft(t.price_amount))}</td>
         </tr>`).join('');
+
+      const catRow = this.categorySums(seller.tickets)
+        .map(c => `${esc(c.label)}: ${c.tickets} db${c.amount ? ' (' + esc(ft(c.amount)) + ')' : ''}`).join(' • ');
 
       return `
         <div>
@@ -182,7 +207,7 @@ export class DailyCloseAdminComponent implements OnInit {
             <tbody>
               ${rows}
               <tr class="sub">
-                <td colspan="4">Összesen: ${seller.tickets.length} jegy</td>
+                <td colspan="4">Összesen: ${seller.tickets.length} jegy / nyugta${catRow ? '<br>' + catRow : ''}</td>
                 <td colspan="2">Készpénz: ${esc(ft(sums.cash))} • Kártya: ${esc(ft(sums.card))}${sums.other ? ' • Egyéb: ' + esc(ft(sums.other)) : ''}</td>
                 <td class="r">${esc(ft(sums.amount))}</td>
               </tr>
@@ -201,10 +226,11 @@ export class DailyCloseAdminComponent implements OnInit {
       ${sections || '<p>Ezen a napon nem volt jegyeladás.</p>'}
       <div class="grand">
         <table>
-          <tr><td>Eladott jegyek száma</td><td class="r"><b>${totals.tickets} db</b></td></tr>
+          <tr><td>Eladott jegyek / nyugták száma</td><td class="r"><b>${totals.tickets} db</b></td></tr>
           <tr><td>Készpénz</td><td class="r">${esc(ft(totals.cash))}</td></tr>
           <tr><td>Bankkártya</td><td class="r">${esc(ft(totals.card))}</td></tr>
           ${totals.other ? `<tr><td>Egyéb (online)</td><td class="r">${esc(ft(totals.other))}</td></tr>` : ''}
+          ${this.visibleCategorySums.map(c => `<tr><td>Ebből: ${esc(c.label)}</td><td class="r">${c.tickets} db${c.amount ? ' • ' + esc(ft(c.amount)) : ''}</td></tr>`).join('')}
           <tr><td><b>Mindösszesen</b></td><td class="r"><b>${esc(ft(totals.amount))}</b></td></tr>
         </table>
       </div>

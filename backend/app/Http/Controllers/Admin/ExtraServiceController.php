@@ -61,6 +61,10 @@ class ExtraServiceController extends Controller
 
     public function destroy(ExtraService $extraService): JsonResponse
     {
+        if ($extraService->kind === ExtraService::KIND_STAFF) {
+            return response()->json(['message' => 'A Dolgozó jegy rendszer-tétel (a székes jegyeladásnál használja a rendszer), nem törölhető. Az ára és a neve szerkeszthető.'], 422);
+        }
+
         $label = sprintf('%s (%s Ft)', $extraService->name, number_format($extraService->price, 0, ',', ' '));
         $extraService->delete();
 

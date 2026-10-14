@@ -1,0 +1,117 @@
+<div class="svc-grid">
+  <section class="panel">
+    <h2>🎫 Egyéb szolgáltatások</h2>
+    <p class="muted">Válaszd ki a szolgáltatásokat és a darabszámot. Minden darabról külön, folyamatos sorszámú nyugta készül a szolgáltatás nevével és az árral.</p>
+
+    <div *ngIf="loading && rows.length === 0" class="muted">Betöltés...</div>
+    <div *ngIf="error && rows.length === 0" class="alert">{{ error }}</div>
+    <div *ngIf="!loading && !error && rows.length === 0" class="muted">Nincs értékesíthető szolgáltatás (a Beállítások → Egyéb szolgáltatások fülön vehetők fel).</div>
+
+    <div class="svc-list">
+      <div *ngFor="let r of rows" class="svc-card" [class.active]="r.quantity > 0">
+        <div class="svc-info">
+          <span class="svc-name">{{ r.name }}</span>
+          <span class="svc-price">{{ r.price | number:'1.0-0' }} Ft</span>
+        </div>
+        <div class="stepper">
+          <button type="button" class="step-btn" [disabled]="r.quantity === 0 || processing" (click)="change(r, -1)">−</button>
+          <span class="qty">{{ r.quantity }}</span>
+          <button type="button" class="step-btn" [disabled]="r.quantity >= 20 || processing" (click)="change(r, 1)">+</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel summary">
+    <h2>Fizetés</h2>
+
+    <div *ngIf="count === 0" class="muted">Adj meg legalább egy szolgáltatást a bal oldalon.</div>
+
+    <ng-container *ngIf="count > 0">
+      <ul class="item-list">
+        <li *ngFor="let r of selected">
+          <span>{{ r.quantity }} × {{ r.name }}</span>
+          <b>{{ r.quantity * r.price | number:'1.0-0' }} Ft</b>
+        </li>
+      </ul>
+
+      <div class="total"><span>Összesen ({{ count }} db nyugta)</span><b>{{ total | number:'1.0-0' }} Ft</b></div>
+
+      <ng-container *ngIf="total > 0; else free">
+        <div class="pay-methods">
+          <button type="button" class="pay-btn" [class.active]="paymentMethod === 'cash'" (click)="setPayment('cash')">💶 Készpénz</button>
+          <button type="button" class="pay-btn" [class.active]="paymentMethod === 'card'" (click)="setPayment('card')">💳 Bankkártya</button>
+        </div>
+
+        <div *ngIf="paymentMethod === 'cash'" class="cash-box">
+          <label class="field">
+            <span>Átvett összeg (Ft)</span>
+            <input type="number" min="0" step="100" [(ngModel)]="cashGiven" placeholder="{{ total }}" />
+          </label>
+          <div class="change" *ngIf="changeDue !== null" [class.short]="changeDue < 0">
+            {{ changeDue < 0 ? 'Hiányzik' : 'Visszajáró' }}: <b>{{ (changeDue < 0 ? -changeDue : changeDue) | number:'1.0-0' }} Ft</b>
+          </div>
+        </div>
+      </ng-container>
+      <ng-template #free><div class="muted">Nincs fizetendő összeg (0 Ft), a nyugták kiállíthatók.</div></ng-template>
+
+      <div *ngIf="error" class="alert">{{ error }}</div>
+
+      <button type="button" class="btn-confirm" [disabled]="!canConfirm" (click)="confirm()">
+        {{ processing ? 'Feldolgozás...' : 'Eladás rögzítése és nyugták kiállítása' }}
+      </button>
+    </ng-container>
+
+    <div *ngIf="notice" class="notice">{{ notice }}</div>
+
+    <div *ngIf="soldTickets.length > 0 && !printOpen" class="sold-box">
+      <div>✅ Sikeres eladás: <b>{{ soldTickets.length }}</b> nyugta ({{ soldTickets[0].ticket_number }}<span *ngIf="soldTickets.length > 1"> – {{ soldTickets[soldTickets.length - 1].ticket_number }}</span>)</div>
+      <div class="sold-actions">
+        <button type="button" class="btn-small" (click)="printOpen = true">🖨️ Nyugták / nyomtatás</button>
+        <button type="button" class="btn-small primary" (click)="newSale()">Új eladás</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<section class="panel today">
+  <h2>🧾 Mai szolgáltatás-nyugták <small>({{ todayTickets.length }} db)</small></h2>
+  <div *ngIf="todayTickets.length === 0" class="muted">Ma még nem volt szolgáltatás-eladás.</div>
+  <table *ngIf="todayTickets.length > 0">
+    <thead><tr><th>Nyugtaszám</th><th>Szolgáltatás</th><th>Ár</th><th>Fizetés</th><th>Eladva</th><th>Eladó</th><th></th></tr></thead>
+    <tbody>
+      <tr *ngFor="let t of todayTickets">
+        <td class="num">{{ t.ticket_number }}</td>
+        <td>{{ t.movie_title }}</td>
+        <td>{{ t.price_amount | number:'1.0-0' }} Ft</td>
+        <td>{{ t.payment_method === 'cash' ? 'Készpénz' : 'Bankkártya' }}</td>
+        <td>{{ t.sold_at | date:'HH:mm' }}</td>
+        <td>{{ t.sold_by_name || '—' }}</td>
+        <td class="act"><button type="button" class="btn-small danger" (click)="askVoid(t)">Sztornó</button></td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<app-ticket-print *ngIf="printOpen" [tickets]="soldTickets" (close)="closePrint()"></app-ticket-print>
+
+<div *ngIf="voidTarget" class="modal-backdrop" (click)="closeVoid()"></div>
+<div *ngIf="voidTarget" class="modal" role="dialog" aria-modal="true" (click)="closeVoid()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <h3>Nyugta sztornózása</h3>
+    <p>
+      Biztosan sztornózod a(z) <b>{{ voidTarget.ticket_number }}</b> nyugtát
+      ({{ voidTarget.movie_title }}, {{ voidTarget.price_amount | number:'1.0-0' }} Ft)?
+      Az eladás kikerül a statisztikákból és a napi zárásból. A művelet nem vonható vissza.
+    </p>
+    <label class="field">
+      <span>Ok (nem kötelező)</span>
+      <input type="text" [(ngModel)]="voidReason" maxlength="255" placeholder="pl. rossz tételt adtam el" />
+    </label>
+    <div *ngIf="voidError" class="alert">{{ voidError }}</div>
+    <div class="modal-actions">
+      <button type="button" class="btn-small danger" [disabled]="processing" (click)="confirmVoid()">{{ processing ? 'Sztornózás...' : 'Igen, sztornózom' }}</button>
+      <button type="button" class="btn-small" [disabled]="processing" (click)="closeVoid()">Mégsem</button>
+    </div>
+  </div>
+</div>

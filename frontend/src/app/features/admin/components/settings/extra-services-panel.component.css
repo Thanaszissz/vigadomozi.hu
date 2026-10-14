@@ -7,6 +7,7 @@ table.services input {
 }
 table.services tr.dirty input { border-color: #d4a574; }
 .price-col { width: 160px; }
+.kind { display: block; margin-top: 4px; color: #a08060; font-size: 12px; line-height: 1.3; }
 .price-col input { text-align: right; }
 .row-buttons { white-space: nowrap; width: 1%; display: flex; gap: 6px; }
 .add-row { display: grid; grid-template-columns: 1fr 180px auto; gap: 12px; align-items: end; }

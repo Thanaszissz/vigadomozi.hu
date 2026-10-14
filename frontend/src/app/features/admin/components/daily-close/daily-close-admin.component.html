@@ -36,10 +36,11 @@
 
   <ng-container *ngIf="tab === 'close' && close && !loading">
     <div class="summary">
-      <div class="card"><span>Eladott jegyek</span><b>{{ visibleTotals.tickets }} db</b></div>
+      <div class="card"><span>Eladott jegyek / nyugták</span><b>{{ visibleTotals.tickets }} db</b></div>
       <div class="card"><span>Készpénz</span><b>{{ visibleTotals.cash | number:'1.0-0' }} Ft</b></div>
       <div class="card"><span>Bankkártya</span><b>{{ visibleTotals.card | number:'1.0-0' }} Ft</b></div>
       <div class="card" *ngIf="visibleTotals.other > 0"><span>Egyéb (online)</span><b>{{ visibleTotals.other | number:'1.0-0' }} Ft</b></div>
+      <div class="card" *ngFor="let c of visibleCategorySums"><span>{{ c.label }}</span><b>{{ c.tickets }} db<ng-container *ngIf="c.amount"> • {{ c.amount | number:'1.0-0' }} Ft</ng-container></b></div>
       <div class="card total"><span>Mindösszesen</span><b>{{ visibleTotals.amount | number:'1.0-0' }} Ft</b></div>
     </div>
 
@@ -56,7 +57,7 @@
             <tr>
               <th>Jegyszám</th>
               <th>Idő</th>
-              <th>Film</th>
+              <th>Film / szolgáltatás</th>
               <th>Előadás</th>
               <th>Sor / szék</th>
               <th>Fizetés</th>
@@ -67,9 +68,9 @@
             <tr *ngFor="let t of seller.tickets">
               <td class="num">{{ t.ticket_number }}</td>
               <td>{{ t.sold_at | date:'HH:mm' }}</td>
-              <td>{{ t.movie_title }}</td>
-              <td>{{ t.starts_at | date:'yyyy.MM.dd. HH:mm' }}</td>
-              <td>{{ t.row_label }} / {{ t.seat_number ?? '—' }}</td>
+              <td>{{ t.movie_title }}<small class="cat-tag" *ngIf="categoryTag(t)"> {{ categoryTag(t) }}</small><small class="cat-tag svc" *ngIf="isService(t)"> szolgáltatás</small></td>
+              <td>{{ isService(t) ? '—' : (t.starts_at | date:'yyyy.MM.dd. HH:mm') }}</td>
+              <td>{{ isService(t) ? '—' : (t.row_label + ' / ' + (t.seat_number ?? '—')) }}</td>
               <td><span class="badge" [class.cash]="t.payment_method === 'cash'" [class.card]="t.payment_method === 'card'">{{ paymentLabel(t.payment_method) }}</span></td>
               <td class="r">{{ t.price_amount | number:'1.0-0' }} Ft</td>
             </tr>

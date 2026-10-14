@@ -413,6 +413,18 @@ h1 { margin: 0; color: #e8d5b7; }
 .hold-box h3 { margin: 0 0 6px; font-size: 15px; color: #e8d5b7; }
 .hold-box .muted { margin: 0 0 10px; font-size: 12px; }
 .hold-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.area-tabs { display: flex; gap: 8px; margin: 0 0 16px; flex-wrap: wrap; }
+.area-tabs button {
+  padding: 10px 18px; border-radius: 10px; border: 1.5px solid #5c3d2e; background: #4a3425; color: #e8d5b7;
+  font-weight: 700; font-size: 15px; cursor: pointer;
+}
+.area-tabs button.active { background: #d4a574; border-color: #d4a574; color: #2c1810; }
+.item-list li.seat-line { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; }
+.cat-select {
+  padding: 5px 8px; border-radius: 6px; border: 1px solid #5c3d2e; background: #4a3425; color: #e8d5b7; font-size: 13px; min-width: 0;
+}
+.cat-tag { margin-left: 6px; padding: 1px 6px; border-radius: 8px; background: #d4a574; color: #2c1810; font-weight: 700; font-size: 11px; }
+.free-note { margin: 10px 0; }
 .btn-invoice {
   width: 100%;
   margin-top: 10px;

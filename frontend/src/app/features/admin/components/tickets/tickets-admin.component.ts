@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { AdminService, Ticket, TicketPage } from '../../../../services/admin.service';
+import { AdminService, Ticket, TicketPage, categoryLabel } from '../../../../services/admin.service';
 import { TicketPrintComponent, paymentLabel } from '../ticket-print/ticket-print.component';
 
 @Component({
@@ -29,6 +29,12 @@ export class TicketsAdminComponent implements OnInit {
   printTickets: Ticket[] = [];
 
   paymentLabel = paymentLabel;
+  categoryLabel = categoryLabel;
+
+  /** Az összesítő kártyák a nem normál kategóriákról (Dolgozó jegy, Élménykártya, Egyéb szolgáltatás). */
+  get categoryCards(): Array<{ category: string; tickets: number; amount: number }> {
+    return (this.result?.summary.by_category ?? []).filter(c => c.category !== 'standard');
+  }
 
   constructor(private admin: AdminService, private router: Router) {}
 
