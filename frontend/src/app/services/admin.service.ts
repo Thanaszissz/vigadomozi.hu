@@ -556,8 +556,13 @@ export class AdminService {
     return this.http.get<TicketPage>(`${this.apiUrl}/tickets?${query}`);
   }
 
-  exportTickets(year: number): Observable<Blob> {
-    return this.http.get(`${this.apiUrl}/tickets/export?year=${year}`, { responseType: 'blob' });
+  exportTickets(params: { year: number; payment_method?: string; date?: string; q?: string }): Observable<Blob> {
+    const query: Record<string, string> = { year: String(params.year) };
+    if (params.payment_method) query['payment_method'] = params.payment_method;
+    if (params.date) query['date'] = params.date;
+    if (params.q) query['q'] = params.q;
+
+    return this.http.get(`${this.apiUrl}/tickets/export`, { params: query, responseType: 'blob' });
   }
 
   getDailyClose(date: string): Observable<DailyClose> {

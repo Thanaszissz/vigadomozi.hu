@@ -32,9 +32,23 @@
     </label>
     <button type="button" class="btn" (click)="load()">Szűrés</button>
     <button type="button" class="btn primary" (click)="exportCsv()" [disabled]="exporting">
-      {{ exporting ? 'Exportálás...' : '⬇ CSV export (' + year + ')' }}
+      {{ exporting ? 'Exportálás...' : '⬇ CSV export (' + (result?.tickets?.total ?? 0) + ' jegy)' }}
     </button>
   </div>
+
+  <ng-template #pagerTpl>
+    <div class="pager" *ngIf="result && result.tickets.total > 0">
+      <span class="range">{{ rangeFrom }}–{{ rangeTo }} / {{ result.tickets.total | number:'1.0-0' }} jegy</span>
+      <ng-container *ngIf="result.tickets.last_page > 1">
+        <button type="button" class="btn small" [disabled]="page <= 1 || loading" (click)="load(page - 1)">‹ Előző</button>
+        <ng-container *ngFor="let p of pageButtons">
+          <span *ngIf="p === null" class="gap">…</span>
+          <button *ngIf="p !== null" type="button" class="btn small page" [class.active]="p === result.tickets.current_page" [disabled]="loading" (click)="load(p)">{{ p }}</button>
+        </ng-container>
+        <button type="button" class="btn small" [disabled]="page >= result.tickets.last_page || loading" (click)="load(page + 1)">Következő ›</button>
+      </ng-container>
+    </div>
+  </ng-template>
 
   <div *ngIf="error" class="alert">{{ error }}</div>
 
@@ -51,6 +65,8 @@
 
   <div class="table-wrap" *ngIf="result && !loading">
     <div *ngIf="result.tickets.data.length === 0" class="muted">Nincs a szűrésnek megfelelő jegy.</div>
+
+    <ng-container *ngTemplateOutlet="pagerTpl"></ng-container>
 
     <table *ngIf="result.tickets.data.length > 0">
       <thead>
@@ -81,11 +97,7 @@
       </tbody>
     </table>
 
-    <div class="pager" *ngIf="result.tickets.last_page > 1">
-      <button type="button" class="btn small" [disabled]="page <= 1" (click)="load(page - 1)">‹ Előző</button>
-      <span>{{ result.tickets.current_page }} / {{ result.tickets.last_page }}</span>
-      <button type="button" class="btn small" [disabled]="page >= result.tickets.last_page" (click)="load(page + 1)">Következő ›</button>
-    </div>
+    <ng-container *ngTemplateOutlet="pagerTpl"></ng-container>
   </div>
 
   <app-ticket-print *ngIf="printTickets.length > 0" [tickets]="printTickets" (close)="closePrint()"></app-ticket-print>

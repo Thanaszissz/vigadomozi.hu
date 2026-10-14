@@ -49,4 +49,7 @@ td.num { font-family: 'Courier New', monospace; font-weight: 700; color: #fdf7ed
 .badge.cash { background: rgba(34, 197, 94, 0.2); color: #86efac; }
 .badge.card { background: rgba(59, 130, 246, 0.2); color: #93c5fd; }
 
-.pager { display: flex; justify-content: center; align-items: center; gap: 12px; padding: 12px 0 4px; }
+.pager { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 6px; padding: 12px 0; }
+.pager .range { color: #a08060; font-size: 13px; margin-right: 10px; }
+.pager .gap { color: #a08060; padding: 0 2px; }
+.btn.page.active { background: #d4a574; color: #2c1810; border-color: #d4a574; }

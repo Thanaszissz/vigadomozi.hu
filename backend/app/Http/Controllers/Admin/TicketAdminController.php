@@ -163,10 +163,28 @@ class TicketAdminController extends Controller
 
     public function export(Request $request)
     {
-        $request->validate(['year' => ['required', 'integer', 'min:2000', 'max:2100']]);
+        $request->validate([
+            'year' => ['required', 'integer', 'min:2000', 'max:2100'],
+            'payment_method' => ['nullable', 'in:cash,card,stripe,simplepay'],
+            'date' => ['nullable', 'date'],
+            'q' => ['nullable', 'string', 'max:100'],
+        ]);
         $year = (int) $request->query('year');
 
-        ActivityLogger::log('report.export_tickets', "Jegyek exportálása (CSV): {$year}", null, ['year' => $year]);
+        // Az export nem lapozott: a szűrésnek megfelelő összes jegyet tartalmazza
+        $query = $this->filtered($request, $year);
+        $filters = array_filter([
+            'payment_method' => $request->query('payment_method'),
+            'date' => $request->query('date'),
+            'q' => trim((string) $request->query('q')),
+        ]);
+
+        ActivityLogger::log(
+            'report.export_tickets',
+            "Jegyek exportálása (CSV): {$year}" . ($filters ? ' (szűrt: ' . implode(', ', array_keys($filters)) . ')' : ''),
+            null,
+            ['year' => $year] + $filters
+        );
 
         $headers = [
             'Content-Type' => 'text/csv; charset=UTF-8',
@@ -175,12 +193,12 @@ class TicketAdminController extends Controller
 
         $methods = ['cash' => 'Készpénz', 'card' => 'Bankkártya', 'stripe' => 'Online', 'simplepay' => 'Online (SimplePay)'];
 
-        return response()->stream(function () use ($year, $methods) {
+        return response()->stream(function () use ($query, $methods) {
             $out = fopen('php://output', 'w');
             fwrite($out, "\xEF\xBB\xBF");
             fputcsv($out, ['Jegyszám', 'Eladva', 'Film', 'Előadás kezdete', 'Terem', 'Sor', 'Szék', 'Ár (Ft)', 'Fizetés', 'Értékesítő'], ';');
 
-            Ticket::where('ticket_year', $year)->orderBy('id')->chunk(500, function ($tickets) use ($out, $methods) {
+            $query->orderBy('id')->chunk(500, function ($tickets) use ($out, $methods) {
                 foreach ($tickets as $t) {
                     fputcsv($out, [
                         $t->ticket_number,
