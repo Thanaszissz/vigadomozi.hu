@@ -165,6 +165,107 @@ class TicketAdminController extends Controller
         return $request->user()->hasPermission('daily_close.all') ? 'all' : 'own';
     }
 
+    /**
+     * Egy nap előadásainak teljes jegyeladása: minden olyan jegy, amelynek előadása az adott napon (budapesti idő) van,
+     * az eladás időpontjától, csatornájától és eladójától függetlenül, előadásonként csoportosítva. Sztornózott jegy nincs benne.
+     */
+    public function showtimeDay(Request $request): JsonResponse
+    {
+        $request->validate(['date' => ['nullable', 'date_format:Y-m-d']]);
+        $date = $request->query('date') ?: now()->timezone('Europe/Budapest')->toDateString();
+
+        $tickets = $this->showtimeDayTickets($date)->get();
+
+        $sum = function ($rows) {
+            return [
+                'tickets' => $rows->count(),
+                'amount' => (int) $rows->sum('price_amount'),
+                'cash' => (int) $rows->where('payment_method', 'cash')->sum('price_amount'),
+                'card' => (int) $rows->where('payment_method', 'card')->sum('price_amount'),
+                'experience_card' => (int) $rows->where('payment_method', 'experience_card')->sum('price_amount'),
+                'online' => (int) $rows->whereIn('payment_method', ['stripe', 'simplepay'])->sum('price_amount'),
+                'staff' => $rows->where('category', TicketCategory::STAFF)->count(),
+                'experience_tickets' => $rows->where('category', TicketCategory::EXPERIENCE_CARD)->count(),
+            ];
+        };
+
+        $shows = $tickets
+            ->groupBy(fn(Ticket $t) => ($t->showtime_id ?? 0) . '|' . $t->starts_at->toIso8601String() . '|' . $t->movie_title)
+            ->map(fn($rows) => [
+                'showtime_id' => $rows->first()->showtime_id,
+                'movie_title' => $rows->first()->movie_title,
+                'starts_at' => $rows->first()->starts_at,
+                'auditorium_name' => $rows->first()->auditorium_name,
+            ] + $sum($rows))
+            ->values();
+
+        ActivityLogger::log('report.showtime_day', "Előadások eladása megtekintve: {$date}", null, ['date' => $date]);
+
+        return response()->json([
+            'date' => $date,
+            'totals' => $sum($tickets),
+            'shows' => $shows,
+            'tickets' => $tickets->values(),
+        ]);
+    }
+
+    /** Az adott napi előadások teljes jegyeladása CSV-ben (előadás szerint, azon belül sor/szék szerint rendezve). */
+    public function showtimeDayExport(Request $request)
+    {
+        $request->validate(['date' => ['required', 'date_format:Y-m-d']]);
+        $date = (string) $request->query('date');
+
+        ActivityLogger::log('report.export_showtime_day', "Előadások eladásának exportálása (CSV): {$date}", null, ['date' => $date]);
+
+        $methods = ['cash' => 'Készpénz', 'card' => 'Bankkártya', 'stripe' => 'Online', 'simplepay' => 'Online (SimplePay)', 'experience_card' => 'Élménykártya'];
+        $channels = ['pos' => 'Pénztár', 'admin' => 'Admin', 'online' => 'Online'];
+        $query = $this->showtimeDayTickets($date);
+
+        return response()->stream(function () use ($query, $methods, $channels) {
+            $out = fopen('php://output', 'w');
+            fwrite($out, "\xEF\xBB\xBF");
+            fputcsv($out, ['Előadás kezdete', 'Film', 'Terem', 'Jegyszám', 'Sor', 'Szék', 'Ár (Ft)', 'Kategória', 'Fizetés', 'Csatorna', 'Eladva', 'Értékesítő'], ';');
+
+            $query->chunk(500, function ($tickets) use ($out, $methods, $channels) {
+                foreach ($tickets as $t) {
+                    fputcsv($out, [
+                        $t->starts_at->copy()->timezone('Europe/Budapest')->format('Y-m-d H:i'),
+                        $t->movie_title,
+                        $t->auditorium_name,
+                        $t->ticket_number,
+                        $t->row_label,
+                        $t->seat_number,
+                        $t->price_amount,
+                        TicketCategory::label($t->category),
+                        $methods[$t->payment_method] ?? $t->payment_method,
+                        $channels[$t->channel] ?? $t->channel,
+                        $t->sold_at->copy()->timezone('Europe/Budapest')->format('Y-m-d H:i'),
+                        $t->sold_by_name,
+                    ], ';');
+                }
+            });
+
+            fclose($out);
+        }, 200, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="elo_adasok_' . $date . '.csv"',
+        ]);
+    }
+
+    private function showtimeDayTickets(string $date): Builder
+    {
+        [$from, $to] = $this->dayRange($date);
+
+        return Ticket::query()
+            ->where('category', '!=', TicketCategory::SERVICE)
+            ->whereBetween('starts_at', [$from, $to])
+            ->orderBy('starts_at')
+            ->orderBy('showtime_id')
+            ->orderBy('row_label')
+            ->orderBy('seat_number')
+            ->orderBy('id');
+    }
+
     private function dayRange(string $date): array
     {
         $start = Carbon::createFromFormat('Y-m-d', $date, 'Europe/Budapest')->startOfDay();

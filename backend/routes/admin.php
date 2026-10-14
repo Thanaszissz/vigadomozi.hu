@@ -159,6 +159,12 @@ Route::middleware('permission:daily_close.view')->group(function () {
     Route::get('tickets/sales-log', [TicketAdminController::class, 'salesLog']);
 });
 
+// Egy nap előadásainak teljes jegyeladása és CSV exportja (vezető, adminisztrátor)
+Route::middleware('permission:daily_close.all')->group(function () {
+    Route::get('tickets/showtime-day', [TicketAdminController::class, 'showtimeDay']);
+    Route::get('tickets/showtime-day/export', [TicketAdminController::class, 'showtimeDayExport']);
+});
+
 // Eladott jegyek évenkénti archívuma (vezető, adminisztrátor)
 Route::middleware('permission:tickets.archive')->group(function () {
     Route::get('tickets/years', [TicketAdminController::class, 'years']);

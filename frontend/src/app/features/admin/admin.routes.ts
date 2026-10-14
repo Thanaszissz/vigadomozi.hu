@@ -12,6 +12,7 @@ import { CustomersAdminComponent } from './components/customers/customers-admin.
 import { PosAdminComponent } from './components/pos/pos-admin.component';
 import { TicketsAdminComponent } from './components/tickets/tickets-admin.component';
 import { DailyCloseAdminComponent } from './components/daily-close/daily-close-admin.component';
+import { ShowtimeDayAdminComponent } from './components/showtime-day/showtime-day-admin.component';
 import { ActivityLogAdminComponent } from './components/activity-log/activity-log-admin.component';
 import { EmailTemplatesAdminComponent } from './components/email-templates/email-templates-admin.component';
 import { SettingsAdminComponent } from './components/settings/settings-admin.component';
@@ -44,6 +45,12 @@ export const ADMIN_ROUTES: Routes = [
     component: DailyCloseAdminComponent,
     canActivate: [AuthGuard],
     data: { permission: 'daily_close.view' }
+  },
+  {
+    path: 'showtime-day',
+    component: ShowtimeDayAdminComponent,
+    canActivate: [AuthGuard],
+    data: { permission: 'daily_close.all' }
   },
   {
     path: 'activity-log',

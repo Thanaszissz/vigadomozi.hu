@@ -106,6 +106,29 @@ export interface DailyClose {
   }>;
 }
 
+export interface ShowtimeDayTotals {
+  tickets: number;
+  amount: number;
+  cash: number;
+  card: number;
+  experience_card: number;
+  online: number;
+  staff: number;
+  experience_tickets: number;
+}
+
+export interface ShowtimeDay {
+  date: string;
+  totals: ShowtimeDayTotals;
+  shows: Array<ShowtimeDayTotals & {
+    showtime_id: number | null;
+    movie_title: string;
+    starts_at: string;
+    auditorium_name: string | null;
+  }>;
+  tickets: Ticket[];
+}
+
 export interface SalesLogEntry {
   id: number;
   occurred_at: string;
@@ -604,6 +627,15 @@ export class AdminService {
     if (params.q) query['q'] = params.q;
 
     return this.http.get(`${this.apiUrl}/tickets/export`, { params: query, responseType: 'blob' });
+  }
+
+  // Egy nap előadásainak teljes jegyeladása
+  getShowtimeDay(date: string): Observable<ShowtimeDay> {
+    return this.http.get<ShowtimeDay>(`${this.apiUrl}/tickets/showtime-day`, { params: { date } });
+  }
+
+  exportShowtimeDay(date: string): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/tickets/showtime-day/export`, { params: { date }, responseType: 'blob' });
   }
 
   getDailyClose(date: string): Observable<DailyClose> {

@@ -111,6 +111,8 @@ class ActivityLogger
         'report.daily_close' => ['report', 'Napi zárás megtekintése'],
         'report.daily_close_print' => ['report', 'Napi zárás nyomtatása'],
         'report.daily_report' => ['report', 'Napi riport megtekintése'],
+        'report.showtime_day' => ['report', 'Előadások napi eladásának megtekintése'],
+        'report.export_showtime_day' => ['report', 'Előadások napi eladásának exportálása'],
         'report.export_tickets' => ['report', 'Jegyek exportálása'],
         'report.export_reservations' => ['report', 'Foglalások exportálása'],
     ];

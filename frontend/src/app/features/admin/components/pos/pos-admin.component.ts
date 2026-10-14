@@ -7,6 +7,7 @@ import { catchError, debounceTime, distinctUntilChanged, switchMap } from 'rxjs/
 import { ApiService, Seat, Showtime, ShowtimeDetail } from '../../../../core/api/api.service';
 import { AdminService, InvoiceBuyer, PaymentMethod, PosInvoice, Ticket, TicketCategory, categoryLabel } from '../../../../services/admin.service';
 import { TicketPrintComponent } from '../ticket-print/ticket-print.component';
+import { AuthService } from '../../../../services/auth.service';
 import { PosServicesComponent } from './pos-services.component';
 
 interface DayTab {
@@ -84,8 +85,14 @@ export class PosAdminComponent implements OnInit, OnDestroy {
   constructor(
     private api: ApiService,
     private admin: AdminService,
+    private auth: AuthService,
     private router: Router
   ) {}
+
+  /** Az előadások napi eladása (minden eladó jegyei) a vezetőknek és az adminisztrátoroknak érhető el. */
+  get canSeeShowtimeDay(): boolean {
+    return this.auth.can('daily_close.all');
+  }
 
   ngOnInit(): void {
     this.loadShowtimes();
