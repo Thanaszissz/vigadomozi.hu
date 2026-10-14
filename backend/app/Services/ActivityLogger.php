@@ -18,6 +18,7 @@ class ActivityLogger
         'showtime' => 'Előadások',
         'auditorium' => 'Termek',
         'user' => 'Felhasználók',
+        'customer' => 'Vásárlók',
         'email' => 'E-mailek',
         'settings' => 'Beállítások',
         'report' => 'Riportok, exportok',
@@ -60,6 +61,10 @@ class ActivityLogger
         'user.updated' => ['user', 'Felhasználó módosítása'],
         'user.deleted' => ['user', 'Felhasználó törlése'],
         'user.role_changed' => ['user', 'Szerepkör módosítása'],
+
+        'customer.created' => ['customer', 'Vásárló felvétele'],
+        'customer.updated' => ['customer', 'Vásárló módosítása'],
+        'customer.deleted' => ['customer', 'Vásárló törlése'],
 
         'email_template.updated' => ['email', 'E-mail sablon módosítása'],
         'email.sent' => ['email', 'E-mail elküldve'],

@@ -1,7 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { Subject, Subscription, of } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import { ApiService, Seat, Showtime, ShowtimeDetail } from '../../../../core/api/api.service';
 import { AdminService, PaymentMethod, Ticket } from '../../../../services/admin.service';
 import { TicketPrintComponent } from '../ticket-print/ticket-print.component';
@@ -21,7 +23,7 @@ type SaleMode = 'seats' | 'reservations' | 'void';
   templateUrl: './pos-admin.component.html',
   styleUrls: ['./pos-admin.component.css']
 })
-export class PosAdminComponent implements OnInit {
+export class PosAdminComponent implements OnInit, OnDestroy {
   // A kezdés után ennyi percig még lehet jegyet adni (a szerver is ezt érvényesíti)
   private readonly graceMinutes = 30;
 
@@ -53,6 +55,11 @@ export class PosAdminComponent implements OnInit {
   holdEmail = '';
   heldNotice: string | null = null;
 
+  // Név szerinti vásárló-javaslatok a foglalási űrlapon
+  customerSuggestions: Array<{ id: number; name: string; email: string | null; phone: string | null }> = [];
+  private nameSearch$ = new Subject<string>();
+  private nameSearchSub?: Subscription;
+
   soldTickets: Ticket[] = [];
   printOpen = false;
 
@@ -64,6 +71,32 @@ export class PosAdminComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadShowtimes();
+    this.nameSearchSub = this.nameSearch$.pipe(
+      debounceTime(250),
+      distinctUntilChanged(),
+      switchMap(q => q.length < 2 ? of([]) : this.admin.posSearchCustomers(q).pipe(catchError(() => of([]))))
+    ).subscribe(list => (this.customerSuggestions = list));
+  }
+
+  ngOnDestroy(): void {
+    this.nameSearchSub?.unsubscribe();
+  }
+
+  onHoldNameChange(value: string): void {
+    this.nameSearch$.next((value ?? '').trim());
+  }
+
+  pickCustomer(c: { name: string; email: string | null; phone: string | null }, event: Event): void {
+    event.preventDefault();
+    this.holdName = c.name;
+    this.holdPhone = c.phone ?? '';
+    this.holdEmail = c.email ?? '';
+    this.customerSuggestions = [];
+    this.nameSearch$.next('');
+  }
+
+  closeSuggestions(): void {
+    this.customerSuggestions = [];
   }
 
   goBack(): void {

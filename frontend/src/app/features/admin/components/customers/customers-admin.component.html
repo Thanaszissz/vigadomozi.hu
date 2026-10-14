@@ -1,0 +1,83 @@
+<div class="admin-container">
+  <div class="header">
+    <h1>🧾 Vásárlók</h1>
+    <div class="header-actions">
+      <button (click)="toggleForm()" class="btn-add">
+        {{ showForm ? '✕ Bezárás' : '+ Új vásárló' }}
+      </button>
+      <button (click)="goBack()" class="btn-back">← Vissza</button>
+    </div>
+  </div>
+
+  <div *ngIf="successMessage" class="success-message">{{ successMessage }}</div>
+  <div *ngIf="error" class="error-message">{{ error }}</div>
+
+  <div *ngIf="showForm" class="form-panel">
+    <h3>{{ editingId ? 'Vásárló szerkesztése' : 'Új vásárló hozzáadása' }}</h3>
+
+    <div class="form-group">
+      <label for="name">Név:</label>
+      <input id="name" type="text" [(ngModel)]="formData.name" placeholder="Vásárló neve" class="form-control">
+    </div>
+
+    <div class="form-group">
+      <label for="email">Email-cím:</label>
+      <input id="email" type="email" [(ngModel)]="formData.email" placeholder="vasarlo@example.com" class="form-control">
+    </div>
+
+    <div class="form-group">
+      <label for="phone">Telefonszám:</label>
+      <input id="phone" type="tel" [(ngModel)]="formData.phone" placeholder="+36 30 123 4567" class="form-control">
+    </div>
+
+    <div class="form-actions">
+      <button (click)="saveCustomer()" [disabled]="loading" class="btn-save">
+        {{ loading ? 'Mentés...' : 'Mentés' }}
+      </button>
+      <button (click)="resetForm()" [disabled]="loading" class="btn-cancel">Mégsem</button>
+    </div>
+  </div>
+
+  <div class="search-bar">
+    <input
+      type="search"
+      [(ngModel)]="search"
+      (ngModelChange)="loadCustomers()"
+      placeholder="Keresés névre, email-címre, telefonszámra..."
+      class="form-control">
+  </div>
+
+  <div *ngIf="loading && customers.length === 0" class="loading">
+    <p>⏳ Betöltés...</p>
+  </div>
+
+  <div *ngIf="customers.length > 0" class="customers-table">
+    <table>
+      <thead>
+        <tr>
+          <th>Név</th>
+          <th>Email-cím</th>
+          <th>Telefonszám</th>
+          <th>Felvéve</th>
+          <th>Műveletek</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let customer of customers">
+          <td>{{ customer.name }}</td>
+          <td>{{ customer.email }}</td>
+          <td>{{ customer.phone }}</td>
+          <td>{{ customer.created_at | date: 'yyyy.MM.dd. HH:mm' }}</td>
+          <td class="actions">
+            <button (click)="editCustomer(customer)" class="btn-edit">✏️ Szerkesztés</button>
+            <button (click)="deleteCustomer(customer)" [disabled]="loading" class="btn-delete">🗑️ Törlés</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div *ngIf="!loading && customers.length === 0" class="empty-state">
+    <p>📭 Nincsenek vásárlók{{ search ? ' a keresésnek megfelelően' : '' }}.</p>
+  </div>
+</div>

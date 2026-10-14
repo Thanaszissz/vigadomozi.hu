@@ -89,6 +89,12 @@
         <button (click)="navigateTo('/admin/auditoria')" class="btn-card">Termek</button>
       </div>
 
+      <div class="dashboard-card" *ngIf="can('customers.manage')">
+        <h3>🧾 Vásárlók</h3>
+        <p>Vásárlók nevének, email-címének és telefonszámának kezelése</p>
+        <button (click)="navigateTo('/admin/customers')" class="btn-card">Vásárlók</button>
+      </div>
+
       <div class="dashboard-card" *ngIf="can('users.manage')">
         <h3>👥 Felhasználók</h3>
         <p>Felhasználók és szerepkörök (Pénztáros, Vezető, Adminisztrátor) kezelése</p>

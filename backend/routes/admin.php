@@ -17,6 +17,7 @@ use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\BackupController;
 use App\Http\Controllers\Admin\SimplePaySettingsController;
 use App\Http\Controllers\Admin\NavController;
+use App\Http\Controllers\Admin\CustomerAdminController;
 
 // A jogosultságokat a szerepkörök adják (App\Support\Roles); minden csoport a megfelelő jogot követeli meg.
 
@@ -24,6 +25,11 @@ use App\Http\Controllers\Admin\NavController;
 Route::middleware('permission:users.manage')->group(function () {
     Route::get('roles', [UserAdminController::class, 'roles']);
     Route::apiResource('users', UserAdminController::class);
+});
+
+// Vásárlók (vezető, adminisztrátor)
+Route::middleware('permission:customers.manage')->group(function () {
+    Route::apiResource('customers', CustomerAdminController::class);
 });
 
 // Program: filmek, színházi előadások, előadások, termek (vezető, adminisztrátor)
@@ -61,6 +67,7 @@ Route::middleware('permission:reports.view')->group(function () {
 Route::middleware('permission:pos.sell')->group(function () {
     Route::post('pos/sell', [PosController::class, 'sell']);
     Route::post('pos/hold', [PosController::class, 'hold']);
+    Route::get('pos/customers', [PosController::class, 'searchCustomers']);
     Route::post('pos/reservations/{reservation}/pay', [PosController::class, 'payReservation']);
     Route::put('pos/reservations/{reservation}', [PosController::class, 'updateReservation']);
     Route::delete('pos/reservations/{reservation}', [ReservationAdminController::class, 'destroy']);

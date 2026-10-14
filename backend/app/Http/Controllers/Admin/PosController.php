@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Exceptions\SeatUnavailableException;
 use App\Http\Controllers\Controller;
+use App\Models\Customer;
 use App\Models\Reservation;
 use App\Models\SeatLock;
 use App\Models\Showtime;
@@ -129,7 +130,27 @@ class PosController extends Controller
             app(ReservationMailer::class)->reservationReceived($reservation);
         }
 
+        Customer::remember($data['customer_name'], $data['customer_phone'], $email);
+
         return response()->json($this->payload($reservation), 201);
+    }
+
+    /** Vásárlók keresése a helyszíni foglalás névmezőjének javaslataihoz (név, telefonszám vagy e-mail részlet alapján). */
+    public function searchCustomers(Request $request): JsonResponse
+    {
+        $search = trim((string) $request->query('q', ''));
+        if (mb_strlen($search) < 2) {
+            return response()->json([]);
+        }
+
+        $like = '%' . addcslashes($search, '%_\\') . '%';
+
+        return response()->json(
+            Customer::where(fn($q) => $q->where('name', 'like', $like)->orWhere('phone', 'like', $like)->orWhere('email', 'like', $like))
+                ->orderBy('name')
+                ->limit(8)
+                ->get(['id', 'name', 'email', 'phone'])
+        );
     }
 
     /**

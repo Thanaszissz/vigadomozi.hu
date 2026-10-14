@@ -458,6 +458,10 @@ export class AdminService {
     return this.http.post<{ reservation: any; tickets: Ticket[] }>(`${this.apiUrl}/pos/sell`, payload);
   }
 
+  posSearchCustomers(q: string): Observable<Array<{ id: number; name: string; email: string | null; phone: string | null }>> {
+    return this.http.get<Array<{ id: number; name: string; email: string | null; phone: string | null }>>(`${this.apiUrl}/pos/customers`, { params: { q } });
+  }
+
   posHold(payload: {
     showtime_id: number;
     seatKeys: string[];
@@ -712,5 +716,22 @@ export class AdminService {
 
   deleteUser(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/users/${id}`);
+  }
+
+  // Customers
+  getCustomers(search = ''): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/customers`, { params: search ? { search } : {} });
+  }
+
+  createCustomer(customer: any): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/customers`, customer);
+  }
+
+  updateCustomer(id: number, customer: any): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}/customers/${id}`, customer);
+  }
+
+  deleteCustomer(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/customers/${id}`);
   }
 }

@@ -219,9 +219,16 @@
           <div *ngIf="reserveOpen" class="hold-box">
             <h3>📌 Foglalás rögzítése</h3>
             <p class="muted">A székek zárolva lesznek, a foglalás a Foglalások között jelenik meg, és később itt kifizethető.</p>
-            <label class="field">
+            <label class="field suggest-field">
               <span>Név *</span>
-              <input type="text" [(ngModel)]="holdName" maxlength="255" placeholder="Vásárló neve" />
+              <input type="text" [(ngModel)]="holdName" (ngModelChange)="onHoldNameChange($event)" (blur)="closeSuggestions()"
+                     maxlength="255" placeholder="Vásárló neve" autocomplete="off" />
+              <ul *ngIf="customerSuggestions.length > 0" class="suggestions">
+                <li *ngFor="let c of customerSuggestions" (mousedown)="pickCustomer(c, $event)">
+                  <b>{{ c.name }}</b>
+                  <small>{{ c.phone }}<ng-container *ngIf="c.phone && c.email"> • </ng-container>{{ c.email }}</small>
+                </li>
+              </ul>
             </label>
             <label class="field">
               <span>Telefonszám *</span>

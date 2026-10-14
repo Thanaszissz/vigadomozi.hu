@@ -27,6 +27,7 @@ final class Roles
         'tickets.archive' => 'Eladott jegyek archívuma és exportja',
         'reports.view' => 'Riportok és foglalás-exportok',
         'email.manage' => 'E-mail sablonok szerkesztése',
+        'customers.manage' => 'Vásárlók (név, e-mail, telefonszám) kezelése',
         'settings.manage' => 'Beállítások (jegyszámozás, biztonsági mentés és visszatöltés)',
         'users.manage' => 'Felhasználók és szerepkörök kezelése',
         'activity.view' => 'Tevékenységnapló megtekintése',
@@ -34,7 +35,7 @@ final class Roles
 
     private const CASHIER_PERMISSIONS = ['pos.sell', 'tickets.void', 'reservations.manage', 'daily_close.view'];
 
-    private const MANAGER_EXTRA = ['daily_close.all', 'catalog.manage', 'tickets.archive', 'reports.view', 'email.manage'];
+    private const MANAGER_EXTRA = ['daily_close.all', 'catalog.manage', 'tickets.archive', 'reports.view', 'email.manage', 'customers.manage'];
 
     /** @return array<int,string> */
     public static function all(): array
