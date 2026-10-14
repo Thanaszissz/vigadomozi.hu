@@ -78,7 +78,7 @@
               <td class="num">{{ t.ticket_number }}</td>
               <td>{{ t.seat_key }}</td>
               <td>{{ t.price_amount | number:'1.0-0' }} Ft</td>
-              <td>{{ t.payment_method === 'cash' ? 'Készpénz' : t.payment_method === 'card' ? 'Kártya' : 'Online' }}</td>
+              <td>{{ t.payment_method === 'cash' ? 'Készpénz' : t.payment_method === 'card' ? 'Kártya' : t.payment_method === 'experience_card' ? 'Élménykártya' : 'Online' }}</td>
               <td>{{ t.sold_at | date:'MM.dd. HH:mm' }}</td>
               <td>{{ t.sold_by_name || 'Online' }}</td>
               <td class="act">
@@ -163,6 +163,12 @@
           <span>Összesen</span>
           <b>{{ (editing ? editTotal : total) | number:'1.0-0' }} Ft</b>
         </div>
+        <div class="card-covered" *ngIf="!editing && cardCoveredAmount > 0">
+          <span>Ebből élménykártyával fedezve</span><b>− {{ cardCoveredAmount | number:'1.0-0' }} Ft</b>
+        </div>
+        <div class="total payable" *ngIf="!editing && cardCoveredAmount > 0">
+          <span>Fizetendő</span><b>{{ payable | number:'1.0-0' }} Ft</b>
+        </div>
 
         <div *ngIf="mode === 'reservations' && selectedReservation && !editing" class="res-actions">
           <button type="button" class="btn-small" [disabled]="processing" (click)="startEdit()">✏️ Módosítás</button>
@@ -200,16 +206,16 @@
           <input type="text" [(ngModel)]="customerName" maxlength="100" placeholder="Helyszíni vásárló" />
         </label>
 
-        <div class="pay-methods" *ngIf="total > 0">
+        <div class="pay-methods" *ngIf="payable > 0">
           <button type="button" class="pay-btn m-cash" [class.active]="paymentMethod === 'cash'" (click)="setPayment('cash')"><span class="pay-icon">💶</span>Készpénz</button>
           <button type="button" class="pay-btn m-card" [class.active]="paymentMethod === 'card'" (click)="setPayment('card')"><span class="pay-icon">💳</span>Bankkártya</button>
         </div>
-        <div *ngIf="total === 0" class="muted free-note">Nincs fizetendő összeg (0 Ft), a jegyek fizetés nélkül kiállíthatók.</div>
+        <div *ngIf="payable === 0" class="muted free-note">Nincs fizetendő összeg (0 Ft), a jegyek fizetés nélkül kiállíthatók.</div>
 
         <div *ngIf="paymentMethod === 'cash'" class="cash-box">
           <label class="field">
             <span>Átvett összeg (Ft)</span>
-            <input type="number" min="0" step="100" [(ngModel)]="cashGiven" placeholder="{{ total }}" />
+            <input type="number" min="0" step="100" [(ngModel)]="cashGiven" placeholder="{{ payable }}" />
           </label>
           <div class="change" *ngIf="change !== null" [class.short]="change < 0">
             {{ change < 0 ? 'Hiányzik' : 'Visszajáró' }}: <b>{{ (change < 0 ? -change : change) | number:'1.0-0' }} Ft</b>
@@ -217,10 +223,10 @@
         </div>
 
         <div *ngIf="paymentMethod === 'card'" class="card-box">
-          Kérje a kártyaterminálon <b>{{ total | number:'1.0-0' }} Ft</b> fizetését, és a sikeres terminálos fizetés után rögzítse az eladást.
+          Kérje a kártyaterminálon <b>{{ payable | number:'1.0-0' }} Ft</b> fizetését, és a sikeres terminálos fizetés után rögzítse az eladást.
         </div>
 
-        <button type="button" class="btn-invoice" *ngIf="invoicingEnabled && total > 0" [class.active]="invoiceRequested" [disabled]="processing" (click)="toggleInvoice()">
+        <button type="button" class="btn-invoice" *ngIf="invoicingEnabled && payable > 0" [class.active]="invoiceRequested" [disabled]="processing" (click)="toggleInvoice()">
           🧾 ÁFÁS számlát kér {{ invoiceRequested ? '✓' : '' }}
         </button>
 

@@ -10,6 +10,7 @@ export function paymentLabel(method: string): string {
     case 'card': return 'Bankkártya';
     case 'stripe': return 'Online';
     case 'simplepay': return 'Online (bankkártya)';
+    case 'experience_card': return 'Élménykártya';
     default: return method;
   }
 }

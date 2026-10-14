@@ -31,8 +31,8 @@ class SeatClaimService
      * Új foglalás székeinek ellenőrzése, a tételek és a zárolások létrehozása. Tranzakcióban hívandó.
      *
      * @param array<int,string> $seatKeys
-     * @param array<string,string> $categories szék kulcs => jegykategória (Dolgozó jegy: a beállított ár, Élménykártya: 0 Ft;
-     *                                          a terem szék-árától függetlenül)
+     * @param array<string,string> $categories szék kulcs => jegykategória (Dolgozó jegy: a beállított ár a terem szék-árától
+     *                                          függetlenül; Élménykártya: a szék normál ára, de külön elszámolási kategóriában)
      * @return int a foglalás végösszege
      * @throws SeatUnavailableException
      */
@@ -58,7 +58,6 @@ class SeatClaimService
             $category = TicketCategory::normalizeSeat($categories[$key] ?? null);
             $price = match ($category) {
                 TicketCategory::STAFF => $staffPrice ??= ExtraService::staffPrice(),
-                TicketCategory::EXPERIENCE_CARD => 0,
                 default => (int) $seats[$key]['price'],
             };
             [$rowLabel, $number] = array_pad(explode('-', $key), 2, null);

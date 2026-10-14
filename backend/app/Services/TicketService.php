@@ -64,7 +64,7 @@ class TicketService
                     'seat_number' => $item->seat_number,
                     'price_amount' => $item->price_amount,
                     'currency' => $reservation->currency ?? 'HUF',
-                    'payment_method' => $paymentMethod,
+                    'payment_method' => $item->category === TicketCategory::EXPERIENCE_CARD ? TicketCategory::EXPERIENCE_CARD : $paymentMethod,
                     'channel' => $channel,
                     'sold_by_user_id' => $seller?->id,
                     'sold_by_name' => $seller?->name,
@@ -171,6 +171,10 @@ class TicketService
         $numbers = $tickets->pluck('ticket_number')->implode(', ');
         $total = (int) $tickets->sum('price_amount');
         $showtime = $reservation->showtime;
+        // Ha minden jegy élménykártyás, a napló sora is így szerepel (nem készpénz/kártya)
+        if ($tickets->every(fn($t) => $t->payment_method === TicketCategory::EXPERIENCE_CARD)) {
+            $paymentMethod = TicketCategory::EXPERIENCE_CARD;
+        }
 
         SalesLog::create([
             'occurred_at' => $soldAt,

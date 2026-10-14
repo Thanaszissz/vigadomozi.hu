@@ -425,6 +425,7 @@ h1 { margin: 0; color: #e8d5b7; }
 }
 .cat-tag { margin-left: 6px; padding: 1px 6px; border-radius: 8px; background: #d4a574; color: #2c1810; font-weight: 700; font-size: 11px; }
 .free-note { margin: 10px 0; }
+.card-covered { display: flex; justify-content: space-between; color: #a08060; font-size: 14px; padding: 2px 0; }
 .btn-invoice {
   width: 100%;
   margin-top: 10px;

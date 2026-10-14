@@ -7,6 +7,7 @@ use App\Models\Reservation;
 use App\Models\Setting;
 use App\Models\Ticket;
 use App\Models\User;
+use App\Support\TicketCategory;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
@@ -206,7 +207,8 @@ class SzamlazzService
             throw new \RuntimeException('A foglaláshoz nincs kiállított jegy, így számla sem készíthető.');
         }
 
-        $lines = $tickets->map(fn(Ticket $t) => [
+        // Az élménykártyával fizetett jegyek (előre fizetett kártya) és a 0 Ft-os jegyek nem kerülnek a számlára
+        $lines = $tickets->reject(fn(Ticket $t) => $t->category === TicketCategory::EXPERIENCE_CARD)->map(fn(Ticket $t) => [
             'name' => sprintf(
                 'Mozijegy: %s, %s, %s',
                 $t->movie_title,
@@ -216,9 +218,9 @@ class SzamlazzService
             'gross' => (int) round((float) $t->price_amount),
         ])->filter(fn($line) => $line['gross'] > 0)->values()->all();
 
-        // A 0 Ft-os jegyek (Dolgozó jegy, Élménykártya) nem kerülnek a számlára
+        // A 0 Ft-os jegyek (Dolgozó jegy) nem kerülnek a számlára
         if (!$lines) {
-            throw new \RuntimeException('A foglalásban nincs számlázható (0 Ft-nál nagyobb értékű) jegy.');
+            throw new \RuntimeException('A foglalásban nincs számlázható (0 Ft-nál nagyobb értékű, nem élménykártyás) jegy.');
         }
 
         return $lines;

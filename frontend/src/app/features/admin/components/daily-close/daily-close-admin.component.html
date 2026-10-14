@@ -79,6 +79,7 @@
               <td>
                 Készpénz: {{ sellerSums(seller.tickets).cash | number:'1.0-0' }} Ft •
                 Kártya: {{ sellerSums(seller.tickets).card | number:'1.0-0' }} Ft
+                <ng-container *ngIf="sellerSums(seller.tickets).experience > 0"> • Élménykártya: {{ sellerSums(seller.tickets).experience | number:'1.0-0' }} Ft</ng-container>
               </td>
               <td class="r">{{ sellerSums(seller.tickets).amount | number:'1.0-0' }} Ft</td>
             </tr>

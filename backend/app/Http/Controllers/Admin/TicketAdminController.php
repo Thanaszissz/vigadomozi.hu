@@ -35,7 +35,7 @@ class TicketAdminController extends Controller
     {
         $request->validate([
             'year' => ['nullable', 'integer', 'min:2000', 'max:2100'],
-            'payment_method' => ['nullable', 'in:cash,card,stripe,simplepay'],
+            'payment_method' => ['nullable', 'in:cash,card,stripe,simplepay,experience_card'],
             'date' => ['nullable', 'date'],
             'q' => ['nullable', 'string', 'max:100'],
         ]);
@@ -176,7 +176,7 @@ class TicketAdminController extends Controller
     {
         $request->validate([
             'year' => ['required', 'integer', 'min:2000', 'max:2100'],
-            'payment_method' => ['nullable', 'in:cash,card,stripe,simplepay'],
+            'payment_method' => ['nullable', 'in:cash,card,stripe,simplepay,experience_card'],
             'date' => ['nullable', 'date'],
             'q' => ['nullable', 'string', 'max:100'],
         ]);
@@ -202,7 +202,7 @@ class TicketAdminController extends Controller
             'Content-Disposition' => 'attachment; filename="jegyek_' . $year . '.csv"',
         ];
 
-        $methods = ['cash' => 'Készpénz', 'card' => 'Bankkártya', 'stripe' => 'Online', 'simplepay' => 'Online (SimplePay)'];
+        $methods = ['cash' => 'Készpénz', 'card' => 'Bankkártya', 'stripe' => 'Online', 'simplepay' => 'Online (SimplePay)', 'experience_card' => 'Élménykártya'];
 
         return response()->stream(function () use ($query, $methods) {
             $out = fopen('php://output', 'w');

@@ -315,13 +315,9 @@ export class PosAdminComponent implements OnInit, OnDestroy {
     this.error = null;
   }
 
-  /** A szék jegyára a kategória szerint: Dolgozó jegy = a beállított ár, Élménykártya = 0 Ft, különben a terem ára. */
+  /** A szék jegyára a kategória szerint: Dolgozó jegy = a beállított ár, egyébként (Élménykártyánál is) a terem ára. */
   effectivePrice(seat: Seat): number {
-    switch (this.categoryOf(seat)) {
-      case 'staff': return this.staffPrice;
-      case 'experience_card': return 0;
-      default: return seat.price;
-    }
+    return this.categoryOf(seat) === 'staff' ? this.staffPrice : seat.price;
   }
 
   private seatCategoriesPayload(): Record<string, TicketCategory> | undefined {
@@ -533,29 +529,45 @@ export class PosAdminComponent implements OnInit, OnDestroy {
     return this.selectedSeats.reduce((sum, seat) => sum + this.effectivePrice(seat), 0);
   }
 
+  /** A fizetendő összeg: az élménykártyás jegyek értéke nem készpénzzel/kártyával fizetendő (a kártya fedezi). */
+  get payable(): number {
+    if (this.mode === 'reservations') {
+      return (this.selectedReservation?.items ?? [])
+        .filter((i: any) => i.category !== 'experience_card')
+        .reduce((sum: number, i: any) => sum + Number(i.price_amount), 0);
+    }
+    return this.selectedSeats
+      .filter(seat => this.categoryOf(seat) !== 'experience_card')
+      .reduce((sum, seat) => sum + this.effectivePrice(seat), 0);
+  }
+
+  get cardCoveredAmount(): number {
+    return this.total - this.payable;
+  }
+
   get hasSelection(): boolean {
     return this.mode === 'seats' ? this.selectedSeats.length > 0 : !!this.selectedReservation;
   }
 
   get change(): number | null {
     if (this.paymentMethod !== 'cash' || this.cashGiven === null || this.cashGiven === undefined) return null;
-    return this.cashGiven - this.total;
+    return this.cashGiven - this.payable;
   }
 
   get canConfirm(): boolean {
     if (!this.hasSelection || this.processing) return false;
-    // 0 Ft-os eladásnál (csak Dolgozó jegy / Élménykártya) nincs fizetendő összeg, a fizetési mód nem kötelező
-    if (this.total > 0 && !this.paymentMethod) return false;
-    if (this.paymentMethod === 'cash' && this.cashGiven !== null && this.cashGiven !== undefined && this.cashGiven < this.total) {
+    // Ha nincs fizetendő összeg (csak Dolgozó jegy / Élménykártya), a fizetési mód nem kötelező
+    if (this.payable > 0 && !this.paymentMethod) return false;
+    if (this.paymentMethod === 'cash' && this.cashGiven !== null && this.cashGiven !== undefined && this.cashGiven < this.payable) {
       return false;
     }
     if (this.invoiceActive && !this.invoiceFormValid) return false;
     return true;
   }
 
-  /** Számla csak fizetendő összeg esetén kérhető (a 0 Ft-os eladásokhoz nem készül számla). */
+  /** Számla csak fizetendő összeg esetén kérhető. */
   get invoiceActive(): boolean {
-    return this.invoicingEnabled && this.invoiceRequested && this.total > 0;
+    return this.invoicingEnabled && this.invoiceRequested && this.payable > 0;
   }
 
   setPayment(method: PaymentMethod): void {
@@ -584,10 +596,12 @@ export class PosAdminComponent implements OnInit, OnDestroy {
   }
 
   get invoiceLineAmounts(): number[] {
-    // A 0 Ft-os jegyek (Dolgozó jegy, Élménykártya) nem kerülnek a számlára
+    // A 0 Ft-os (Dolgozó jegy) és az élménykártyás jegyek nem kerülnek a számlára
     const amounts = this.mode === 'reservations'
-      ? (this.selectedReservation?.items ?? []).map((i: any) => Math.round(Number(i.price_amount)))
-      : this.selectedSeats.map(s => Math.round(this.effectivePrice(s)));
+      ? (this.selectedReservation?.items ?? [])
+          .filter((i: any) => i.category !== 'experience_card')
+          .map((i: any) => Math.round(Number(i.price_amount)))
+      : this.selectedSeats.filter(s => this.categoryOf(s) !== 'experience_card').map(s => Math.round(this.effectivePrice(s)));
     return amounts.filter((a: number) => a > 0);
   }
 
