@@ -19,6 +19,7 @@ class ActivityLogger
         'auditorium' => 'Termek',
         'user' => 'Felhasználók',
         'customer' => 'Vásárlók',
+        'invoice' => 'Számlák',
         'email' => 'E-mailek',
         'settings' => 'Beállítások',
         'report' => 'Riportok, exportok',
@@ -65,6 +66,11 @@ class ActivityLogger
         'customer.created' => ['customer', 'Vásárló felvétele'],
         'customer.updated' => ['customer', 'Vásárló módosítása'],
         'customer.deleted' => ['customer', 'Vásárló törlése'],
+
+        'invoice.issued' => ['invoice', 'Számla kiállítva'],
+        'invoice.failed' => ['invoice', 'Számla kiállítása sikertelen'],
+        'settings.szamlazz_changed' => ['settings', 'Számlázz.hu beállítások módosítása'],
+        'settings.szamlazz_tested' => ['settings', 'Számlázz.hu kapcsolat-ellenőrzés'],
 
         'email_template.updated' => ['email', 'E-mail sablon módosítása'],
         'email.sent' => ['email', 'E-mail elküldve'],

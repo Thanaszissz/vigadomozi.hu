@@ -1,0 +1,124 @@
+<div *ngIf="loading && !data" class="muted">Betöltés...</div>
+<div *ngIf="error" class="alert">{{ error }}</div>
+<div *ngIf="notice" class="ok">✅ {{ notice }}</div>
+
+<ng-container *ngIf="data">
+  <section class="card">
+    <div class="title-row">
+      <h2>🧾 Számlázz.hu</h2>
+      <div class="pills">
+        <span class="pill" [class.on]="data.ready" [class.off]="!data.ready">{{ data.ready ? '● Számlázás aktív' : '○ Nincs aktiválva' }}</span>
+      </div>
+    </div>
+    <p class="muted">
+      Ha a számlázás be van kapcsolva, a helyszíni jegyeladásnál megjelenik az <b>„ÁFÁS számlát kér”</b> gomb. A pénztáros megadja a vevő számlázási adatait,
+      a rendszer megerősítést kér, majd a Számlázz.hu Számla Agenten keresztül kiállítja a számlát (az eladás összegéről, kifizetettként).
+    </p>
+  </section>
+
+  <section class="card">
+    <h2>🔑 Kapcsolati adatok</h2>
+
+    <label class="switch">
+      <input type="checkbox" [(ngModel)]="form.enabled" />
+      <span>Számlázás a Számlázz.hu-val bekapcsolva</span>
+    </label>
+
+    <div class="form-grid">
+      <label class="field wide">
+        <span>
+          Számla Agent kulcs
+          <b *ngIf="data.has_key" class="hint">— mentve: {{ data.key_hint }}; hagyd üresen, ha nem módosítod</b>
+          <b *ngIf="!data.has_key" class="hint bad">— még nincs megadva</b>
+        </span>
+        <div class="secret">
+          <input [type]="showKey ? 'text' : 'password'" [(ngModel)]="form.agent_key" autocomplete="new-password" spellcheck="false"
+                 [placeholder]="data.has_key ? 'Új kulcs megadása (csak módosításhoz)' : 'A Számlázz.hu felületén generált Számla Agent kulcs'" />
+          <button type="button" class="btn small" (click)="showKey = !showKey">{{ showKey ? '🙈 Elrejt' : '👁️ Mutat' }}</button>
+        </div>
+      </label>
+
+      <label class="field">
+        <span>ÁFA kulcs a jegyeken</span>
+        <select [(ngModel)]="form.vat_rate">
+          <option *ngFor="let r of data.vat_rates" [value]="r">{{ vatLabel(r) }}</option>
+        </select>
+      </label>
+
+      <label class="field">
+        <span>Számlaszám előtag (nem kötelező)</span>
+        <input type="text" [(ngModel)]="form.prefix" maxlength="10" placeholder="üresen: a Számlázz.hu alapértelmezett" spellcheck="false" />
+      </label>
+    </div>
+
+    <label class="switch">
+      <input type="checkbox" [(ngModel)]="form.e_invoice" />
+      <span>Elektronikus számla (e-számla)</span>
+    </label>
+
+    <label class="switch">
+      <input type="checkbox" [(ngModel)]="form.send_email" />
+      <span>A számlát a Számlázz.hu e-mailben is elküldi a vevőnek (ha megadott e-mail-címet)</span>
+    </label>
+
+    <div class="form-grid" *ngIf="form.send_email">
+      <label class="field wide">
+        <span>E-mail tárgya</span>
+        <input type="text" [(ngModel)]="form.email_subject" maxlength="200" />
+      </label>
+      <label class="field wide">
+        <span>E-mail szövege</span>
+        <textarea [(ngModel)]="form.email_text" rows="5" maxlength="2000"></textarea>
+      </label>
+    </div>
+
+    <label class="field">
+      <span>Jelszavad (a módosítás megerősítéséhez)</span>
+      <input type="password" [(ngModel)]="password" autocomplete="new-password" (keyup.enter)="save()" />
+    </label>
+
+    <div *ngIf="saveError" class="alert">{{ saveError }}</div>
+
+    <div class="row-actions">
+      <button type="button" class="btn primary" [disabled]="!canSave" (click)="save()">{{ saving ? 'Mentés...' : '💾 Beállítások mentése' }}</button>
+      <button type="button" class="btn" [disabled]="testing || !data.has_key" (click)="runTest()">
+        {{ testing ? 'Ellenőrzés...' : '🔌 Kapcsolat ellenőrzése' }}
+      </button>
+    </div>
+    <p class="muted small">A kapcsolat-ellenőrzés a <b>mentett</b> kulccsal fut: előnézeti számlát kér a Számlázz.hu-tól, <b>számla nem készül</b>.</p>
+
+    <div *ngIf="testResult" class="result" [class.ok]="testResult.ok" [class.alert]="!testResult.ok">
+      {{ testResult.ok ? '✅' : '❌' }} {{ testResult.message }}
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>ℹ️ Beállítás a Számlázz.hu felületén</h2>
+    <ol class="steps">
+      <li>A Számlázz.hu fiókodban (Beállítások → Számla Agent) kapcsold be a <b>Számla Agent</b> használatát, és generálj <b>Agent kulcsot</b>.</li>
+      <li>Másold be a kulcsot fent, válaszd ki a jegyekre vonatkozó <b>ÁFA kulcsot</b>, és mentsd a beállításokat.</li>
+      <li>Ellenőrizd a kapcsolatot, majd a pénztárban próbálj ki egy számlázott eladást. Az ÁFA kulcsnak egyeznie kell a NAV beállításnál megadottal.</li>
+      <li>A kiállított számlák PDF-je a szerveren is tárolódik, a pénztárban az eladás után letölthető.</li>
+    </ol>
+  </section>
+
+  <section class="card" *ngIf="data.recent_invoices.length">
+    <h2>🧾 Legutóbbi számlák</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Kiállítva</th><th>Számlaszám</th><th>Foglalás</th><th>Vevő</th><th>Összeg</th><th>ÁFA</th><th>Kiállította</th></tr></thead>
+        <tbody>
+          <tr *ngFor="let i of data.recent_invoices">
+            <td>{{ i.issued_at | date:'yyyy.MM.dd. HH:mm' }}</td>
+            <td class="mono">{{ i.invoice_number }}</td>
+            <td>#{{ i.reservation_id }}</td>
+            <td>{{ i.buyer_name }}</td>
+            <td>{{ i.gross_amount | number:'1.0-0' }} Ft</td>
+            <td>{{ vatLabel(i.vat_rate) }}</td>
+            <td>{{ i.issued_by_name }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</ng-container>

@@ -288,6 +288,49 @@ export interface SimplePayTestResult {
   signature_valid: boolean | null;
 }
 
+export interface SzamlazzSettings {
+  enabled: boolean;
+  ready: boolean;
+  has_key: boolean;
+  key_hint: string | null;
+  vat_rate: string;
+  vat_rates: string[];
+  e_invoice: boolean;
+  send_email: boolean;
+  prefix: string;
+  email_subject: string;
+  email_text: string;
+  recent_invoices: Array<{
+    id: number;
+    reservation_id: number;
+    invoice_number: string;
+    buyer_name: string;
+    gross_amount: number;
+    vat_rate: string;
+    issued_by_name: string | null;
+    issued_at: string;
+  }>;
+}
+
+export interface InvoiceBuyer {
+  name: string;
+  zip: string;
+  city: string;
+  address: string;
+  tax_number?: string | null;
+  email?: string | null;
+}
+
+export interface PosInvoice {
+  id: number;
+  reservation_id: number;
+  invoice_number: string;
+  buyer_name: string;
+  gross_amount: number;
+  vat_rate: string;
+  has_pdf: boolean;
+}
+
 export interface BackupStats {
   tickets: number;
   reservations: number;
@@ -588,6 +631,35 @@ export class AdminService {
 
   testSimplePay(): Observable<SimplePayTestResult> {
     return this.http.post<SimplePayTestResult>(`${this.apiUrl}/settings/simplepay/test`, {});
+  }
+
+  // Beállítások: Számlázz.hu
+  getSzamlazz(): Observable<SzamlazzSettings> {
+    return this.http.get<SzamlazzSettings>(`${this.apiUrl}/settings/szamlazz`);
+  }
+
+  saveSzamlazz(payload: {
+    enabled: boolean; agent_key?: string; vat_rate: string; e_invoice: boolean; send_email: boolean;
+    prefix: string; email_subject: string; email_text: string; password: string;
+  }): Observable<SzamlazzSettings> {
+    return this.http.put<SzamlazzSettings>(`${this.apiUrl}/settings/szamlazz`, payload);
+  }
+
+  testSzamlazz(): Observable<{ ok: boolean; message: string }> {
+    return this.http.post<{ ok: boolean; message: string }>(`${this.apiUrl}/settings/szamlazz/test`, {});
+  }
+
+  // Helyszíni ÁFÁS számla
+  posInvoicing(): Observable<{ enabled: boolean; vat_rate: string }> {
+    return this.http.get<{ enabled: boolean; vat_rate: string }>(`${this.apiUrl}/pos/invoicing`);
+  }
+
+  posIssueInvoice(reservationId: number, buyer: InvoiceBuyer): Observable<PosInvoice> {
+    return this.http.post<PosInvoice>(`${this.apiUrl}/pos/reservations/${reservationId}/invoice`, buyer);
+  }
+
+  posInvoicePdf(invoiceId: number): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/pos/invoices/${invoiceId}/pdf`, { responseType: 'blob' });
   }
 
   // Beállítások: biztonsági mentés

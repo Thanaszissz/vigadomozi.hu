@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 import { Subject, Subscription, of } from 'rxjs';
 import { catchError, debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import { ApiService, Seat, Showtime, ShowtimeDetail } from '../../../../core/api/api.service';
-import { AdminService, PaymentMethod, Ticket } from '../../../../services/admin.service';
+import { AdminService, InvoiceBuyer, PaymentMethod, PosInvoice, Ticket } from '../../../../services/admin.service';
 import { TicketPrintComponent } from '../ticket-print/ticket-print.component';
 
 interface DayTab {
@@ -63,6 +63,17 @@ export class PosAdminComponent implements OnInit, OnDestroy {
   soldTickets: Ticket[] = [];
   printOpen = false;
 
+  // ÁFÁS számla (Számlázz.hu)
+  invoicingEnabled = false;
+  invoiceVatRate = '5';
+  invoiceRequested = false;
+  invoiceConfirmOpen = false;
+  invoiceBuyer = { name: '', zip: '', city: '', address: '', tax_number: '', email: '' };
+  pendingInvoice: { reservationId: number; buyer: InvoiceBuyer } | null = null;
+  invoiceBusy = false;
+  invoiceError: string | null = null;
+  soldInvoice: PosInvoice | null = null;
+
   constructor(
     private api: ApiService,
     private admin: AdminService,
@@ -71,6 +82,13 @@ export class PosAdminComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadShowtimes();
+    this.admin.posInvoicing().subscribe({
+      next: (s) => {
+        this.invoicingEnabled = s.enabled;
+        this.invoiceVatRate = s.vat_rate;
+      },
+      error: () => (this.invoicingEnabled = false)
+    });
     this.nameSearchSub = this.nameSearch$.pipe(
       debounceTime(250),
       distinctUntilChanged(),
@@ -485,6 +503,7 @@ export class PosAdminComponent implements OnInit, OnDestroy {
     if (this.paymentMethod === 'cash' && this.cashGiven !== null && this.cashGiven !== undefined && this.cashGiven < this.total) {
       return false;
     }
+    if (this.invoiceRequested && !this.invoiceFormValid) return false;
     return true;
   }
 
@@ -494,11 +513,116 @@ export class PosAdminComponent implements OnInit, OnDestroy {
     this.error = null;
   }
 
+  // ---- ÁFÁS számla ----
+
+  toggleInvoice(): void {
+    this.invoiceRequested = !this.invoiceRequested;
+    if (this.invoiceRequested && !this.invoiceBuyer.name) {
+      const r = this.mode === 'reservations' ? this.selectedReservation : null;
+      this.invoiceBuyer.name = (r?.customer_name || this.customerName || '').trim();
+      const email = (r?.customer_email || '').trim();
+      this.invoiceBuyer.email = email && !email.endsWith('@vigadomozi.hu') ? email : '';
+    }
+  }
+
+  get invoiceFormValid(): boolean {
+    const b = this.invoiceBuyer;
+    const taxOk = !b.tax_number.trim() || /^\d{8}-\d-\d{2}$/.test(b.tax_number.trim());
+    const emailOk = !b.email.trim() || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(b.email.trim());
+    return !!b.name.trim() && b.zip.trim().length >= 3 && !!b.city.trim() && !!b.address.trim() && taxOk && emailOk;
+  }
+
+  get invoiceLineAmounts(): number[] {
+    if (this.mode === 'reservations') {
+      return (this.selectedReservation?.items ?? []).map((i: any) => Math.round(Number(i.price_amount)));
+    }
+    return this.selectedSeats.map(s => Math.round(s.price));
+  }
+
+  /** A szerverrel azonos számítás: tételenként kerekített nettó és ÁFA. */
+  get invoiceTotals(): { net: number; vat: number; gross: number } {
+    const rate = /^\d+$/.test(this.invoiceVatRate) ? Number(this.invoiceVatRate) : 0;
+    let net = 0, gross = 0;
+    for (const g of this.invoiceLineAmounts) {
+      net += rate > 0 ? Math.round(g / (1 + rate / 100)) : g;
+      gross += g;
+    }
+    return { net, vat: gross - net, gross };
+  }
+
+  get invoiceVatLabel(): string {
+    return ({ AAM: 'AAM (alanyi adómentes)', TAM: 'TAM (tárgyi adómentes)' } as Record<string, string>)[this.invoiceVatRate] ?? `${this.invoiceVatRate}%`;
+  }
+
   confirmSale(): void {
+    if (!this.canConfirm) return;
+    if (this.invoiceRequested) {
+      this.invoiceConfirmOpen = true;
+      return;
+    }
+    this.executeSale();
+  }
+
+  closeInvoiceConfirm(): void {
+    this.invoiceConfirmOpen = false;
+  }
+
+  confirmInvoiceAndSell(): void {
+    this.invoiceConfirmOpen = false;
+    this.executeSale();
+  }
+
+  private buyerPayload(): InvoiceBuyer {
+    const b = this.invoiceBuyer;
+    return {
+      name: b.name.trim(),
+      zip: b.zip.trim(),
+      city: b.city.trim(),
+      address: b.address.trim(),
+      tax_number: b.tax_number.trim() || null,
+      email: b.email.trim() || null
+    };
+  }
+
+  private issueInvoice(reservationId: number, buyer: InvoiceBuyer): void {
+    this.pendingInvoice = { reservationId, buyer };
+    this.invoiceBusy = true;
+    this.invoiceError = null;
+
+    this.admin.posIssueInvoice(reservationId, buyer).subscribe({
+      next: (invoice) => {
+        this.invoiceBusy = false;
+        this.soldInvoice = invoice;
+        this.pendingInvoice = null;
+      },
+      error: (err) => {
+        this.invoiceBusy = false;
+        const errors = err?.error?.errors;
+        this.invoiceError = (errors && (Object.values(errors) as string[][])[0]?.[0]) || err?.error?.message || 'A számla kiállítása sikertelen.';
+      }
+    });
+  }
+
+  retryInvoice(): void {
+    if (this.pendingInvoice && !this.invoiceBusy) {
+      this.issueInvoice(this.pendingInvoice.reservationId, this.pendingInvoice.buyer);
+    }
+  }
+
+  openInvoicePdf(): void {
+    if (!this.soldInvoice) return;
+    this.admin.posInvoicePdf(this.soldInvoice.id).subscribe({
+      next: (blob) => window.open(URL.createObjectURL(blob), '_blank'),
+      error: () => (this.invoiceError = 'A számla PDF letöltése sikertelen.')
+    });
+  }
+
+  private executeSale(): void {
     if (!this.canConfirm || !this.showtime || !this.paymentMethod) return;
 
     this.processing = true;
     this.error = null;
+    const buyer = this.invoiceRequested ? this.buyerPayload() : null;
 
     const request$ = this.mode === 'reservations' && this.selectedReservation
       ? this.admin.posPayReservation(this.selectedReservation.id, this.paymentMethod)
@@ -517,8 +641,16 @@ export class PosAdminComponent implements OnInit, OnDestroy {
         this.selectedSeats = [];
         this.selectedReservation = null;
         this.customerName = '';
+        this.invoiceRequested = false;
+        this.invoiceBuyer = { name: '', zip: '', city: '', address: '', tax_number: '', email: '' };
+        this.soldInvoice = null;
+        this.invoiceError = null;
+        this.pendingInvoice = null;
         this.resetPayment();
         this.refresh();
+        if (buyer) {
+          this.issueInvoice(response.reservation.id, buyer);
+        }
       },
       error: (err) => {
         this.processing = false;
@@ -613,6 +745,12 @@ export class PosAdminComponent implements OnInit, OnDestroy {
     this.reserveOpen = false;
     this.heldNotice = null;
     this.soldTickets = [];
+    this.invoiceRequested = false;
+    this.invoiceConfirmOpen = false;
+    this.invoiceBuyer = { name: '', zip: '', city: '', address: '', tax_number: '', email: '' };
+    this.soldInvoice = null;
+    this.invoiceError = null;
+    this.pendingInvoice = null;
     this.resetPayment();
   }
 

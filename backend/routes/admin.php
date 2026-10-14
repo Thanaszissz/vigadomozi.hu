@@ -18,6 +18,8 @@ use App\Http\Controllers\Admin\BackupController;
 use App\Http\Controllers\Admin\SimplePaySettingsController;
 use App\Http\Controllers\Admin\NavController;
 use App\Http\Controllers\Admin\CustomerAdminController;
+use App\Http\Controllers\Admin\SzamlazzSettingsController;
+use App\Http\Controllers\Admin\InvoiceController;
 
 // A jogosultságokat a szerepkörök adják (App\Support\Roles); minden csoport a megfelelő jogot követeli meg.
 
@@ -68,6 +70,12 @@ Route::middleware('permission:pos.sell')->group(function () {
     Route::post('pos/sell', [PosController::class, 'sell']);
     Route::post('pos/hold', [PosController::class, 'hold']);
     Route::get('pos/customers', [PosController::class, 'searchCustomers']);
+
+    // ÁFÁS számla kiállítása a kifizetett helyszíni foglaláshoz (Számlázz.hu)
+    Route::get('pos/invoicing', [InvoiceController::class, 'status']);
+    Route::get('pos/reservations/{reservation}/invoice', [InvoiceController::class, 'show'])->whereNumber('reservation');
+    Route::post('pos/reservations/{reservation}/invoice', [InvoiceController::class, 'issue'])->whereNumber('reservation')->middleware('throttle:30,1,invoice-issue');
+    Route::get('pos/invoices/{invoice}/pdf', [InvoiceController::class, 'pdf'])->whereNumber('invoice');
     Route::post('pos/reservations/{reservation}/pay', [PosController::class, 'payReservation']);
     Route::put('pos/reservations/{reservation}', [PosController::class, 'updateReservation']);
     Route::delete('pos/reservations/{reservation}', [ReservationAdminController::class, 'destroy']);
@@ -100,6 +108,11 @@ Route::middleware('permission:settings.manage')->group(function () {
     Route::get('settings/simplepay', [SimplePaySettingsController::class, 'show']);
     Route::put('settings/simplepay', [SimplePaySettingsController::class, 'update'])->middleware('throttle:20,1');
     Route::post('settings/simplepay/test', [SimplePaySettingsController::class, 'test'])->middleware('throttle:10,1');
+
+    // Számlázz.hu számlázás: Számla Agent kulcs, ÁFA kulcs, kapcsolat-ellenőrzés
+    Route::get('settings/szamlazz', [SzamlazzSettingsController::class, 'show']);
+    Route::put('settings/szamlazz', [SzamlazzSettingsController::class, 'update'])->middleware('throttle:20,1,szamlazz-save');
+    Route::post('settings/szamlazz/test', [SzamlazzSettingsController::class, 'test'])->middleware('throttle:10,1,szamlazz-test');
 
     // Biztonsági mentés: teljes adatbázis-mentés, letöltés, feltöltés, ütemezés, többszörösen védett visszatöltés
     Route::get('settings/backups', [BackupController::class, 'index']);

@@ -12,6 +12,9 @@
       <button type="button" class="menu-item" [class.active]="section === 'simplepay'" (click)="section = 'simplepay'">
         💳 OTP SimplePay
       </button>
+      <button type="button" class="menu-item" [class.active]="section === 'szamlazz'" (click)="section = 'szamlazz'">
+        🧾 Számlázz.hu
+      </button>
       <button type="button" class="menu-item" [class.active]="section === 'nav'" (click)="section = 'nav'">
         🏛️ NAV kapcsolat
       </button>
@@ -138,6 +141,10 @@
 
     <main class="content" *ngIf="section === 'simplepay'">
       <app-simplepay-panel></app-simplepay-panel>
+    </main>
+
+    <main class="content" *ngIf="section === 'szamlazz'">
+      <app-szamlazz-panel></app-szamlazz-panel>
     </main>
 
     <main class="content" *ngIf="section === 'nav'">

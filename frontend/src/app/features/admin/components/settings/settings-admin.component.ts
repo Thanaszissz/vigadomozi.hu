@@ -6,13 +6,14 @@ import { AdminService, TicketNumberingPlan, TicketNumberingState } from '../../.
 import { BackupsPanelComponent } from './backups-panel.component';
 import { SimplePayPanelComponent } from './simplepay-panel.component';
 import { NavPanelComponent } from './nav-panel.component';
+import { SzamlazzPanelComponent } from './szamlazz-panel.component';
 
-type Section = 'numbering' | 'simplepay' | 'nav' | 'backups';
+type Section = 'numbering' | 'simplepay' | 'szamlazz' | 'nav' | 'backups';
 
 @Component({
   selector: 'app-settings-admin',
   standalone: true,
-  imports: [CommonModule, FormsModule, BackupsPanelComponent, SimplePayPanelComponent, NavPanelComponent],
+  imports: [CommonModule, FormsModule, BackupsPanelComponent, SimplePayPanelComponent, SzamlazzPanelComponent, NavPanelComponent],
   templateUrl: './settings-admin.component.html',
   styleUrls: ['./settings-admin.component.css']
 })

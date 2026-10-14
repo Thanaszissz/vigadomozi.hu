@@ -413,6 +413,27 @@ h1 { margin: 0; color: #e8d5b7; }
 .hold-box h3 { margin: 0 0 6px; font-size: 15px; color: #e8d5b7; }
 .hold-box .muted { margin: 0 0 10px; font-size: 12px; }
 .hold-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn-invoice {
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1.5px dashed #d4a574;
+  background: transparent;
+  color: #e8d5b7;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+}
+.btn-invoice.active { border-style: solid; background: rgba(212, 165, 116, 0.2); }
+.btn-invoice:disabled { opacity: 0.5; cursor: not-allowed; }
+.invoice-box { margin-bottom: 10px; }
+.invoice-row { display: grid; grid-template-columns: 1fr 2fr; gap: 10px; }
+.invoice-done { margin-top: 8px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.invoice-summary { list-style: none; margin: 12px 0; padding: 0; }
+.invoice-summary li { display: flex; justify-content: space-between; gap: 16px; padding: 6px 0; border-bottom: 1px solid #5c3d2e; font-size: 14px; }
+.invoice-summary li span { color: #a08060; }
+.invoice-summary li.grand { border-bottom: 0; font-size: 16px; }
 .suggest-field { position: relative; }
 .suggestions {
   position: absolute;

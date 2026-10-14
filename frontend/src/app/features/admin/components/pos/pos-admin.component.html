@@ -204,10 +204,46 @@
           Kérje a kártyaterminálon <b>{{ total | number:'1.0-0' }} Ft</b> fizetését, és a sikeres terminálos fizetés után rögzítse az eladást.
         </div>
 
+        <button type="button" class="btn-invoice" *ngIf="invoicingEnabled" [class.active]="invoiceRequested" [disabled]="processing" (click)="toggleInvoice()">
+          🧾 ÁFÁS számlát kér {{ invoiceRequested ? '✓' : '' }}
+        </button>
+
+        <div *ngIf="invoicingEnabled && invoiceRequested" class="hold-box invoice-box">
+          <h3>🧾 Számlázási adatok</h3>
+          <p class="muted">A számla a vevő alábbi adataival, {{ invoiceVatLabel }} ÁFÁ-val, kifizetettként készül.</p>
+          <label class="field">
+            <span>Vevő neve / cégnév *</span>
+            <input type="text" [(ngModel)]="invoiceBuyer.name" maxlength="200" />
+          </label>
+          <div class="invoice-row">
+            <label class="field">
+              <span>Irányítószám *</span>
+              <input type="text" [(ngModel)]="invoiceBuyer.zip" maxlength="10" />
+            </label>
+            <label class="field">
+              <span>Település *</span>
+              <input type="text" [(ngModel)]="invoiceBuyer.city" maxlength="100" />
+            </label>
+          </div>
+          <label class="field">
+            <span>Cím (utca, házszám) *</span>
+            <input type="text" [(ngModel)]="invoiceBuyer.address" maxlength="200" />
+          </label>
+          <label class="field">
+            <span>Adószám (cég esetén)</span>
+            <input type="text" [(ngModel)]="invoiceBuyer.tax_number" maxlength="13" placeholder="12345678-1-42" />
+          </label>
+          <label class="field">
+            <span>E-mail (a számla elküldéséhez, nem kötelező)</span>
+            <input type="email" [(ngModel)]="invoiceBuyer.email" maxlength="255" placeholder="vasarlo@example.com" />
+          </label>
+          <div class="muted" *ngIf="!invoiceFormValid">A *-gal jelölt mezők kitöltése kötelező (az adószám formátuma: 12345678-1-42).</div>
+        </div>
+
         <div *ngIf="error && !reserveOpen && !editing" class="alert">{{ error }}</div>
 
         <button type="button" class="btn-confirm" [disabled]="!canConfirm" (click)="confirmSale()">
-          {{ processing ? 'Feldolgozás...' : 'Fizetés rögzítése és jegyek kiállítása' }}
+          {{ processing ? 'Feldolgozás...' : (invoiceRequested ? 'Fizetés rögzítése, jegyek és számla kiállítása' : 'Fizetés rögzítése és jegyek kiállítása') }}
         </button>
         </ng-container>
 
@@ -257,6 +293,15 @@
         <div>✅ Sikeres eladás: <b>{{ soldTickets.length }}</b> jegy ({{ soldTickets[0].ticket_number }}
           <span *ngIf="soldTickets.length > 1"> – {{ soldTickets[soldTickets.length - 1].ticket_number }}</span>)
         </div>
+        <div *ngIf="invoiceBusy" class="muted">⏳ Számla kiállítása folyamatban...</div>
+        <div *ngIf="soldInvoice" class="invoice-done">
+          🧾 Számla kiállítva: <b>{{ soldInvoice.invoice_number }}</b> ({{ soldInvoice.gross_amount | number:'1.0-0' }} Ft)
+          <button type="button" class="btn-small" *ngIf="soldInvoice.has_pdf" (click)="openInvoicePdf()">📄 Számla megnyitása</button>
+        </div>
+        <div *ngIf="invoiceError" class="alert">
+          A jegyeladás megtörtént, de a számla kiállítása sikertelen (foglalás #{{ pendingInvoice?.reservationId }}): {{ invoiceError }}
+          <button type="button" class="btn-small" *ngIf="pendingInvoice" [disabled]="invoiceBusy" (click)="retryInvoice()">↻ Újrapróbálás</button>
+        </div>
         <div class="sold-actions">
           <button type="button" class="btn-small" (click)="printOpen = true">🖨️ Jegyek / nyomtatás</button>
           <button type="button" class="btn-small primary" (click)="newSale()">Új eladás</button>
@@ -266,6 +311,29 @@
   </div>
 
   <app-ticket-print *ngIf="printOpen" [tickets]="soldTickets" (close)="closePrint()"></app-ticket-print>
+
+  <div *ngIf="invoiceConfirmOpen" class="modal-backdrop" (click)="closeInvoiceConfirm()"></div>
+  <div *ngIf="invoiceConfirmOpen" class="modal" role="dialog" aria-modal="true" (click)="closeInvoiceConfirm()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <h3>🧾 Számla kiállításának megerősítése</h3>
+      <p>Az eladás rögzítése után a rendszer <b>ÁFÁS számlát állít ki</b> a Számlázz.hu-n. A kiállított számla nem vonható vissza.</p>
+      <ul class="invoice-summary">
+        <li><span>Vevő</span><b>{{ invoiceBuyer.name }}</b></li>
+        <li><span>Cím</span><b>{{ invoiceBuyer.zip }} {{ invoiceBuyer.city }}, {{ invoiceBuyer.address }}</b></li>
+        <li *ngIf="invoiceBuyer.tax_number"><span>Adószám</span><b>{{ invoiceBuyer.tax_number }}</b></li>
+        <li *ngIf="invoiceBuyer.email"><span>E-mail</span><b>{{ invoiceBuyer.email }}</b></li>
+        <li><span>Tételek</span><b>{{ invoiceLineAmounts.length }} db jegy</b></li>
+        <li><span>Fizetés módja</span><b>{{ paymentMethod === 'cash' ? 'Készpénz' : 'Bankkártya' }}</b></li>
+        <li><span>Nettó</span><b>{{ invoiceTotals.net | number:'1.0-0' }} Ft</b></li>
+        <li><span>ÁFA ({{ invoiceVatLabel }})</span><b>{{ invoiceTotals.vat | number:'1.0-0' }} Ft</b></li>
+        <li class="grand"><span>Bruttó összesen</span><b>{{ invoiceTotals.gross | number:'1.0-0' }} Ft</b></li>
+      </ul>
+      <div class="modal-actions">
+        <button type="button" class="btn-small primary" [disabled]="processing" (click)="confirmInvoiceAndSell()">Igen, rögzítem és kiállítom a számlát</button>
+        <button type="button" class="btn-small" [disabled]="processing" (click)="closeInvoiceConfirm()">Mégsem</button>
+      </div>
+    </div>
+  </div>
 
   <div *ngIf="voidTarget" class="modal-backdrop" (click)="closeVoid()"></div>
   <div *ngIf="voidTarget" class="modal" role="dialog" aria-modal="true" (click)="closeVoid()">
