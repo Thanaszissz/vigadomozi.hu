@@ -9,6 +9,9 @@
       <button type="button" class="menu-item" [class.active]="section === 'numbering'" (click)="section = 'numbering'">
         🎟️ Jegyszámozás
       </button>
+      <button type="button" class="menu-item" [class.active]="section === 'services'" (click)="section = 'services'">
+        🎫 Egyéb szolgáltatások
+      </button>
       <button type="button" class="menu-item" [class.active]="section === 'simplepay'" (click)="section = 'simplepay'">
         💳 OTP SimplePay
       </button>
@@ -137,6 +140,10 @@
           </button>
         </section>
       </ng-container>
+    </main>
+
+    <main class="content" *ngIf="section === 'services'">
+      <app-extra-services-panel></app-extra-services-panel>
     </main>
 
     <main class="content" *ngIf="section === 'simplepay'">

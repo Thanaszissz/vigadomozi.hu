@@ -1,0 +1,49 @@
+<div *ngIf="loading && rows.length === 0" class="muted">Betöltés...</div>
+<div *ngIf="error" class="alert">{{ error }}</div>
+<div *ngIf="notice" class="ok">✅ {{ notice }}</div>
+
+<section class="card">
+  <h2>🎟️ Egyéb szolgáltatások</h2>
+  <p class="muted">
+    A mozijegyeken kívüli szolgáltatások (Sárkányvár, Néprajzi gyűjtemények, élménykártya stb.) árai forintban.
+    Az ár és a név módosítása után a sor végén a <b>Mentés</b> gombbal rögzítsd a változtatást.
+  </p>
+
+  <div class="table-wrap" *ngIf="rows.length > 0">
+    <table class="services">
+      <thead><tr><th>Szolgáltatás</th><th class="price-col">Ár (Ft)</th><th></th></tr></thead>
+      <tbody>
+        <ng-container *ngFor="let r of rows">
+          <tr [class.dirty]="isDirty(r)">
+            <td><input type="text" [(ngModel)]="r.name" maxlength="120" (keyup.enter)="save(r)" /></td>
+            <td class="price-col"><input type="number" min="0" step="50" [(ngModel)]="r.price" (keyup.enter)="save(r)" /></td>
+            <td class="row-buttons">
+              <button type="button" class="btn small primary" [disabled]="!isDirty(r) || r.busy || !r.name.trim() || r.price === null" (click)="save(r)">
+                {{ r.busy ? '...' : '💾 Mentés' }}
+              </button>
+              <button type="button" class="btn small" [disabled]="r.busy" (click)="remove(r)">🗑️</button>
+            </td>
+          </tr>
+          <tr *ngIf="r.error" class="error-row"><td colspan="3"><div class="alert">{{ r.error }}</div></td></tr>
+        </ng-container>
+      </tbody>
+    </table>
+  </div>
+  <div *ngIf="!loading && rows.length === 0" class="muted">Még nincs felvett szolgáltatás.</div>
+</section>
+
+<section class="card">
+  <h2>➕ Új szolgáltatás</h2>
+  <div class="add-row">
+    <label class="field">
+      <span>Megnevezés</span>
+      <input type="text" [(ngModel)]="newName" maxlength="120" placeholder="pl. Csoportos belépő" (keyup.enter)="add()" />
+    </label>
+    <label class="field">
+      <span>Ár (Ft)</span>
+      <input type="number" min="0" step="50" [(ngModel)]="newPrice" (keyup.enter)="add()" />
+    </label>
+    <button type="button" class="btn primary" [disabled]="!canAdd" (click)="add()">{{ adding ? 'Mentés...' : '➕ Felvétel' }}</button>
+  </div>
+  <div *ngIf="addError" class="alert">{{ addError }}</div>
+</section>

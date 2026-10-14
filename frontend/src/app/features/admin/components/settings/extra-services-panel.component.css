@@ -1,0 +1,15 @@
+table.services { width: 100%; border-collapse: collapse; }
+table.services th { text-align: left; padding: 8px 10px; }
+table.services td { padding: 6px 10px; vertical-align: middle; }
+table.services input {
+  width: 100%; box-sizing: border-box; padding: 9px 12px; border-radius: 6px; border: 1px solid #5c3d2e;
+  background: #4a3425; color: #e8d5b7; font-size: 15px;
+}
+table.services tr.dirty input { border-color: #d4a574; }
+.price-col { width: 160px; }
+.price-col input { text-align: right; }
+.row-buttons { white-space: nowrap; width: 1%; display: flex; gap: 6px; }
+.add-row { display: grid; grid-template-columns: 1fr 180px auto; gap: 12px; align-items: end; }
+@media (max-width: 700px) {
+  .add-row { grid-template-columns: 1fr; }
+}

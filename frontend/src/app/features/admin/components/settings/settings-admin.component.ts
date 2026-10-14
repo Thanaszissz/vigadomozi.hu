@@ -7,13 +7,14 @@ import { BackupsPanelComponent } from './backups-panel.component';
 import { SimplePayPanelComponent } from './simplepay-panel.component';
 import { NavPanelComponent } from './nav-panel.component';
 import { SzamlazzPanelComponent } from './szamlazz-panel.component';
+import { ExtraServicesPanelComponent } from './extra-services-panel.component';
 
-type Section = 'numbering' | 'simplepay' | 'szamlazz' | 'nav' | 'backups';
+type Section = 'numbering' | 'services' | 'simplepay' | 'szamlazz' | 'nav' | 'backups';
 
 @Component({
   selector: 'app-settings-admin',
   standalone: true,
-  imports: [CommonModule, FormsModule, BackupsPanelComponent, SimplePayPanelComponent, SzamlazzPanelComponent, NavPanelComponent],
+  imports: [CommonModule, FormsModule, BackupsPanelComponent, SimplePayPanelComponent, SzamlazzPanelComponent, NavPanelComponent, ExtraServicesPanelComponent],
   templateUrl: './settings-admin.component.html',
   styleUrls: ['./settings-admin.component.css']
 })

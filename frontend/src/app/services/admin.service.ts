@@ -288,6 +288,13 @@ export interface SimplePayTestResult {
   signature_valid: boolean | null;
 }
 
+export interface ExtraService {
+  id: number;
+  name: string;
+  price: number;
+  sort_order: number;
+}
+
 export interface SzamlazzSettings {
   enabled: boolean;
   ready: boolean;
@@ -636,6 +643,23 @@ export class AdminService {
 
   testSimplePay(): Observable<SimplePayTestResult> {
     return this.http.post<SimplePayTestResult>(`${this.apiUrl}/settings/simplepay/test`, {});
+  }
+
+  // Beállítások: egyéb szolgáltatások
+  getExtraServices(): Observable<ExtraService[]> {
+    return this.http.get<ExtraService[]>(`${this.apiUrl}/settings/extra-services`);
+  }
+
+  createExtraService(payload: { name: string; price: number }): Observable<ExtraService> {
+    return this.http.post<ExtraService>(`${this.apiUrl}/settings/extra-services`, payload);
+  }
+
+  updateExtraService(id: number, payload: { name: string; price: number }): Observable<ExtraService> {
+    return this.http.put<ExtraService>(`${this.apiUrl}/settings/extra-services/${id}`, payload);
+  }
+
+  deleteExtraService(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/settings/extra-services/${id}`);
   }
 
   // Beállítások: Számlázz.hu

@@ -20,6 +20,7 @@ use App\Http\Controllers\Admin\NavController;
 use App\Http\Controllers\Admin\CustomerAdminController;
 use App\Http\Controllers\Admin\SzamlazzSettingsController;
 use App\Http\Controllers\Admin\InvoiceController;
+use App\Http\Controllers\Admin\ExtraServiceController;
 
 // A jogosultságokat a szerepkörök adják (App\Support\Roles); minden csoport a megfelelő jogot követeli meg.
 
@@ -108,6 +109,11 @@ Route::middleware('permission:settings.manage')->group(function () {
     Route::get('settings/simplepay', [SimplePaySettingsController::class, 'show']);
     Route::put('settings/simplepay', [SimplePaySettingsController::class, 'update'])->middleware('throttle:20,1');
     Route::post('settings/simplepay/test', [SimplePaySettingsController::class, 'test'])->middleware('throttle:10,1');
+
+    // Egyéb szolgáltatások (Sárkányvár, Néprajzi gyűjtemények, élménykártya stb.) árai
+    Route::apiResource('settings/extra-services', ExtraServiceController::class)
+        ->only(['index', 'store', 'update', 'destroy'])
+        ->parameters(['extra-services' => 'extra_service']);
 
     // Számlázz.hu számlázás: Számla Agent kulcs, ÁFA kulcs, kapcsolat-ellenőrzés
     Route::get('settings/szamlazz', [SzamlazzSettingsController::class, 'show']);

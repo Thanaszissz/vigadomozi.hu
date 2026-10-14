@@ -71,6 +71,7 @@ class ActivityLogger
         'invoice.failed' => ['invoice', 'Számla kiállítása sikertelen'],
         'settings.szamlazz_changed' => ['settings', 'Számlázz.hu beállítások módosítása'],
         'settings.szamlazz_tested' => ['settings', 'Számlázz.hu kapcsolat-ellenőrzés'],
+        'settings.service_changed' => ['settings', 'Egyéb szolgáltatás árának módosítása'],
 
         'email_template.updated' => ['email', 'E-mail sablon módosítása'],
         'email.sent' => ['email', 'E-mail elküldve'],
