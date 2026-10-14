@@ -1,6 +1,6 @@
 <div class="sd-container">
   <div class="header">
-    <h1>🎬 Előadások napi eladása</h1>
+    <h1>🎬 Előadások eladott jegyei</h1>
     <button (click)="goBack()" class="btn-back">← Vissza a jegyeladáshoz</button>
   </div>
 
@@ -12,21 +12,19 @@
     </label>
     <button type="button" class="btn small" (click)="shiftDay(1)">›</button>
 
-    <label *ngIf="data && data.shows.length > 1">
-      <span>Előadás</span>
-      <select [(ngModel)]="showFilter">
-        <option value="all">Minden előadás</option>
-        <option *ngFor="let s of data.shows" [value]="showKey(s)">{{ s.starts_at | date:'HH:mm' }} – {{ s.movie_title }}</option>
-      </select>
-    </label>
-
     <span class="spacer"></span>
-    <button type="button" class="btn primary" (click)="exportCsv()" [disabled]="exporting || !data || data.totals.tickets === 0">
-      {{ exporting ? 'Exportálás...' : '⬇ CSV export (' + (data?.totals?.tickets ?? 0) + ' jegy)' }}
+    <button type="button" class="btn primary" (click)="exportCsv('summary')" [disabled]="exporting || !data || data.totals.tickets === 0">
+      {{ exporting ? 'Exportálás...' : '⬇ CSV: előadásonként' }}
+    </button>
+    <button type="button" class="btn" (click)="exportCsv('tickets')" [disabled]="exporting || !data || data.totals.tickets === 0">
+      ⬇ CSV: jegyenként ({{ data?.totals?.tickets ?? 0 }} jegy)
     </button>
   </div>
 
-  <p class="muted">Az adott napon tartott előadások összes eladott jegye, az eladás időpontjától, csatornájától (pénztár / online) és eladójától függetlenül. A sztornózott jegyek nincsenek benne.</p>
+  <p class="muted">
+    Az adott napon tartott előadásokra <b>összesen eladott</b> jegyek: minden jegy benne van, amelyet az előadásra valaha eladtak
+    (nem csak az adott napon, hanem korábban is, pénztárban és online). A sztornózott jegyek nincsenek benne.
+  </p>
 
   <div *ngIf="loading" class="muted">Betöltés...</div>
   <div *ngIf="error" class="alert">{{ error }}</div>
@@ -34,7 +32,7 @@
   <ng-container *ngIf="data && !loading">
     <div class="summary">
       <div class="card"><span>Előadások</span><b>{{ data.shows.length }} db</b></div>
-      <div class="card"><span>Eladott jegyek</span><b>{{ data.totals.tickets | number:'1.0-0' }} db</b></div>
+      <div class="card"><span>Összesen eladott jegy</span><b>{{ data.totals.tickets | number:'1.0-0' }} db</b></div>
       <div class="card"><span>Készpénz</span><b>{{ data.totals.cash | number:'1.0-0' }} Ft</b></div>
       <div class="card"><span>Bankkártya</span><b>{{ data.totals.card | number:'1.0-0' }} Ft</b></div>
       <div class="card" *ngIf="data.totals.online > 0"><span>Online</span><b>{{ data.totals.online | number:'1.0-0' }} Ft</b></div>
@@ -43,48 +41,92 @@
       <div class="card total"><span>Mindösszesen</span><b>{{ data.totals.amount | number:'1.0-0' }} Ft</b></div>
     </div>
 
-    <div *ngIf="data.shows.length === 0" class="muted">Ezen a napon nincs eladott jegy egyetlen előadásra sem.</div>
+    <div *ngIf="data.shows.length === 0" class="muted">Erre a napra egyetlen előadásra sincs eladott jegy.</div>
 
-    <section class="show" *ngFor="let s of visibleShows">
-      <h2>
-        {{ s.starts_at | date:'HH:mm' }} – {{ s.movie_title }}
-        <small>{{ s.auditorium_name || '—' }} • {{ s.tickets }} jegy • {{ s.amount | number:'1.0-0' }} Ft</small>
-      </h2>
+    <!-- Áttekintő lista: előadásonként egy sor -->
+    <section *ngIf="data.shows.length > 0">
+      <h2 class="section-title">Előadások</h2>
       <div class="table-wrap">
-        <table>
+        <table class="overview">
           <thead>
             <tr>
-              <th>Jegyszám</th>
-              <th>Sor / szék</th>
-              <th>Kategória</th>
-              <th>Fizetés</th>
-              <th>Csatorna</th>
-              <th>Eladva</th>
-              <th>Értékesítő</th>
-              <th class="r">Ár</th>
+              <th>Kezdés</th>
+              <th>Film</th>
+              <th>Terem</th>
+              <th class="r">Eladott jegy</th>
+              <th class="r">Bevétel</th>
+              <th class="r">Készpénz</th>
+              <th class="r">Kártya</th>
+              <th class="r">Online</th>
+              <th class="r">Élménykártya</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let t of ticketsOf(s)">
-              <td class="num">{{ t.ticket_number }}</td>
-              <td>{{ t.row_label }} / {{ t.seat_number ?? '—' }}</td>
-              <td>{{ categoryLabel(t.category) }}</td>
-              <td><span class="badge" [class.cash]="t.payment_method === 'cash'" [class.card]="t.payment_method === 'card'">{{ paymentLabel(t.payment_method) }}</span></td>
-              <td>{{ t.channel === 'online' ? 'Online' : t.channel === 'admin' ? 'Admin' : 'Pénztár' }}</td>
-              <td>{{ t.sold_at | date:'MM.dd. HH:mm' }}</td>
-              <td>{{ t.sold_by_name || '—' }}</td>
-              <td class="r">{{ t.price_amount | number:'1.0-0' }} Ft</td>
+            <tr *ngFor="let s of data.shows" class="clickable" [class.active]="showFilter === showKey(s)" (click)="pick(s)" title="Kattints a jegyek megtekintéséhez">
+              <td>{{ s.starts_at | date:'HH:mm' }}</td>
+              <td><b>{{ s.movie_title }}</b></td>
+              <td>{{ s.auditorium_name || '—' }}</td>
+              <td class="r"><b>{{ s.tickets }} db</b></td>
+              <td class="r">{{ s.amount | number:'1.0-0' }} Ft</td>
+              <td class="r">{{ s.cash | number:'1.0-0' }} Ft</td>
+              <td class="r">{{ s.card | number:'1.0-0' }} Ft</td>
+              <td class="r">{{ s.online | number:'1.0-0' }} Ft</td>
+              <td class="r">{{ s.experience_tickets }} db<span *ngIf="s.experience_card"> • {{ s.experience_card | number:'1.0-0' }} Ft</span></td>
             </tr>
             <tr class="subtotal">
-              <td colspan="3">Összesen: {{ s.tickets }} jegy</td>
-              <td colspan="4">
-                Készpénz: {{ s.cash | number:'1.0-0' }} Ft • Kártya: {{ s.card | number:'1.0-0' }} Ft<ng-container *ngIf="s.online"> • Online: {{ s.online | number:'1.0-0' }} Ft</ng-container><ng-container *ngIf="s.experience_card"> • Élménykártya: {{ s.experience_card | number:'1.0-0' }} Ft</ng-container>
-              </td>
-              <td class="r">{{ s.amount | number:'1.0-0' }} Ft</td>
+              <td colspan="3">Összesen</td>
+              <td class="r">{{ data.totals.tickets }} db</td>
+              <td class="r">{{ data.totals.amount | number:'1.0-0' }} Ft</td>
+              <td class="r">{{ data.totals.cash | number:'1.0-0' }} Ft</td>
+              <td class="r">{{ data.totals.card | number:'1.0-0' }} Ft</td>
+              <td class="r">{{ data.totals.online | number:'1.0-0' }} Ft</td>
+              <td class="r">{{ data.totals.experience_tickets }} db</td>
             </tr>
           </tbody>
         </table>
       </div>
+
+      <label class="details-toggle">
+        <input type="checkbox" [(ngModel)]="showDetails" />
+        <span>Jegyek részletezése (minden előadás jegyei külön listában; egy sorra kattintva csak az az előadás)</span>
+      </label>
     </section>
+
+    <ng-container *ngIf="detailsVisible">
+      <section class="show" *ngFor="let s of visibleShows">
+        <h2>
+          {{ s.starts_at | date:'HH:mm' }} – {{ s.movie_title }}
+          <small>{{ s.auditorium_name || '—' }} • {{ s.tickets }} jegy • {{ s.amount | number:'1.0-0' }} Ft</small>
+        </h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Jegyszám</th>
+                <th>Sor / szék</th>
+                <th>Kategória</th>
+                <th>Fizetés</th>
+                <th>Csatorna</th>
+                <th>Eladva</th>
+                <th>Értékesítő</th>
+                <th class="r">Ár</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let t of ticketsOf(s)">
+                <td class="num">{{ t.ticket_number }}</td>
+                <td>{{ t.row_label }} / {{ t.seat_number ?? '—' }}</td>
+                <td>{{ categoryLabel(t.category) }}</td>
+                <td><span class="badge" [class.cash]="t.payment_method === 'cash'" [class.card]="t.payment_method === 'card'">{{ paymentLabel(t.payment_method) }}</span></td>
+                <td>{{ t.channel === 'online' ? 'Online' : t.channel === 'admin' ? 'Admin' : 'Pénztár' }}</td>
+                <td>{{ t.sold_at | date:'MM.dd. HH:mm' }}</td>
+                <td>{{ t.sold_by_name || '—' }}</td>
+                <td class="r">{{ t.price_amount | number:'1.0-0' }} Ft</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </ng-container>
   </ng-container>
 </div>

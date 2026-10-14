@@ -3,7 +3,7 @@
     <h1>🎟️ Helyszíni jegyeladás</h1>
     <div class="header-actions">
       <button (click)="goTo('/admin/daily-close')" class="btn-back secondary">🧮 Napi zárás</button>
-      <button *ngIf="canSeeShowtimeDay" (click)="goTo('/admin/showtime-day')" class="btn-back secondary">🎬 Előadások napi eladása</button>
+      <button *ngIf="canSeeShowtimeDay" (click)="goTo('/admin/showtime-day')" class="btn-back secondary">🎬 Előadások eladott jegyei</button>
       <button (click)="goBack()" class="btn-back">← Vissza a dashboardra</button>
     </div>
   </div>

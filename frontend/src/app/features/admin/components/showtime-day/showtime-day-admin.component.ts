@@ -20,6 +20,7 @@ export class ShowtimeDayAdminComponent implements OnInit {
   error: string | null = null;
   exporting = false;
   showFilter = 'all';
+  showDetails = false;
 
   paymentLabel = paymentLabel;
   categoryLabel = categoryLabel;
@@ -74,14 +75,14 @@ export class ShowtimeDayAdminComponent implements OnInit {
     return (this.data?.tickets ?? []).filter(t => this.showKey(t) === key);
   }
 
-  exportCsv(): void {
+  exportCsv(type: 'summary' | 'tickets'): void {
     this.exporting = true;
-    this.admin.exportShowtimeDay(this.date).subscribe({
+    this.admin.exportShowtimeDay(this.date, type).subscribe({
       next: (blob) => {
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `elo_adasok_${this.date}.csv`;
+        link.download = `elo_adasok_${type === 'summary' ? 'osszesito_' : ''}${this.date}.csv`;
         link.click();
         URL.revokeObjectURL(url);
         this.exporting = false;
@@ -91,6 +92,16 @@ export class ShowtimeDayAdminComponent implements OnInit {
         this.exporting = false;
       }
     });
+  }
+
+  /** Az áttekintő sorra kattintva az adott előadás jegyei jelennek meg (újra kattintva visszaáll a lista). */
+  pick(show: ShowtimeDay['shows'][number]): void {
+    const key = this.showKey(show);
+    this.showFilter = this.showFilter === key ? 'all' : key;
+  }
+
+  get detailsVisible(): boolean {
+    return this.showDetails || this.showFilter !== 'all';
   }
 
   private keyOf(d: Date): string {

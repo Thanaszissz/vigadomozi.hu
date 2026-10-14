@@ -634,8 +634,8 @@ export class AdminService {
     return this.http.get<ShowtimeDay>(`${this.apiUrl}/tickets/showtime-day`, { params: { date } });
   }
 
-  exportShowtimeDay(date: string): Observable<Blob> {
-    return this.http.get(`${this.apiUrl}/tickets/showtime-day/export`, { params: { date }, responseType: 'blob' });
+  exportShowtimeDay(date: string, type: 'summary' | 'tickets' = 'tickets'): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/tickets/showtime-day/export`, { params: { date, type }, responseType: 'blob' });
   }
 
   getDailyClose(date: string): Observable<DailyClose> {

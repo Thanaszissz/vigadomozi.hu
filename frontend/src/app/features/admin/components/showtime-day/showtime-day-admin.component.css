@@ -41,6 +41,12 @@ h1 { margin: 0; color: #e8d5b7; }
 .card.total { border-color: #d4a574; }
 
 .show { margin-bottom: 22px; }
+.section-title { margin: 0 0 8px; font-size: 18px; color: #fdf7ed; }
+table.overview tr.clickable { cursor: pointer; }
+table.overview tr.clickable:hover td { background: #3a2518; }
+table.overview tr.clickable.active td { background: #5c3d2e; }
+.details-toggle { display: flex; align-items: center; gap: 8px; margin: 12px 0 18px; font-size: 13px; color: #a08060; cursor: pointer; }
+.details-toggle input { width: 18px; height: 18px; accent-color: #d4a574; }
 .show h2 { margin: 0 0 8px; font-size: 18px; color: #fdf7ed; display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
 .show h2 small { font-size: 13px; color: #a08060; font-weight: 400; }
 
