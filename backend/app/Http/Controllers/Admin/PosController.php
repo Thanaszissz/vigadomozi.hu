@@ -25,7 +25,7 @@ use Illuminate\Validation\ValidationException;
 
 class PosController extends Controller
 {
-    private const WALK_IN_EMAIL = 'helyszini@vigadomozi.hu';
+    private const WALK_IN_EMAIL = 'helyszini@vigadojegy.hu';
 
     // Az előadás kezdete után ennyi percig még adható el jegy
     private const SALES_GRACE_MINUTES = 30;

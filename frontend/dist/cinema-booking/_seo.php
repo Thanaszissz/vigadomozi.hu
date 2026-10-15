@@ -6,18 +6,18 @@
  * Beállítás környezeti változókkal (opcionális): SEO_SITE_URL, SEO_API_URL.
  */
 
-const SEO_SITE_NAME = 'Vigadó Mozi';
-const SEO_DEFAULT_TITLE = 'Vigadó Mozi Kisújszállás – műsor, jegyvásárlás online';
-const SEO_DEFAULT_DESCRIPTION = 'A kisújszállási Vigadó Mozi műsora, vetítési időpontok, jegyárak és online jegyfoglalás. Foglalj helyet kedvenc filmedre percek alatt!';
+const SEO_SITE_NAME = 'Vigadó Jegy';
+const SEO_DEFAULT_TITLE = 'Vigadó Jegy Kisújszállás – műsor, jegyvásárlás online';
+const SEO_DEFAULT_DESCRIPTION = 'A kisújszállási Vigadó Jegy műsora, vetítési időpontok, jegyárak és online jegyfoglalás. Foglalj helyet kedvenc filmedre percek alatt!';
 
 function seo_site_url(): string
 {
-    return rtrim(getenv('SEO_SITE_URL') ?: 'https://vigadomozi.hu', '/');
+    return rtrim(getenv('SEO_SITE_URL') ?: 'https://vigadojegy.hu', '/');
 }
 
 function seo_api_url(): string
 {
-    return rtrim(getenv('SEO_API_URL') ?: 'https://api.vigadomozi.hu/api', '/');
+    return rtrim(getenv('SEO_API_URL') ?: 'https://api.vigadojegy.hu/api', '/');
 }
 
 function seo_h(?string $text): string
@@ -30,13 +30,13 @@ function seo_static_pages(): array
 {
     return [
         '/' => [null, SEO_DEFAULT_DESCRIPTION],
-        '/movies' => ['Filmek', 'Aktuális filmek a kisújszállási Vigadó Moziban: plakátok, leírások, előzetesek és vetítési időpontok egy helyen.'],
-        '/schedule' => ['Műsor és vetítési időpontok', 'A Vigadó Mozi teljes műsora napokra bontva: mikor és mit játszunk Kisújszálláson. Jegyfoglalás online.'],
-        '/prices' => ['Jegyárak', 'A Vigadó Mozi jegyárai Kisújszálláson: teljes árú, kedvezményes és csoportos jegyek.'],
-        '/mediaajanlat' => ['Médiaajánlat', 'Hirdetési és médiaajánlat a Vigadó Mozi vásznán és felületein, Kisújszálláson.'],
-        '/hazirend' => ['Házirend', 'A Vigadó Mozi házirendje: látogatási szabályok, korhatár-besorolások és tudnivalók a mozilátogatáshoz.'],
-        '/fizetesi-tajekoztato' => ['Fizetési tájékoztató', 'Fizetési tájékoztató a Vigadó Mozi online jegyvásárlásához: elfogadott fizetési módok és a vásárlás menete.'],
-        '/adatkezelesi-tajekoztato' => ['Adatkezelési tájékoztató', 'A Vigadó Mozi adatkezelési tájékoztatója: hogyan kezeljük a jegyfoglalás és vásárlás során megadott adataidat.'],
+        '/movies' => ['Filmek', 'Aktuális filmek a kisújszállási Vigadó Jegyen: plakátok, leírások, előzetesek és vetítési időpontok egy helyen.'],
+        '/schedule' => ['Műsor és vetítési időpontok', 'A Vigadó Jegy teljes műsora napokra bontva: mikor és mit játszunk Kisújszálláson. Jegyfoglalás online.'],
+        '/prices' => ['Jegyárak', 'A Vigadó Jegy jegyárai Kisújszálláson: teljes árú, kedvezményes és csoportos jegyek.'],
+        '/mediaajanlat' => ['Médiaajánlat', 'Hirdetési és médiaajánlat a Vigadó Jegy vásznán és felületein, Kisújszálláson.'],
+        '/hazirend' => ['Házirend', 'A Vigadó Jegy házirendje: látogatási szabályok, korhatár-besorolások és tudnivalók a mozilátogatáshoz.'],
+        '/fizetesi-tajekoztato' => ['Fizetési tájékoztató', 'Fizetési tájékoztató a Vigadó Jegy online jegyvásárlásához: elfogadott fizetési módok és a vásárlás menete.'],
+        '/adatkezelesi-tajekoztato' => ['Adatkezelési tájékoztató', 'A Vigadó Jegy adatkezelési tájékoztatója: hogyan kezeljük a jegyfoglalás és vásárlás során megadott adataidat.'],
     ];
 }
 
@@ -86,7 +86,7 @@ function seo_http_get(string $url, string $accept = '*/*', int $maxBytes = 80000
             CURLOPT_CONNECTTIMEOUT => 3,
             CURLOPT_TIMEOUT => 6,
             CURLOPT_HTTPHEADER => ['Accept: ' . $accept],
-            CURLOPT_USERAGENT => 'VigadoMoziSeo/1.0',
+            CURLOPT_USERAGENT => 'VigadoJegySeo/1.0',
             CURLOPT_PROTOCOLS => CURLPROTO_HTTP | CURLPROTO_HTTPS,
         ]);
         $body = curl_exec($ch);
@@ -96,7 +96,7 @@ function seo_http_get(string $url, string $accept = '*/*', int $maxBytes = 80000
         return ($body !== false && $code >= 200 && $code < 300 && strlen($body) <= $maxBytes) ? $body : null;
     }
 
-    $context = stream_context_create(['http' => ['timeout' => 6, 'header' => "Accept: $accept\r\nUser-Agent: VigadoMoziSeo/1.0\r\n"]]);
+    $context = stream_context_create(['http' => ['timeout' => 6, 'header' => "Accept: $accept\r\nUser-Agent: VigadoJegySeo/1.0\r\n"]]);
     $body = @file_get_contents($url, false, $context, 0, $maxBytes);
 
     return $body === false ? null : $body;
@@ -214,7 +214,7 @@ function seo_resolve(string $path): array
                 $when = seo_format_datetime($showtime['starts_at']);
                 $room = $showtime['auditorium']['name'] ?? '';
                 $page['title'] = 'Jegyfoglalás: ' . $movie['title'] . ' – ' . $when . ' | ' . SEO_SITE_NAME;
-                $page['description'] = 'Foglalj helyet a(z) ' . $movie['title'] . ' vetítésére a kisújszállási Vigadó Moziban: ' . $when . ($room ? ', ' . $room : '') . '.';
+                $page['description'] = 'Foglalj helyet a(z) ' . $movie['title'] . ' vetítésére a kisújszállási Vigadó Jegyen: ' . $when . ($room ? ', ' . $room : '') . '.';
                 $page['image'] = seo_movie_image($movie);
                 $page['type'] = 'video.movie';
                 $page['body'] = '<h1>' . seo_h($page['title']) . '</h1><p>' . seo_h($page['description']) . '</p>';
@@ -254,7 +254,7 @@ function seo_movie_page(array $page, array $movie): array
 
     $theater = [
         '@type' => 'MovieTheater',
-        'name' => 'Vigadó Mozi',
+        'name' => 'Vigadó Jegy',
         'address' => ['@type' => 'PostalAddress', 'streetAddress' => 'Szabadság tér 7.', 'addressLocality' => 'Kisújszállás', 'postalCode' => '5310', 'addressCountry' => 'HU'],
     ];
 

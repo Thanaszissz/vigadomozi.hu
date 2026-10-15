@@ -82,7 +82,7 @@ export class SuccessComponent implements OnInit {
         pdf.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, 210, 100, undefined, 'FAST');
       }
 
-      pdf?.save(`vigado-mozi-jegyek-${this.reservationId}.pdf`);
+      pdf?.save(`vigado-jegyek-${this.reservationId}.pdf`);
     } catch (err: any) {
       this.downloadError = err?.error?.message || 'A jegyek letöltése nem sikerült. Próbáld újra később.';
       console.error(err);

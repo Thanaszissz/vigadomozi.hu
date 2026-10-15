@@ -93,7 +93,7 @@ class ReservationMailer
 
         try {
             return [[
-                'name' => 'vigado-mozi-jegyek-' . $reservation->id . '.pdf',
+                'name' => 'vigado-jegyek-' . $reservation->id . '.pdf',
                 'data' => app(TicketPdfService::class)->render($tickets),
                 'mime' => 'application/pdf',
             ]];

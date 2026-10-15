@@ -425,7 +425,7 @@ export class PosAdminComponent implements OnInit, OnDestroy {
   editEmail = '';
   editSeatKeys: string[] = [];
   deleteConfirmOpen = false;
-  private readonly walkInEmail = 'helyszini@vigadomozi.hu';
+  private readonly walkInEmail = 'helyszini@vigadojegy.hu';
 
   startEdit(): void {
     const r = this.selectedReservation;
@@ -591,7 +591,7 @@ export class PosAdminComponent implements OnInit, OnDestroy {
       const r = this.mode === 'reservations' ? this.selectedReservation : null;
       this.invoiceBuyer.name = (r?.customer_name || this.customerName || '').trim();
       const email = (r?.customer_email || '').trim();
-      this.invoiceBuyer.email = email && !email.endsWith('@vigadomozi.hu') ? email : '';
+      this.invoiceBuyer.email = email && !email.endsWith('@vigadojegy.hu') ? email : '';
     }
   }
 

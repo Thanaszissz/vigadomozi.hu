@@ -1,6 +1,6 @@
-# VIGADÓ MOZI - Online Jegyfoglalási Rendszer
+# VIGADÓ JEGY - Online Jegyfoglalási Rendszer
 
-A VIGADÓ MOZI egy teljes körű, modern **online mozi jegyfoglalási rendszer** a kiváló Vigadó Sándor Budai Mozi számára. Az alkalmazás a filmvetítések egyszerű és intuitív online foglalását teszi lehetővé.
+A VIGADÓ JEGY egy teljes körű, modern **online mozi jegyfoglalási rendszer** a kiváló Vigadó Sándor Budai Mozi számára. Az alkalmazás a filmvetítések egyszerű és intuitív online foglalását teszi lehetővé.
 
 ## 📋 Projektöttletek
 
@@ -45,7 +45,7 @@ Frontend elérhető: `http://localhost:4200`
 ## 🏗️ Projekt Struktúra
 
 ```
-VIGADO MOZI/
+VIGADO JEGY/
 ├── backend/
 │   ├── app/
 │   │   ├── Models/               (6 Eloquent modell)
@@ -243,7 +243,7 @@ cd ../frontend && docker build -t vigado-frontend .
 
 ## 📄 Licenc
 
-Saját fejlesztésű projekt. © 2025 VIGADÓ MOZI
+Saját fejlesztésű projekt. © 2025 VIGADÓ JEGY
 
 ## 👤 Support
 

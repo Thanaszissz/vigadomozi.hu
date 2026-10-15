@@ -15,7 +15,7 @@ class AdminSeeder extends Seeder
      */
     public function run(): void
     {
-        $email = (string) env('ADMIN_EMAIL', 'admin@vigadomozi.hu');
+        $email = (string) env('ADMIN_EMAIL', 'admin@vigadojegy.hu');
 
         if (User::where('email', $email)->exists()) {
             $this->command?->info("A(z) {$email} felhasználó már létezik, a jelszava nem módosult.");

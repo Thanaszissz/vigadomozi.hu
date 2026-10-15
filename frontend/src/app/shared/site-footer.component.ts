@@ -19,10 +19,10 @@ import { RouterLink } from '@angular/router';
 
           <section class="footer-col">
             <h4>Kapcsolat</h4>
-            <p class="name">Vigadó Mozi • Film és Színház</p>
+            <p class="name">Vigadó Jegy • Film és Színház</p>
             <p><span class="ico">📍</span>5310 Kisújszállás, Szabadság tér 7.</p>
             <p><span class="ico">📞</span><a href="tel:+3659328083">+36-59-328-083</a></p>
-            <p><span class="ico">✉️</span><a href="mailto:info&#64;vigadomozi.hu">info&#64;vigadomozi.hu</a></p>
+            <p><span class="ico">✉️</span><a href="mailto:info&#64;vigadojegy.hu">info&#64;vigadojegy.hu</a></p>
           </section>
 
           <section class="footer-col">
@@ -31,7 +31,7 @@ import { RouterLink } from '@angular/router';
           </section>
         </div>
 
-        <div class="footer-bottom">© {{ year }} Vigadó Mozi, Kisújszállás. Minden jog fenntartva.</div>
+        <div class="footer-bottom">© {{ year }} Vigadó Jegy, Kisújszállás. Minden jog fenntartva.</div>
       </div>
     </footer>
   `,

@@ -31,7 +31,7 @@ class NavReceiptService
         'live' => 'https://receipt-if.enyugta.nav.gov.hu/v1',
     ];
 
-    public const DEFAULT_SOFTWARE = 'Vigado Mozi Jegyfoglalo';
+    public const DEFAULT_SOFTWARE = 'Vigado Jegy Jegyfoglalo';
     public const NS_RECEIPT = 'http://schemas.nav.gov.hu/NTCA/1.0/receipt';
     public const NS_SERVICE = 'http://schemas.nav.gov.hu/NTCA/2.0/common/service';
     public const NS_AUTH = 'http://schemas.nav.gov.hu/NTCA/2.0/common/authservice';

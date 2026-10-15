@@ -2,7 +2,7 @@
 # Plesk Git "post deployment action": a backend frissítése minden telepítés (git pull + deploy) után.
 #
 # A Plesk-ben a repository beállításainál (Enable post deployment actions) ezt a sort kell megadni:
-#   for d in "$PWD" /httpdocs "$HOME/httpdocs" /var/www/vhosts/vigadomozi.hu/httpdocs; do [ -f "$d/deploy/plesk/post-deploy.sh" ] && exec bash "$d/deploy/plesk/post-deploy.sh"; done
+#   for d in "$PWD" /httpdocs "$HOME/httpdocs" /var/www/vhosts/vigadojegy.hu/httpdocs; do [ -f "$d/deploy/plesk/post-deploy.sh" ] && exec bash "$d/deploy/plesk/post-deploy.sh"; done
 #
 # Elvégzi: composer install (zárolt verziókkal), adatbázis-migrációk, Laravel gyorsítótárak újraépítése.
 # A frontend (frontend/dist/cinema-booking) előre buildelve van a repóban, ahhoz itt nincs teendő.

@@ -218,7 +218,7 @@ export class DailyCloseAdminComponent implements OnInit {
     }).join('');
 
     return `<!doctype html><html><head><meta charset="utf-8"><title>Napi zárás ${esc(this.date)}</title><style>${PRINT_CSS}</style></head><body>
-      <h1>Napi zárás – Vigadó Mozi</h1>
+      <h1>Napi zárás – Vigadó Jegy</h1>
       <div class="sub">${esc(this.date.replace(/-/g, '.'))}. • ${esc(filterNote)}</div>
       <div class="meta">
         <span>Nyomtatta: ${esc(current?.name ?? '-')}</span>

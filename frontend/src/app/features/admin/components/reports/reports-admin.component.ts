@@ -286,7 +286,7 @@ export class ReportsAdminComponent implements OnInit {
         ` : ''}
 
         <div class="footer">
-          <p><strong>Vigadó Mozi</strong></p>
+          <p><strong>Vigadó Jegy</strong></p>
           <p>Nyomtatva: ${new Date().toLocaleString('hu-HU')}</p>
         </div>
 

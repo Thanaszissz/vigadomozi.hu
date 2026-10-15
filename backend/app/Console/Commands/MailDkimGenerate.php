@@ -10,7 +10,7 @@ use Illuminate\Console\Command;
  */
 class MailDkimGenerate extends Command
 {
-    protected $signature = 'mail:dkim-generate {--selector=vigado : A DKIM kijelölő (selector)} {--domain=vigadomozi.hu : A feladó domain} {--bits=2048}';
+    protected $signature = 'mail:dkim-generate {--selector=vigado : A DKIM kijelölő (selector)} {--domain=vigadojegy.hu : A feladó domain} {--bits=2048}';
 
     protected $description = 'DKIM-kulcspár generálása (privát kulcs az .env-be, publikus kulcs a DNS-be)';
 

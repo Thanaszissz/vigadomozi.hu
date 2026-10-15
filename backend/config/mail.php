@@ -115,10 +115,10 @@ return [
         'name' => env('MAIL_FROM_NAME', 'Example'),
     ],
 
-    // A válaszok címe: az ügyfél válasza a mozi valódi postafiókjába érkezzen (MAIL_REPLY_TO_ADDRESS, alapból info@vigadomozi.hu)
+    // A válaszok címe: az ügyfél válasza a mozi valódi postafiókjába érkezzen (MAIL_REPLY_TO_ADDRESS, alapból info@vigadojegy.hu)
     'reply_to' => [
-        'address' => env('MAIL_REPLY_TO_ADDRESS', 'info@vigadomozi.hu'),
-        'name' => env('MAIL_REPLY_TO_NAME', 'Vigadó Mozi'),
+        'address' => env('MAIL_REPLY_TO_ADDRESS', 'info@vigadojegy.hu'),
+        'name' => env('MAIL_REPLY_TO_NAME', 'Vigadó Jegy'),
     ],
 
     /*

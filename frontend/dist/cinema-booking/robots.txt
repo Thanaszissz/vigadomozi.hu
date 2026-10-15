@@ -4,4 +4,4 @@ Disallow: /checkout/
 Disallow: /hold-summary/
 Disallow: /success/
 
-Sitemap: https://vigadomozi.hu/sitemap.xml
+Sitemap: https://vigadojegy.hu/sitemap.xml

@@ -2,7 +2,7 @@
 
 ## Projekt Áttekintés
 
-A **Vigado Mozi Jegyfoglalási Rendszer** egy teljes szövetséges web alkalmazás filmjegyek online foglalásához.
+A **Vigado Jegy Jegyfoglalási Rendszer** egy teljes szövetséges web alkalmazás filmjegyek online foglalásához.
 
 **Technológia Stack:**
 - **Backend**: Laravel 11 + MySQL
@@ -524,4 +524,4 @@ Problémákra vonatkozó dokumentáció:
 
 **Verzió:** 1.0.0  
 **Frissítés:** 2026-01-28  
-**Szerző:** Vigado Mozi Dev Team
+**Szerző:** Vigado Jegy Dev Team

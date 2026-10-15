@@ -23,8 +23,8 @@ return [
     'allowed_origins' => array_values(array_filter(array_map('trim', explode(',', (string) env(
         'CORS_ALLOWED_ORIGINS',
         env('APP_ENV') === 'production'
-            ? 'https://vigadomozi.hu,https://www.vigadomozi.hu'
-            : 'https://vigadomozi.hu,https://www.vigadomozi.hu,http://localhost:4200,http://127.0.0.1:4200,http://localhost:4201'
+            ? 'https://vigadojegy.hu,https://www.vigadojegy.hu'
+            : 'https://vigadojegy.hu,https://www.vigadojegy.hu,http://localhost:4200,http://127.0.0.1:4200,http://localhost:4201'
     ))))),
 
     'allowed_origins_patterns' => [],

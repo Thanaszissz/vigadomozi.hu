@@ -1,4 +1,4 @@
-# 🎬 VIGADÓ MOZI - Projekt Indítása
+# 🎬 VIGADÓ JEGY - Projekt Indítása
 
 ## 📋 Jelenlegi Státusz
 
@@ -122,7 +122,7 @@ php artisan migrate --seed
 ## ✨ Projekt Szerkezet
 
 ```
-VIGADO MOZI/
+VIGADO JEGY/
 ├── backend/
 │   ├── app/Models/              (6 modell)
 │   ├── app/Services/            (Pricing, SeatMap, Stripe)

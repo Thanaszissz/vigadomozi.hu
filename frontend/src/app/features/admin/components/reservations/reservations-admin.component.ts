@@ -189,7 +189,7 @@ export class ReservationsAdminComponent implements OnInit {
       </head>
       <body>
         <div class="header">
-          <img class="logo" src="${logoUrl}" alt="Vigadó Mozi" />
+          <img class="logo" src="${logoUrl}" alt="Vigadó Jegy" />
           <div>
             <h1>Befizetési igazolás</h1>
             <div class="value">Foglalás #${reservation.id}</div>

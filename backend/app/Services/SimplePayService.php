@@ -22,7 +22,7 @@ use Illuminate\Support\Str;
  */
 class SimplePayService
 {
-    public const SDK_VERSION = 'VigadoMozi_Laravel_1.0';
+    public const SDK_VERSION = 'VigadoJegy_Laravel_1.0';
     public const PROVIDER = 'simplepay';
 
     public const API = [

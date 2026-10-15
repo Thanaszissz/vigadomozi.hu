@@ -13,17 +13,17 @@ export interface SeoData {
   type?: 'website' | 'video.movie';
 }
 
-export const SITE_NAME = 'Vigadó Mozi';
-const DEFAULT_TITLE = 'Vigadó Mozi Kisújszállás – műsor, jegyvásárlás online';
+export const SITE_NAME = 'Vigadó Jegy';
+const DEFAULT_TITLE = 'Vigadó Jegy Kisújszállás – műsor, jegyvásárlás online';
 const DEFAULT_DESCRIPTION =
-  'A kisújszállási Vigadó Mozi műsora, vetítési időpontok, jegyárak és online jegyfoglalás. Foglalj helyet kedvenc filmedre percek alatt!';
+  'A kisújszállási Vigadó Jegy műsora, vetítési időpontok, jegyárak és online jegyfoglalás. Foglalj helyet kedvenc filmedre percek alatt!';
 const DEFAULT_IMAGE = '/assets/og-default.jpg';
 
 const THEATER = {
   '@type': 'MovieTheater',
-  name: 'Vigadó Mozi',
+  name: 'Vigadó Jegy',
   telephone: '+36-59-328-083',
-  email: 'info@vigadomozi.hu',
+  email: 'info@vigadojegy.hu',
   address: {
     '@type': 'PostalAddress',
     streetAddress: 'Szabadság tér 7.',
