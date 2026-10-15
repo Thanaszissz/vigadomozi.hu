@@ -41,14 +41,16 @@ Route::middleware('permission:catalog.manage')->group(function () {
     Route::get('auditoria/{auditorium}/seats', [AuditoriumController::class, 'getSeats']);
     Route::put('auditoria/{auditorium}/seats', [AuditoriumController::class, 'updateSeats']);
 
-    Route::apiResource('movies-admin', MovieAdminController::class);
+    Route::apiResource('movies-admin', MovieAdminController::class)
+        ->parameters(['movies-admin' => 'movie']);
     Route::post('movies-admin/{movie}/upload', [MovieAdminController::class, 'uploadPoster']);
 
     Route::apiResource('theater-shows-admin', TheaterShowAdminController::class)
         ->parameters(['theater-shows-admin' => 'theater_show']);
     Route::post('theater-shows-admin/{theater_show}/upload', [TheaterShowAdminController::class, 'uploadPoster']);
 
-    Route::apiResource('showtimes-admin', ShowtimeAdminController::class);
+    Route::apiResource('showtimes-admin', ShowtimeAdminController::class)
+        ->parameters(['showtimes-admin' => 'showtime']);
 });
 
 // Foglalások kezelése és kifizetése (pénztáros, vezető, adminisztrátor)
