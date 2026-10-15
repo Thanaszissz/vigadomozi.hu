@@ -29,6 +29,7 @@
                     *ngFor="let seat of getSeatsInRow(rowLabel)"
                     class="seat"
                     [ngClass]="getSeatClasses(seat)"
+                    [style.--price-color]="getPriceColor(seat)"
                     (click)="toggleSeat(seat)"
                     [title]="getSeatTitle(seat)">
                     <span *ngIf="!isAisle(seat)" class="seat-number">{{ seat.key.split('-')[1] }}</span>
@@ -55,6 +56,13 @@
             <div class="legend-item">
               <div class="legend-square selected"></div>
               <span>Kiválasztott</span>
+            </div>
+          </div>
+
+          <div class="legend price-legend" *ngIf="priceGroups.length">
+            <div class="legend-item" *ngFor="let group of priceGroups">
+              <div class="legend-square price-mark" [style.--price-color]="group.color"></div>
+              <span>{{ group.price }} Ft</span>
             </div>
           </div>
         </div>

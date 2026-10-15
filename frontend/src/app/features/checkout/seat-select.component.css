@@ -270,6 +270,11 @@
 .seat.available {
   background: #22c55e;
   color: #fff;
+  border-bottom: 5px solid var(--price-color, #5c3d2e);
+}
+
+.seat.selected {
+  border-bottom: 5px solid var(--price-color, #5c3d2e);
 }
 
 .seat.booked {
@@ -312,6 +317,7 @@
 .legend-square.booked { background: #ef4444; }
 .legend-square.locked { background: #f59e0b; }
 .legend-square.selected { background: #8b6f47; }
+.legend-square.price-mark { background: #e8d5b7; border-bottom: 4px solid var(--price-color, #5c3d2e); }
 
 .summary-section {
   display: flex;

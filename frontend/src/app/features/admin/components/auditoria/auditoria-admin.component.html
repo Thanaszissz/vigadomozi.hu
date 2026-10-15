@@ -189,18 +189,21 @@
               [class.available]="!seat.blocked"
               [attr.data-row]="seat.row"
               [attr.data-col]="seat.column"
+              [attr.title]="getSeatTitle(seat)"
               [style.--section-color]="getSectionColor(seat.section)"
+              [style.--sector-color]="getSectorColor(getSeatSector(seat)?.name)"
               (click)="toggleSeat(seat)">
               <span class="seat-label">{{ seat.column }}</span>
+              <span class="seat-price" *ngIf="!seat.blocked && getSeatPrice(seat) !== null">{{ getSeatPrice(seat) }}</span>
             </div>
           </div>
         </div>
       </div>
 
       <div class="legend">
-        <div class="legend-item">
-          <div class="seat available"></div>
-          <span>Elérhető</span>
+        <div class="legend-item" *ngFor="let sector of sectors">
+          <div class="seat available" [style.--sector-color]="getSectorColor(sector.name)"></div>
+          <span>{{ sector.name }} – {{ sector.price }} Ft</span>
         </div>
         <div class="legend-item">
           <div class="seat blocked"></div>

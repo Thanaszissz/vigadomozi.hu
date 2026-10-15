@@ -97,6 +97,28 @@ export class SeatSelectComponent implements OnInit {
     return `${seat.key} - ${seat.price} Ft`;
   }
 
+  /** A különböző árú (szektoros) székek színjelölése; egyetlen ár esetén nincs rá szükség. */
+  get priceGroups(): Array<{ price: number; color: string }> {
+    if (!this.showtime?.seatMap.seats) return [];
+
+    const prices = new Set<number>();
+    for (const rowLabel of this.getRowsArray()) {
+      for (const seat of Object.values(this.showtime.seatMap.seats[rowLabel] || {})) {
+        if (seat.type !== 'aisle' && seat.bookable) {
+          prices.add(Number(seat.price));
+        }
+      }
+    }
+    if (prices.size < 2) return [];
+
+    const palette = ['#2f5aa6', '#c0392b', '#8e44ad', '#e67e22', '#16a085', '#d4a574'];
+    return Array.from(prices).sort((a, b) => a - b).map((price, i) => ({ price, color: palette[i % palette.length] }));
+  }
+
+  getPriceColor(seat: Seat): string | null {
+    return this.priceGroups.find(g => g.price === Number(seat.price))?.color ?? null;
+  }
+
   isAisle(seat: Seat): boolean {
     return seat.type === 'aisle';
   }

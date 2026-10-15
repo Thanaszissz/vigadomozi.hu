@@ -193,7 +193,13 @@ export class AuditoriaAdminComponent implements OnInit {
   saveSeatLayout(): void {
     if (!this.selectedAuditorium) return;
 
-    this.adminService.updateAuditoriumSeats(this.selectedAuditorium.id, this.seatLayout, this.sectors, this.sections, this.rowConfigs).subscribe({
+    // a szék kulcsát is elmentjük, így az árazás a sor jelétől függetlenül a megfelelő székhez kötődik
+    const seats = this.seatLayout.map(seat => ({
+      ...seat,
+      key: `${seat.rowLabel || this.getRowLabel(seat.row)}-${String(seat.column).padStart(2, '0')}`
+    }));
+
+    this.adminService.updateAuditoriumSeats(this.selectedAuditorium.id, seats as Seat[], this.sectors, this.sections, this.rowConfigs).subscribe({
       next: () => {
         alert('Nézőtér elrendezés sikeresen mentve!');
         this.originalSeatLayout = JSON.parse(JSON.stringify(this.seatLayout));
@@ -380,6 +386,30 @@ export class AuditoriaAdminComponent implements OnInit {
         seat.price = price;
       }
     }
+  }
+
+  /** A szektor nélküli szék az első (alapértelmezett) szektor árát kapja, mint a szerveren is. */
+  getSeatSector(seat: Seat): Sector | null {
+    return this.sectors.find(s => s.name === seat.sector) ?? this.sectors[0] ?? null;
+  }
+
+  getSeatPrice(seat: Seat): number | null {
+    return seat.price ?? this.getSeatSector(seat)?.price ?? null;
+  }
+
+  getSectorColor(sectorName?: string | null): string {
+    const palette = ['#4CAF50', '#2f5aa6', '#c0392b', '#8e44ad', '#e67e22', '#16a085'];
+    const index = this.sectors.findIndex(s => s.name === sectorName);
+    return palette[(index < 0 ? 0 : index) % palette.length];
+  }
+
+  getSeatTitle(seat: Seat): string {
+    if (seat.blocked) {
+      return `${seat.rowLabel}-${seat.column} • tiltott`;
+    }
+    const sector = this.getSeatSector(seat);
+    const price = this.getSeatPrice(seat);
+    return `${seat.rowLabel}-${seat.column}` + (sector ? ` • ${sector.name}` : '') + (price !== null ? ` • ${price} Ft` : '');
   }
 
   getSectionColor(sectionName?: string | null): string {

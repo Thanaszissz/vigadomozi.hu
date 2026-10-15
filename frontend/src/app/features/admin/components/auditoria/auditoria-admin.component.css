@@ -595,6 +595,7 @@ h1 {
   height: 40px;
   border-radius: 8px 8px 2px 2px;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   cursor: pointer;
@@ -624,6 +625,14 @@ h1 {
 .seat.available {
   background: #4CAF50;
   color: #e8d5b7;
+  border-bottom: 5px solid var(--sector-color, #4CAF50);
+}
+
+.seat-price {
+  font-size: 8px;
+  line-height: 1;
+  opacity: 0.85;
+  pointer-events: none;
 }
 
 .seat.available:hover {

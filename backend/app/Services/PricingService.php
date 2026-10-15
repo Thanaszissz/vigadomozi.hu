@@ -46,16 +46,17 @@ class PricingService
                         $key = $rowLabel . '-' . str_pad((string) $seat['column'], 2, '0', STR_PAD_LEFT);
                     }
                     if ($key === $seatKey) {
-                        if (isset($seat['price'])) {
-                            return $seat['price'];
-                        }
-
+                        // A szektor ára az irányadó (így a szektor árának módosítása a már kijelölt székekre is érvényes)
                         if (isset($seat['sector']) && isset($layout['sectors']) && is_array($layout['sectors'])) {
                             foreach ($layout['sectors'] as $sector) {
                                 if (($sector['name'] ?? null) === $seat['sector'] && isset($sector['price'])) {
-                                    return $sector['price'];
+                                    return (int) $sector['price'];
                                 }
                             }
+                        }
+
+                        if (isset($seat['price'])) {
+                            return (int) $seat['price'];
                         }
                         break;
                     }
@@ -83,6 +84,12 @@ class PricingService
                     }
                     break;
                 }
+            }
+
+            // Szektor nélküli szék: az első (alapértelmezett) szektor ára
+            $defaultSectorPrice = $layout['sectors'][0]['price'] ?? null;
+            if (is_numeric($defaultSectorPrice)) {
+                return (int) $defaultSectorPrice;
             }
         }
 
