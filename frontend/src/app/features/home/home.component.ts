@@ -13,6 +13,7 @@ interface ShowtimeWithMovie {
     id: number;
     title: string;
     description: string;
+    film_info?: string | null;
     poster_path: string;
   };
 }

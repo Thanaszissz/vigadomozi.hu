@@ -461,6 +461,13 @@
   color: #3d2817;
 }
 
+.movie-type {
+  font-size: 13px;
+  font-style: italic;
+  margin: 0;
+  color: #7a5c4a;
+}
+
 .movie-desc {
   font-size: 13px;
   line-height: 1.4;

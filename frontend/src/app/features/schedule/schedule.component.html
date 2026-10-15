@@ -25,6 +25,7 @@
           <img *ngIf="showtime.movie.poster_path" [src]="showtime.movie.poster_path" [alt]="showtime.movie.title" />
           <div class="info">
             <div class="title">{{ showtime.movie.title }}</div>
+            <div class="film-info" *ngIf="showtime.movie.film_info">{{ showtime.movie.film_info }}</div>
             <div class="time">{{ showtime.starts_at | date:'HH:mm' }}</div>
           </div>
         </a>
