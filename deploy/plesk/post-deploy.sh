@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
 # Plesk Git "post deployment action": a backend frissítése minden telepítés (git pull + deploy) után.
 #
-# A Plesk-ben a repository beállításainál (Enable post deployment actions) ezt a sort kell megadni:
-#   for d in "$PWD" /httpdocs "$HOME/httpdocs" /var/www/vhosts/vigadojegy.hu/httpdocs; do [ -f "$d/deploy/plesk/post-deploy.sh" ] && exec bash "$d/deploy/plesk/post-deploy.sh"; done
+# A Plesk-ben a repository beállításainál (Enable post deployment actions) ezt a sort kell megadni
+# (a Deployment directory: /vigadojegy-app, a webgyökér /httpdocs marad, az API aldomain gyökere /vigadojegy-app/backend/public):
+#   for d in "$PWD" /vigadojegy-app "$HOME/vigadojegy-app" /var/www/vhosts/vigadojegy.hu/vigadojegy-app; do [ -f "$d/deploy/plesk/post-deploy.sh" ] && exec bash "$d/deploy/plesk/post-deploy.sh"; done
 #
-# Elvégzi: composer install (zárolt verziókkal), adatbázis-migrációk, Laravel gyorsítótárak újraépítése.
-# A frontend (frontend/dist/cinema-booking) előre buildelve van a repóban, ahhoz itt nincs teendő.
+# Elvégzi: composer install (zárolt verziókkal), adatbázis-migrációk, Laravel gyorsítótárak újraépítése,
+# a buildelt frontend (frontend/dist/cinema-booking) szinkronizálása a webgyökérbe (sync-frontend.php).
+# A frontend előre buildelve van a repóban (ng build), a dist mappát a módosítással együtt kell commitolni.
 # A backend/.env nincs a repóban: a szerveren egyszer kell létrehozni (lásd: deploy/plesk/env.production.example).
 set -euo pipefail
 
@@ -63,10 +65,21 @@ DB_HOST=127.0.0.1 "$php_bin" artisan migrate --force
 
 echo "== gyorsítótárak törlése"
 # A jailben a cache-ek jail-relatív (/httpdocs/...) útvonalakat tartalmaznának, amik a webszerveren hibásak,
-# ezért itt csak törlünk (a storage:link-et is egyszer, a Laravel Toolkit Artisan felületén kell futtatni).
+# ezért itt csak törlünk.
 "$php_bin" artisan config:clear
 "$php_bin" artisan route:clear
 "$php_bin" artisan event:clear
 "$php_bin" artisan view:clear
+
+# Feltöltött fájlok: relatív symlink, mert a jailen kívül az abszolút útvonal más
+"$php_bin" -r '
+if (!file_exists("public/storage") && !is_link("public/storage")) { symlink("../storage/app/public", "public/storage"); }
+'
+
+# A repó a webgyökéren kívül van (pl. /vigadojegy-app), az előre buildelt frontend innen kerül a webgyökérbe (/httpdocs)
+if [ -d "$root/../httpdocs" ] && [ "$(cd "$root/../httpdocs" && pwd)" != "$root" ]; then
+    echo "== frontend szinkronizálása a webgyökérbe"
+    "$php_bin" "$here/sync-frontend.php" "$root/frontend/dist/cinema-booking" "$root/../httpdocs" "$backend/storage/app/frontend-manifest.json"
+fi
 
 printf 'KÉSZ: %(%Y-%m-%d %H:%M:%S)T\n' -1
