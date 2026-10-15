@@ -139,6 +139,13 @@ h1 {
   color: #e8d5b7;
 }
 
+.film-info {
+  color: #e8d5b7;
+  font-size: 13px;
+  font-style: italic;
+  margin: 0 0 8px;
+}
+
 .description {
   color: #d4a574;
   font-size: 14px;

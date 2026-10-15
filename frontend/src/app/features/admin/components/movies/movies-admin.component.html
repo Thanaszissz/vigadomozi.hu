@@ -19,6 +19,7 @@
       </div>
       <div class="movie-info">
         <h3>{{ movie.title }}</h3>
+        <p class="film-info" *ngIf="movie.film_info">{{ movie.film_info }}</p>
         <p class="description">{{ movie.description }}</p>
         <div class="movie-meta">
           <span>⏱️ {{ movie.duration_minutes || movie.duration_min }} perc</span>
@@ -86,6 +87,11 @@
         <div class="form-group">
           <label>Film címe</label>
           <input type="text" [(ngModel)]="editingMovie.title" name="title" class="form-input" required>
+        </div>
+
+        <div class="form-group">
+          <label>Film fajtája / adatai</label>
+          <input type="text" [(ngModel)]="editingMovie.film_info" name="film_info" class="form-input" maxlength="255" placeholder="pl. amerikai kalandfilm, 101 perc, 2026">
         </div>
 
         <div class="form-group">

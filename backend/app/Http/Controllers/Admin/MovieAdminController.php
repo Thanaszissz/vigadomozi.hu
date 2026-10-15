@@ -28,6 +28,7 @@ class MovieAdminController extends Controller
             'trailer_youtube_url' => ['nullable', 'url'],
             'duration_min' => ['nullable', 'integer'],
             'rating' => ['nullable', 'in:general,6,12,16,18'],
+            'film_info' => ['nullable', 'string', 'max:255'],
         ]);
 
         if ($request->hasFile('poster_file')) {
@@ -51,6 +52,7 @@ class MovieAdminController extends Controller
             'trailer_youtube_url' => ['sometimes', 'url'],
             'duration_min' => ['sometimes', 'integer'],
             'rating' => ['sometimes', 'in:general,6,12,16,18'],
+            'film_info' => ['nullable', 'string', 'max:255'],
         ]);
 
         if ($request->hasFile('poster_file')) {
@@ -87,6 +89,7 @@ class MovieAdminController extends Controller
             'trailer_youtube_url' => ['nullable', 'url'],
             'duration_min' => ['nullable', 'integer'],
             'rating' => ['nullable', 'in:general,6,12,16,18'],
+            'film_info' => ['nullable', 'string', 'max:255'],
         ]);
 
         if ($request->hasFile('poster_file')) {

@@ -64,7 +64,7 @@ export class MoviesAdminComponent implements OnInit {
       duration_minutes: 0,
       duration_min: 0,
       rating: 'general',
-      poster_path: '',
+      film_info: '',
       trailer_youtube_url: ''
     } as Movie;
     this.isCreating = true;
@@ -102,6 +102,7 @@ export class MoviesAdminComponent implements OnInit {
     formData.append('description', this.editingMovie.description || '');
     formData.append('duration_min', String(this.editingMovie.duration_min || this.editingMovie.duration_minutes || 0));
     formData.append('rating', this.editingMovie.rating || 'general');
+    formData.append('film_info', this.editingMovie.film_info || '');
 
     if (this.selectedFile) {
       formData.append('poster_file', this.selectedFile);

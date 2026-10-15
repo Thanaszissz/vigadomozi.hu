@@ -25,6 +25,7 @@ export interface Movie {
   trailer_youtube_url: string;
   duration_min: number;
   rating: string;
+  film_info?: string | null;
   created_at: string;
   updated_at: string;
 }

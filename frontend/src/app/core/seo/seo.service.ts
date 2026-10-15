@@ -75,7 +75,7 @@ export class SeoService {
   /** Filmoldal: egyedi cím, leírás, plakát (Facebook-megosztáshoz is) és a Movie / ScreeningEvent adatok. */
   setMovie(movie: Movie, showtimes: Showtime[] = []): void {
     const rating = this.ratingLabel(movie.rating);
-    const parts = [this.sentence(movie.description), movie.duration_min ? `Játékidő: ${movie.duration_min} perc.` : '', rating ? `Korhatár: ${rating}.` : ''];
+    const parts = [movie.film_info ? `${movie.film_info.replace(/[.\s]+$/, '')}.` : '', this.sentence(movie.description), movie.duration_min ? `Játékidő: ${movie.duration_min} perc.` : '', rating ? `Korhatár: ${rating}.` : ''];
     const description = parts.filter(Boolean).join(' ');
     const path = `/movies/${movie.id}`;
 

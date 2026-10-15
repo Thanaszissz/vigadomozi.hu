@@ -17,6 +17,7 @@ class Movie extends Model
         'trailer_youtube_url',
         'duration_min',
         'rating',
+        'film_info',
     ];
 
     protected $appends = ['poster_url', 'duration_minutes'];

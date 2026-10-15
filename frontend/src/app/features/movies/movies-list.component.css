@@ -199,6 +199,13 @@
   margin-bottom: 6px;
 }
 
+.film-info {
+  font-size: 12px;
+  font-style: italic;
+  color: #7a5c4a;
+  margin-bottom: 6px;
+}
+
 .description {
   font-size: 13px;
   color: #5c3d2e;

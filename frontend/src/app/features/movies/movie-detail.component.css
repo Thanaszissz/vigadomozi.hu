@@ -146,6 +146,13 @@
   color: #5c3d2e;
 }
 
+.film-info {
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-style: italic;
+  color: #7a5c4a;
+}
+
 .description {
   line-height: 1.6;
   color: #2c1810;
