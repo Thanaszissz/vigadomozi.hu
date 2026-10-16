@@ -10,11 +10,13 @@ use App\Http\Controllers\Api\WebhookController;
 use App\Http\Controllers\Api\SimplePayController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\TheaterShowController;
+use App\Http\Controllers\Api\SiteStatusController;
 
 // Auth routes (public)
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:30,1');
 
 // Public routes
+Route::get('/site-status', [SiteStatusController::class, 'show'])->middleware('throttle:120,1');
 Route::get('/movies', [MovieController::class, 'index']);
 Route::get('/movies/{movie}', [MovieController::class, 'show']);
 

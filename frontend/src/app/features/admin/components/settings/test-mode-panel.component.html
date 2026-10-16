@@ -1,0 +1,22 @@
+<div class="card">
+  <h2>🚧 Teszt üzem</h2>
+  <p class="muted">
+    Bekapcsolva a nyilvános oldalak tetején piros sáv jelenik meg:
+    <b>„Teszt üzem - Ne vásároljon, nem éles az oldal még!"</b>
+    A jegyvásárlást ez nem tiltja le, csak figyelmeztet.
+  </p>
+
+  <div *ngIf="loading" class="muted">Betöltés...</div>
+  <div *ngIf="error" class="alert">{{ error }}</div>
+  <div *ngIf="notice" class="ok">✅ {{ notice }}</div>
+
+  <label class="switch" *ngIf="!loading">
+    <input type="checkbox" [(ngModel)]="testMode" (change)="toggle()" [disabled]="saving">
+    <span>Teszt üzem jelzés megjelenítése az oldal tetején</span>
+  </label>
+
+  <div class="preview" *ngIf="testMode">
+    <div class="preview-label">Így fog kinézni:</div>
+    <div class="preview-bar">⚠️ Teszt üzem - Ne vásároljon, nem éles az oldal még!</div>
+  </div>
+</div>

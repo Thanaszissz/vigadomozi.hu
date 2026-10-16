@@ -95,6 +95,11 @@ export class ApiService {
   constructor(private http: HttpClient) {}
 
   // Movies
+  // Public API methods
+  getSiteStatus(): Observable<{ test_mode: boolean }> {
+    return this.http.get<{ test_mode: boolean }>(`${API_URL}/site-status`);
+  }
+
   getMovies(): Observable<Movie[]> {
     return this.http.get<Movie[]>(`${API_URL}/movies`);
   }

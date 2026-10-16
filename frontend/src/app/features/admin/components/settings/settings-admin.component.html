@@ -6,6 +6,9 @@
 
   <div class="layout">
     <nav class="menu">
+      <button type="button" class="menu-item" [class.active]="section === 'testmode'" (click)="section = 'testmode'">
+        🚧 Teszt üzem
+      </button>
       <button type="button" class="menu-item" [class.active]="section === 'numbering'" (click)="section = 'numbering'">
         🎟️ Jegyszámozás
       </button>
@@ -140,6 +143,10 @@
           </button>
         </section>
       </ng-container>
+    </main>
+
+    <main class="content" *ngIf="section === 'testmode'">
+      <app-test-mode-panel></app-test-mode-panel>
     </main>
 
     <main class="content" *ngIf="section === 'services'">

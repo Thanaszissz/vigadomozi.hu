@@ -696,6 +696,15 @@ export class AdminService {
     return this.http.post<{ status: string; submission: NavSubmissionItem; state: NavState }>(`${this.apiUrl}/settings/nav/send/apply`, payload);
   }
 
+  // Beállítások: teszt üzem jelzés
+  getTestMode(): Observable<{ test_mode: boolean }> {
+    return this.http.get<{ test_mode: boolean }>(`${this.apiUrl}/settings/test-mode`);
+  }
+
+  saveTestMode(testMode: boolean): Observable<{ test_mode: boolean }> {
+    return this.http.put<{ test_mode: boolean }>(`${this.apiUrl}/settings/test-mode`, { test_mode: testMode });
+  }
+
   // Beállítások: OTP SimplePay
   getSimplePay(): Observable<SimplePaySettings> {
     return this.http.get<SimplePaySettings>(`${this.apiUrl}/settings/simplepay`);

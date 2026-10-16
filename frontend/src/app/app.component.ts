@@ -3,15 +3,17 @@ import { CommonModule } from '@angular/common';
 import { NavigationEnd, Router, RouterOutlet, RouterLink } from '@angular/router';
 import { SiteHeaderComponent } from './shared/site-header.component';
 import { SiteFooterComponent } from './shared/site-footer.component';
+import { TestModeBannerComponent } from './shared/test-mode-banner.component';
 import { SeoService } from './core/seo/seo.service';
 import { seoForPath } from './core/seo/seo-routes';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, SiteHeaderComponent, SiteFooterComponent],
+  imports: [CommonModule, RouterOutlet, RouterLink, SiteHeaderComponent, SiteFooterComponent, TestModeBannerComponent],
   template: `
     <div class="app-container">
+      <app-test-mode-banner *ngIf="showHeader"></app-test-mode-banner>
       <app-site-header *ngIf="showHeader"></app-site-header>
       <main>
         <router-outlet></router-outlet>

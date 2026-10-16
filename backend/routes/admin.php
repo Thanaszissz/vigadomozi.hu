@@ -21,6 +21,7 @@ use App\Http\Controllers\Admin\CustomerAdminController;
 use App\Http\Controllers\Admin\SzamlazzSettingsController;
 use App\Http\Controllers\Admin\InvoiceController;
 use App\Http\Controllers\Admin\ExtraServiceController;
+use App\Http\Controllers\Admin\TestModeController;
 
 // A jogosultságokat a szerepkörök adják (App\Support\Roles); minden csoport a megfelelő jogot követeli meg.
 
@@ -98,6 +99,10 @@ Route::middleware('permission:tickets.void')->group(function () {
 
 // Beállítások: jegyszámozás (csak adminisztrátor; a módosítás jelszóval és kétlépcsős megerősítéssel védett)
 Route::middleware('permission:settings.manage')->group(function () {
+    // Teszt üzem jelzés a nyilvános oldal tetején
+    Route::get('settings/test-mode', [TestModeController::class, 'show']);
+    Route::put('settings/test-mode', [TestModeController::class, 'update']);
+
     Route::get('settings/ticket-numbering', [SettingsController::class, 'ticketNumbering']);
     Route::post('settings/ticket-numbering/prepare', [SettingsController::class, 'prepareTicketNumbering'])->middleware('throttle:10,1');
     Route::post('settings/ticket-numbering/apply', [SettingsController::class, 'applyTicketNumbering'])->middleware('throttle:10,1');
