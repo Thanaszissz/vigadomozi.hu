@@ -56,7 +56,7 @@ class TicketService
                     'ticket_number' => $this->numbering->format($prefix, $seq),
                     'reservation_id' => $reservation->id,
                     'showtime_id' => $showtime?->id,
-                    'movie_title' => $showtime?->movie?->title ?? 'Ismeretlen film',
+                    'movie_title' => $showtime?->program_title ?? 'Ismeretlen film',
                     'starts_at' => $showtime?->starts_at ?? $soldAt,
                     'auditorium_name' => $showtime?->auditorium?->name,
                     'seat_key' => $item->seat_key,
@@ -183,7 +183,7 @@ class TicketService
             'channel' => $channel,
             'reservation_id' => $reservation->id,
             'showtime_id' => $showtime?->id,
-            'movie_title' => $showtime?->movie?->title,
+            'movie_title' => $showtime?->program_title,
             'starts_at' => $showtime?->starts_at,
             'ticket_count' => $tickets->count(),
             'total_amount' => $total,
@@ -204,7 +204,7 @@ class TicketService
 
         if ($seller) {
             $method = ['cash' => 'készpénz', 'card' => 'bankkártya'][$paymentMethod] ?? $paymentMethod;
-            $title = $showtime?->movie?->title ?? 'Ismeretlen film';
+            $title = $showtime?->program_title ?? 'Ismeretlen film';
             $when = $showtime?->starts_at?->copy()->timezone('Europe/Budapest')->format('Y.m.d. H:i');
 
             ActivityLogger::log(

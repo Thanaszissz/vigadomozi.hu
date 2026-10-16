@@ -461,6 +461,13 @@
   color: #3d2817;
 }
 
+.movie-kind {
+  font-size: 12px;
+  font-weight: 700;
+  margin: 0;
+  color: #8b4513;
+}
+
 .movie-type {
   font-size: 13px;
   font-style: italic;

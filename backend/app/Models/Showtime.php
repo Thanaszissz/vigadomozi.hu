@@ -11,6 +11,7 @@ class Showtime extends Model
 
     protected $fillable = [
         'movie_id',
+        'theater_show_id',
         'auditorium_id',
         'starts_at',
         'sales_open_at',
@@ -26,9 +27,56 @@ class Showtime extends Model
         'pricing_override_json' => 'array',
     ];
 
+    // Az előadás-időpontoknál a program (előadás) mindig betöltődik, hogy a JSON-ban a film helyén megjelenhessen
+    protected $with = ['theaterShow'];
+
     public function movie()
     {
         return $this->belongsTo(Movie::class);
+    }
+
+    public function theaterShow()
+    {
+        return $this->belongsTo(TheaterShow::class, 'theater_show_id');
+    }
+
+    /** A film vagy az előadás címe (jegyekhez, e-mailekhez, naplóhoz). */
+    public function getProgramTitleAttribute(): ?string
+    {
+        return $this->movie?->title ?? $this->theaterShow?->title;
+    }
+
+    /**
+     * Előadás-időpontnál a `movie` kulcs az előadás film-szerű adataival töltődik ki (cím, plakát, jelvények...),
+     * így a foglalási, pénztári és admin felületek külön módosítás nélkül is a helyes címet mutatják.
+     */
+    public function toArray()
+    {
+        $array = parent::toArray();
+        $array['is_theater'] = $this->theater_show_id !== null;
+
+        if ($this->theater_show_id !== null && array_key_exists('movie', $array) && $array['movie'] === null && $this->theaterShow) {
+            $show = $this->theaterShow;
+            $array['movie'] = [
+                'id' => $show->id,
+                'title' => $show->title,
+                'description' => $show->description,
+                'poster_path' => $show->poster_path,
+                'poster_url' => $show->poster_path,
+                'trailer_youtube_url' => $show->trailer_youtube_url,
+                'duration_min' => $show->duration_min,
+                'duration_minutes' => $show->duration_min,
+                'rating' => null,
+                'film_info' => $show->show_info,
+                'badges' => $show->badges,
+                'category' => $show->category,
+                'performer' => $show->performer,
+                'venue' => $show->venue,
+                'is_theater' => true,
+            ];
+        }
+
+        return $array;
     }
 
     public function auditorium()

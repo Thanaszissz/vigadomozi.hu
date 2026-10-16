@@ -168,7 +168,7 @@ class ReservationAdminController extends Controller
                 'Foglalások exportálása (CSV): előadás #' . $showtime->id,
                 $showtime,
                 ['rows' => $reservations->count()],
-                subjectLabel: $showtime->movie?->title
+                subjectLabel: $showtime->program_title
             );
 
             return $this->exportCSV($reservations, $showtime);

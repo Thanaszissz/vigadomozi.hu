@@ -1,0 +1,70 @@
+<div class="page">
+  <section class="content">
+    <div *ngIf="loading" class="state loading">
+      <p>Betöltés...</p>
+    </div>
+
+    <div *ngIf="error" class="state error">
+      <p>{{ error }}</p>
+    </div>
+
+    <div *ngIf="show" class="movie-detail">
+      <div class="movie-header">
+        <img
+          *ngIf="show.poster_path; else noPoster"
+          [src]="show.poster_path"
+          [alt]="show.title"
+          class="poster-image"
+        />
+        <ng-template #noPoster>
+          <div class="no-poster">Nincs plakát</div>
+        </ng-template>
+
+        <div class="info-section">
+          <p class="program-kind" *ngIf="show.category">🎭 {{ categoryLabel(show.category) }}</p>
+          <h1>{{ show.title }}</h1>
+          <app-movie-badges kind="show" [badges]="show.badges"></app-movie-badges>
+          <p *ngIf="show.show_info" class="film-info">{{ show.show_info }}</p>
+          <div class="meta-info">
+            <span *ngIf="show.performer">🎤 {{ show.performer }}</span>
+            <span *ngIf="show.venue">📍 {{ show.venue }}</span>
+            <span *ngIf="show.duration_min" class="duration">⏱️ {{ show.duration_min }} perc</span>
+          </div>
+          <p class="description">{{ show.description }}</p>
+
+          <div *ngIf="trailerEmbedUrl" class="trailer">
+            <h3>Előzetes</h3>
+            <iframe
+              [src]="trailerEmbedUrl"
+              width="100%"
+              height="360"
+              frameborder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowfullscreen>
+            </iframe>
+          </div>
+        </div>
+      </div>
+
+      <div class="showtimes-section">
+        <h2>Időpontok</h2>
+
+        <div *ngIf="showtimes.length === 0" class="no-showtimes">
+          <p>Jelenleg nincs meghirdetett időpont ehhez az előadáshoz.</p>
+        </div>
+
+        <div *ngIf="showtimes.length > 0" class="showtimes-grid">
+          <div *ngFor="let showtime of showtimes" class="showtime-card">
+            <div class="showtime-date">{{ showtime.starts_at | date: 'yyyy.MM.dd.' }}</div>
+            <div class="showtime-time">{{ showtime.starts_at | date: 'HH:mm' }}</div>
+            <div class="showtime-auditorium">📍 {{ show.venue || showtime.auditorium.name }}</div>
+            <a [routerLink]="'/showtimes/' + showtime.id + '/select-seats'" class="book-btn">
+              <span>🎟️ Jegyek foglalása</span>
+              <span class="arrow">→</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>

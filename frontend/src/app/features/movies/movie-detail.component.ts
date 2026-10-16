@@ -175,7 +175,8 @@ export class MovieDetailComponent implements OnInit, OnDestroy {
 
         for (const st of upcoming) {
           const movie = st.movie;
-          if (!movie || seen.has(movie.id) || !movie.poster_path) continue;
+          // az ajánló csak filmeket tartalmaz (az előadásoknak saját oldaluk van)
+          if (!movie || st.is_theater || seen.has(movie.id) || !movie.poster_path) continue;
           seen.add(movie.id);
           items.push({ id: movie.id, title: movie.title, image: movie.poster_path });
           if (items.length >= 15) break;

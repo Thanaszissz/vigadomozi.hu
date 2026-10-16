@@ -88,7 +88,7 @@ class AuditObserver
 
     private function showtimeLabel(Showtime $showtime): string
     {
-        $title = $showtime->movie?->title ?? 'Előadás #' . $showtime->getKey();
+        $title = $showtime->program_title ?? 'Előadás #' . $showtime->getKey();
         $when = $showtime->starts_at?->copy()->timezone('Europe/Budapest')->format('Y.m.d. H:i');
 
         return $when ? "{$title} – {$when}" : $title;

@@ -3,21 +3,33 @@ import { RouterLink } from "@angular/router";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { ApiService } from "../../core/api/api.service";
-import { MovieBadgesComponent } from "../../shared/movie-badges.component";
+import { MovieBadgesComponent, showCategoryLabel } from "../../shared/movie-badges.component";
 import { youtubeId } from "../../core/util/html";
 import { DomSanitizer, SafeResourceUrl } from "@angular/platform-browser";
 
 interface ShowtimeWithMovie {
   id: number;
   starts_at: string;
+  is_theater?: boolean;
   movie: {
     id: number;
     title: string;
     description: string;
     film_info?: string | null;
     badges?: string[] | null;
+    category?: string | null;
+    is_theater?: boolean;
     poster_path: string;
   };
+}
+
+interface SliderItem {
+  id: number;
+  title: string;
+  image: string;
+  startsAt?: string;
+  link: string;
+  theater: boolean;
 }
 
 interface WeekDay {
@@ -37,9 +49,9 @@ interface WeekDay {
   styleUrls: ["./home.component.css"]
 })
 export class HomeComponent implements OnInit, OnDestroy {
-  posters: Array<{ id: number; title: string; image: string; startsAt?: string }> = [];
+  posters: SliderItem[] = [];
 
-  slideGroups: Array<Array<{ id: number; title: string; image: string; startsAt?: string }>> = [];
+  slideGroups: SliderItem[][] = [];
   featuredMovies: Array<{ showtime: ShowtimeWithMovie; movieId: number }> = [];
   weekDays: WeekDay[] = [];
   allShowtimes: ShowtimeWithMovie[] = [];
@@ -52,6 +64,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   trailerPoster = "";
   trailerRating = "";
   trailerMovieId: number | null = null;
+  trailerLink = '';
   isTrailerOpen = false;
 
   constructor(
@@ -135,22 +148,26 @@ export class HomeComponent implements OnInit, OnDestroy {
           movieId: st.movie.id
         }));
 
-        // Slider: legközelebbi előadások egyedi filmjei időrendben
+        // Slider: legközelebbi előadások egyedi filmjei és előadásai időrendben
         const upcomingSorted = showtimes
           .filter(st => new Date(st.starts_at) > now)
           .sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime());
 
-        const seen = new Set<number>();
-        const sliderItems: Array<{ id: number; title: string; image: string; startsAt?: string }> = [];
+        const seen = new Set<string>();
+        const sliderItems: SliderItem[] = [];
         for (const st of upcomingSorted) {
-          if (seen.has(st.movie.id)) continue;
+          const theater = !!st.is_theater;
+          const key = `${theater ? 't' : 'm'}-${st.movie.id}`;
+          if (seen.has(key)) continue;
           if (!st.movie.poster_path) continue;
-          seen.add(st.movie.id);
+          seen.add(key);
           sliderItems.push({
             id: st.movie.id,
             title: st.movie.title,
             image: st.movie.poster_path,
-            startsAt: st.starts_at
+            startsAt: st.starts_at,
+            link: this.programLink(st),
+            theater
           });
           if (sliderItems.length >= 16) break;
         }
@@ -179,11 +196,21 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.selectedDayShowtimes = day.showtimes;
   }
 
-  openTrailer(poster: { id: number; title: string }, event: MouseEvent): void {
+  /** Film esetén a film oldalára, előadás / program esetén a program oldalára mutat. */
+  programLink(showtime: ShowtimeWithMovie): string {
+    return (showtime.is_theater ? '/programs/' : '/movies/') + showtime.movie.id;
+  }
+
+  programKind(showtime: ShowtimeWithMovie): string {
+    return showtime.is_theater ? (showCategoryLabel(showtime.movie.category) || 'Előadás') : '';
+  }
+
+  openTrailer(poster: SliderItem, event: MouseEvent): void {
     event.preventDefault();
     event.stopPropagation();
 
-    this.apiService.getMovieById(poster.id).subscribe({
+    const request = poster.theater ? this.apiService.getTheaterShowById(poster.id) : this.apiService.getMovieById(poster.id);
+    request.subscribe({
       next: (movie) => {
         if (!movie.trailer_youtube_url) {
           return;
@@ -192,6 +219,7 @@ export class HomeComponent implements OnInit, OnDestroy {
         this.trailerPoster = movie.poster_path || "";
         this.trailerRating = movie.rating || "";
         this.trailerMovieId = movie.id;
+        this.trailerLink = (poster.theater ? '/programs/' : '/movies/') + movie.id;
         this.trailerUrl = this.getYouTubeEmbedUrl(movie.trailer_youtube_url);
         this.isTrailerOpen = true;
       },

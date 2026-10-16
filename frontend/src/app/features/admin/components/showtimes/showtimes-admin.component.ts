@@ -14,6 +14,8 @@ import { AdminService } from '../../../../services/admin.service';
 export class ShowtimesAdminComponent implements OnInit {
   showtimes: any[] = [];
   movies: any[] = [];
+  private movieList: any[] = [];
+  private theaterList: any[] = [];
   auditoria: any[] = [];
   loading = true;
   error = '';
@@ -44,12 +46,28 @@ export class ShowtimesAdminComponent implements OnInit {
   loadMovies(): void {
     this.adminService.getMovies().subscribe({
       next: (movies) => {
-        this.movies = movies;
+        this.movieList = movies.map(m => ({ ...m, kind: 'movie' }));
+        this.rebuildPrograms();
       },
       error: (err) => {
         console.error('Error loading movies:', err);
       }
     });
+
+    this.adminService.getTheaterShows().subscribe({
+      next: (shows) => {
+        this.theaterList = shows.map(s => ({ ...s, kind: 'theater' }));
+        this.rebuildPrograms();
+      },
+      error: (err) => {
+        console.error('Error loading theater shows:', err);
+      }
+    });
+  }
+
+  /** A film és az előadás / program egy közös listában választható az időponthoz. */
+  private rebuildPrograms(): void {
+    this.movies = [...this.movieList, ...this.theaterList];
   }
 
   loadAuditoria(): void {
@@ -96,6 +114,7 @@ export class ShowtimesAdminComponent implements OnInit {
   createNewShowtime(): void {
     this.editingShowtime = {
       movie_id: null,
+      theater_show_id: null,
       auditorium_id: null,
       starts_at: '',
       status: 'active'
@@ -120,7 +139,8 @@ export class ShowtimesAdminComponent implements OnInit {
     const startsAt = this.combineDateAndTime(this.dateString, this.timeString);
 
     const showtimeData = {
-      movie_id: this.editingShowtime.movie_id,
+      movie_id: this.editingShowtime.movie_id ?? null,
+      theater_show_id: this.editingShowtime.theater_show_id ?? null,
       auditorium_id: this.editingShowtime.auditorium_id,
       starts_at: startsAt,
       status: this.editingShowtime.status || 'active'
@@ -285,15 +305,22 @@ export class ShowtimesAdminComponent implements OnInit {
   }
 
   selectMovie(movie: any): void {
-    this.editingShowtime.movie_id = movie.id;
+    if (movie.kind === 'theater') {
+      this.editingShowtime.theater_show_id = movie.id;
+      this.editingShowtime.movie_id = null;
+    } else {
+      this.editingShowtime.movie_id = movie.id;
+      this.editingShowtime.theater_show_id = null;
+    }
     this.movieSearchTerm = movie.title;
     this.showMovieDropdown = false;
   }
 
   getSelectedMovieTitle(): string {
-    if (!this.editingShowtime.movie_id) return '';
-    const movie = this.movies.find(m => m.id === this.editingShowtime.movie_id);
-    return movie ? movie.title : '';
+    const selected = this.editingShowtime.theater_show_id
+      ? this.movies.find(m => m.kind === 'theater' && m.id === this.editingShowtime.theater_show_id)
+      : this.movies.find(m => m.kind === 'movie' && m.id === this.editingShowtime.movie_id);
+    return selected ? selected.title : '';
   }
 
   formatDateForInput(date: Date): string {

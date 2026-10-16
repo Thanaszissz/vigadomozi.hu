@@ -27,7 +27,11 @@ class ShowtimeController extends Controller
             $query->where('movie_id', $request->movie_id);
         }
 
-        return response()->json($query->get(), 200)
+        if ($request->has('theater_show_id')) {
+            $query->where('theater_show_id', $request->theater_show_id);
+        }
+
+        return response()->json($query->orderBy('starts_at')->get(), 200)
             ->header('Cache-Control', 'public, max-age=30');
     }
 

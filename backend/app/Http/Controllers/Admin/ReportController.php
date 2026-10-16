@@ -58,7 +58,7 @@ class ReportController extends Controller
             $showtime = $showtimeReservations->first()->showtime;
             $summary['by_showtime'][] = [
                 'showtime_id' => $showtimeId,
-                'movie_title' => $showtime?->movie?->title ?? 'N/A',
+                'movie_title' => $showtime?->program_title ?? 'N/A',
                 'starts_at' => $showtime?->starts_at,
                 'auditorium_name' => $showtime?->auditorium?->name ?? 'N/A',
                 'reservations_count' => $showtimeReservations->count(),

@@ -1,0 +1,10 @@
+.program-kind {
+  margin: 0 0 4px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #8b4513;
+}
+
+.meta-info {
+  flex-wrap: wrap;
+}

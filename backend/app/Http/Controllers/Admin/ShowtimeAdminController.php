@@ -23,7 +23,8 @@ class ShowtimeAdminController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'movie_id' => ['required', 'exists:movies,id'],
+            'movie_id' => ['nullable', 'required_without:theater_show_id', 'exists:movies,id'],
+            'theater_show_id' => ['nullable', 'required_without:movie_id', 'exists:theater_shows,id'],
             'auditorium_id' => ['required', 'exists:auditoria,id'],
             'starts_at' => ['required', 'date'],
             'sales_open_at' => ['nullable', 'date'],
@@ -31,6 +32,11 @@ class ShowtimeAdminController extends Controller
             'pricing_override_json' => ['nullable', 'array'],
             'status' => ['sometimes', 'in:active,inactive,cancelled,completed'],
         ]);
+
+        // egy időpont vagy filmhez, vagy előadáshoz tartozik
+        if (!empty($data['theater_show_id'])) {
+            $data['movie_id'] = null;
+        }
 
         $showtime = Showtime::create($data);
 
@@ -40,7 +46,8 @@ class ShowtimeAdminController extends Controller
     public function update(Showtime $showtime, Request $request)
     {
         $data = $request->validate([
-            'movie_id' => ['sometimes', 'exists:movies,id'],
+            'movie_id' => ['sometimes', 'nullable', 'exists:movies,id'],
+            'theater_show_id' => ['sometimes', 'nullable', 'exists:theater_shows,id'],
             'auditorium_id' => ['sometimes', 'exists:auditoria,id'],
             'starts_at' => ['sometimes', 'date'],
             'sales_open_at' => ['sometimes', 'date'],
@@ -48,6 +55,12 @@ class ShowtimeAdminController extends Controller
             'pricing_override_json' => ['sometimes', 'array'],
             'status' => ['sometimes', 'in:active,inactive,cancelled,completed'],
         ]);
+
+        if (!empty($data['theater_show_id'])) {
+            $data['movie_id'] = null;
+        } elseif (!empty($data['movie_id'])) {
+            $data['theater_show_id'] = null;
+        }
 
         $showtime->update($data);
 

@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ApiService, Showtime } from '../../core/api/api.service';
-import { MovieBadgesComponent } from '../../shared/movie-badges.component';
+import { MovieBadgesComponent, showCategoryLabel } from '../../shared/movie-badges.component';
 
 interface ShowtimeGroup {
   key: string;
@@ -24,6 +24,15 @@ export class ScheduleComponent implements OnInit {
   groups: ShowtimeGroup[] = [];
 
   constructor(private apiService: ApiService) {}
+
+  /** Film esetén a film oldalára, előadás / program esetén a program oldalára mutat. */
+  programLink(showtime: Showtime): string {
+    return (showtime.is_theater ? '/programs/' : '/movies/') + showtime.movie.id;
+  }
+
+  programKind(showtime: Showtime): string {
+    return showCategoryLabel(showtime.movie.category) || 'Előadás';
+  }
 
   ngOnInit(): void {
     this.apiService.getShowtimes().subscribe({

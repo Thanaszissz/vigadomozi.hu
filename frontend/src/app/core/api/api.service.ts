@@ -27,6 +27,11 @@ export interface Movie {
   rating: string;
   film_info?: string | null;
   badges?: string[] | null;
+  is_theater?: boolean;
+  category?: string | null;
+  performer?: string | null;
+  venue?: string | null;
+  show_info?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -48,7 +53,9 @@ export interface Auditorium {
 
 export interface Showtime {
   id: number;
-  movie_id: number;
+  movie_id: number | null;
+  theater_show_id?: number | null;
+  is_theater?: boolean;
   auditorium_id: number;
   starts_at: string;
   status: string;
@@ -97,6 +104,10 @@ export class ApiService {
 
   // Movies
   // Public API methods
+  getTheaterShowById(id: number): Observable<Movie> {
+    return this.http.get<Movie>(`${API_URL}/theater-shows/${id}`);
+  }
+
   getSiteStatus(): Observable<{ test_mode: boolean; maintenance?: boolean; maintenance_message?: string | null }> {
     return this.http.get<{ test_mode: boolean; maintenance?: boolean; maintenance_message?: string | null }>(`${API_URL}/site-status`);
   }

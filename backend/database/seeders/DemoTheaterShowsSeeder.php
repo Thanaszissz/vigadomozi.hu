@@ -2,8 +2,11 @@
 
 namespace Database\Seeders;
 
+use App\Models\Auditorium;
 use App\Models\TheaterShow;
+use Carbon\Carbon;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 /**
@@ -13,9 +16,12 @@ use Illuminate\Support\Str;
  */
 class DemoTheaterShowsSeeder extends Seeder
 {
+    private const TZ = 'Europe/Budapest';
+
     public function run(): void
     {
         $created = 0;
+        $programs = [];
 
         foreach ($this->shows() as $data) {
             if (isset($data['poster_file'])) {
@@ -27,10 +33,11 @@ class DemoTheaterShowsSeeder extends Seeder
             $existing = TheaterShow::all()->first(fn (TheaterShow $s) => $this->normalize($s->title) === $wanted);
 
             if (!$existing) {
-                TheaterShow::create($data);
+                $programs[] = TheaterShow::create($data);
                 $created++;
                 continue;
             }
+            $programs[] = $existing;
 
             $fill = [];
             foreach (['category', 'performer', 'venue', 'show_info', 'description', 'duration_min', 'badges', 'poster_path'] as $column) {
@@ -43,7 +50,53 @@ class DemoTheaterShowsSeeder extends Seeder
             }
         }
 
-        $this->command?->info("{$created} új demó előadás / program.");
+        $showtimes = $this->scheduleShowtimes($programs);
+
+        $this->command?->info("{$created} új demó előadás / program, {$showtimes} új időpont.");
+    }
+
+    /** @param TheaterShow[] $programs */
+    private function scheduleShowtimes(array $programs): int
+    {
+        $auditorium = Auditorium::firstOrCreate(
+            ['name' => 'Nagyterem'],
+            ['rows' => 10, 'columns' => 12, 'total_seats' => 120]
+        );
+
+        $today = Carbon::now(self::TZ)->startOfDay();
+        $created = 0;
+
+        foreach ($programs as $i => $program) {
+            $time = $program->category === 'gyerek' ? '16:00' : '19:00';
+
+            foreach ([2 + $i, 9 + $i] as $offset) {
+                $startsAt = Carbon::parse($today->copy()->addDays($offset)->format('Y-m-d') . ' ' . $time, self::TZ)->utc();
+                $at = $startsAt->format('Y-m-d H:i:s');
+
+                $taken = DB::table('showtimes')
+                    ->where(fn ($q) => $q->where('theater_show_id', $program->id)->orWhere('auditorium_id', $auditorium->id))
+                    ->where('starts_at', $at)
+                    ->exists();
+                if ($taken) {
+                    continue;
+                }
+
+                DB::table('showtimes')->insert([
+                    'movie_id' => null,
+                    'theater_show_id' => $program->id,
+                    'auditorium_id' => $auditorium->id,
+                    'starts_at' => $at,
+                    'sales_open_at' => $startsAt->copy()->subDays(10)->startOfDay()->format('Y-m-d H:i:s'),
+                    'sales_close_at' => $startsAt->copy()->subMinutes(30)->format('Y-m-d H:i:s'),
+                    'status' => 'active',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+                $created++;
+            }
+        }
+
+        return $created;
     }
 
     private function normalize(string $title): string

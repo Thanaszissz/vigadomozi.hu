@@ -3,7 +3,7 @@
     <div class="slider-window">
       <div class="slides" [style.transform]="'translateX(' + (-activeSlide * 100) + '%)'"><!-- slider -->
         <div class="slide" *ngFor="let slide of slideGroups">
-          <a *ngFor="let poster of slide" [routerLink]="'/movies/' + poster.id" class="poster-link">
+          <a *ngFor="let poster of slide" [routerLink]="poster.link" class="poster-link">
             <img [src]="poster.image" [alt]="poster.title" />
             <div class="poster-showtime" *ngIf="poster.startsAt">
               {{ formatShowtime(poster.startsAt) }}
@@ -38,7 +38,7 @@
            [class.selected]="day.isSelected"
            [class.all-tab]="day.isAll"
            (click)="!day.isAll ? selectDay(day) : null"
-           [routerLink]="day.isAll ? '/movies' : null">
+           [routerLink]="day.isAll ? '/schedule' : null">
         <div class="tab-date">{{ day.label }}</div>
         <div class="tab-day">{{ day.sub }}</div>
         <div class="tab-info" *ngIf="!day.isAll && day.showtimes.length > 0">
@@ -52,11 +52,12 @@
 
     <div class="tab-content" *ngIf="selectedDayShowtimes.length > 0">
       <div class="showtime-card" *ngFor="let showtime of selectedDayShowtimes">
-        <a [routerLink]="'/movies/' + showtime.movie.id" class="card-link">
+        <a [routerLink]="programLink(showtime)" class="card-link">
           <img [src]="showtime.movie.poster_path" [alt]="showtime.movie.title" class="poster" />
           <div class="card-info">
             <h3 class="movie-title">{{ showtime.movie.title }}</h3>
-            <app-movie-badges [badges]="showtime.movie.badges"></app-movie-badges>
+            <p class="movie-kind" *ngIf="showtime.is_theater">🎭 {{ programKind(showtime) }}</p>
+            <app-movie-badges [badges]="showtime.movie.badges" [kind]="showtime.is_theater ? 'show' : 'movie'"></app-movie-badges>
             <p class="movie-type" *ngIf="showtime.movie.film_info">{{ showtime.movie.film_info }}</p>
             <p class="movie-desc">{{ showtime.movie.description }}</p>
             <div class="time-row">
@@ -95,7 +96,7 @@
             <div class="trailer-rating" *ngIf="trailerRating">{{ trailerRating }}</div>
           </div>
         </div>
-        <a class="trailer-ticket" [routerLink]="'/movies/' + trailerMovieId">Jegyfoglalás</a>
+        <a class="trailer-ticket" [routerLink]="trailerLink">Jegyfoglalás</a>
       </div>
     </div>
   </div>

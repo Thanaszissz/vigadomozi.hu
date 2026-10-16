@@ -166,6 +166,13 @@
   margin-bottom: 4px;
 }
 
+.showtime-card .program-kind {
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 4px;
+  opacity: 0.85;
+}
+
 .showtime-card .film-info {
   font-size: 13px;
   font-style: italic;
