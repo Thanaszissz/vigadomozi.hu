@@ -870,8 +870,8 @@ export class AdminService {
     return this.http.get<any>(`${this.apiUrl}/auditoria/${id}/seats`);
   }
 
-  updateAuditoriumSeats(id: number, seats: any[], sectors: any[], sections: any[], rows: any[]): Observable<any> {
-    return this.http.put<any>(`${this.apiUrl}/auditoria/${id}/seats`, { seats, sectors, sections, rows });
+  updateAuditoriumSeats(id: number, seats: any[], sectors: any[], sections: any[], rows: any[], noSectionAisle = false): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}/auditoria/${id}/seats`, { seats, sectors, sections, rows, no_section_aisle: noSectionAisle });
   }
 
   createAuditorium(auditorium: any): Observable<any> {

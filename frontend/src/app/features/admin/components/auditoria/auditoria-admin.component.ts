@@ -21,6 +21,7 @@ interface Sector {
 
 interface Section {
   name: string;
+  aisle?: boolean;
 }
 
 interface RowConfig {
@@ -43,6 +44,7 @@ export class AuditoriaAdminComponent implements OnInit {
   originalSeatLayout: Seat[] = [];
   sectors: Sector[] = [];
   sections: Section[] = [];
+  noSectionAisle = false;
   selectedSectorName: string | null = null;
   rowConfigs: RowConfig[] = [];
   newSectorName = '';
@@ -102,6 +104,7 @@ export class AuditoriaAdminComponent implements OnInit {
         this.originalSeatLayout = JSON.parse(JSON.stringify(this.seatLayout));
         this.sectors = sectors.length ? sectors : this.getDefaultSectors();
         this.sections = sections.length ? sections : this.getDefaultSections();
+        this.noSectionAisle = !!response?.no_section_aisle;
         this.rowConfigs = Array.isArray(response?.rows) && response.rows.length
           ? response.rows
           : this.getDefaultRowConfigs();
@@ -112,6 +115,7 @@ export class AuditoriaAdminComponent implements OnInit {
         this.originalSeatLayout = JSON.parse(JSON.stringify(this.seatLayout));
         this.sectors = this.getDefaultSectors();
         this.sections = this.getDefaultSections();
+        this.noSectionAisle = false;
         this.rowConfigs = this.getDefaultRowConfigs();
         console.log('No custom layout, using default', err);
       }
@@ -199,7 +203,7 @@ export class AuditoriaAdminComponent implements OnInit {
       key: `${seat.rowLabel || this.getRowLabel(seat.row)}-${String(seat.column).padStart(2, '0')}`
     }));
 
-    this.adminService.updateAuditoriumSeats(this.selectedAuditorium.id, seats as Seat[], this.sectors, this.sections, this.rowConfigs).subscribe({
+    this.adminService.updateAuditoriumSeats(this.selectedAuditorium.id, seats as Seat[], this.sectors, this.sections, this.rowConfigs, this.noSectionAisle).subscribe({
       next: () => {
         alert('Nézőtér elrendezés sikeresen mentve!');
         this.originalSeatLayout = JSON.parse(JSON.stringify(this.seatLayout));
@@ -343,6 +347,26 @@ export class AuditoriaAdminComponent implements OnInit {
 
   getSeatsForRow(row: RowConfig): Seat[] {
     return this.seatLayout.filter(seat => seat.rowLabel === row.label);
+  }
+
+  /** A sor szintjének (szint nélkül: a „Nincs szint” beállításnak) megfelelően van-e folyosó a sor közepén. */
+  rowHasAisle(row: RowConfig): boolean {
+    if (row.columns < 2) return false;
+    return row.section
+      ? !!this.sections.find(s => s.name === row.section)?.aisle
+      : this.noSectionAisle;
+  }
+
+  hasAisleBefore(row: RowConfig, index: number): boolean {
+    return this.rowHasAisle(row) && index === Math.ceil(row.columns / 2);
+  }
+
+  rowGridColumns(row: RowConfig): string {
+    if (!this.rowHasAisle(row)) {
+      return `repeat(${row.columns}, 1fr)`;
+    }
+    const left = Math.ceil(row.columns / 2);
+    return `repeat(${left}, 1fr) 28px repeat(${row.columns - left}, 1fr)`;
   }
 
   removeSector(sector: Sector): void {

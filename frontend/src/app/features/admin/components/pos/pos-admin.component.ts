@@ -270,6 +270,11 @@ export class PosAdminComponent implements OnInit, OnDestroy {
     return this.showtime ? Object.values(this.showtime.seatMap.seats[row] || {}) : [];
   }
 
+  hasAisleBefore(row: string, index: number): boolean {
+    const aisleAfter = this.showtime?.seatMap.layout?.aisles?.[row];
+    return aisleAfter !== undefined && index === aisleAfter;
+  }
+
   isAisle(seat: Seat): boolean {
     return seat.type === 'aisle';
   }

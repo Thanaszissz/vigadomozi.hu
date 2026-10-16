@@ -117,7 +117,18 @@
               <span class="section-dot" [style.background]="getSectionColor(section.name)"></span>
               {{ section.name }}
             </button>
+            <label class="aisle-toggle" title="A sorok közepén szünet (folyosó) lesz a megjelenítésnél">
+              <input type="checkbox" [(ngModel)]="section.aisle">
+              Folyosó középen
+            </label>
             <button type="button" class="section-remove" (click)="removeSection(section)">✕</button>
+          </div>
+          <div class="section-item">
+            <span class="section-select no-section">Nincs szint (szint nélküli sorok)</span>
+            <label class="aisle-toggle" title="A szint nélküli sorok közepén szünet (folyosó) lesz a megjelenítésnél">
+              <input type="checkbox" [(ngModel)]="noSectionAisle">
+              Folyosó középen
+            </label>
           </div>
         </div>
 
@@ -180,22 +191,24 @@
         </div>
         <div class="row" *ngFor="let row of group.rows">
           <div class="row-label">{{ row.label }}</div>
-          <div class="row-seats" [style.grid-template-columns]="'repeat(' + row.columns + ', 1fr)'">
-            <div
-              *ngFor="let seat of getSeatsForRow(row)"
-              class="seat"
-              [class.sectioned]="seat.section"
-              [class.blocked]="seat.blocked"
-              [class.available]="!seat.blocked"
-              [attr.data-row]="seat.row"
-              [attr.data-col]="seat.column"
-              [attr.title]="getSeatTitle(seat)"
-              [style.--section-color]="getSectionColor(seat.section)"
-              [style.--sector-color]="getSectorColor(getSeatSector(seat)?.name)"
-              (click)="toggleSeat(seat)">
-              <span class="seat-label">{{ seat.column }}</span>
-              <span class="seat-price" *ngIf="!seat.blocked && getSeatPrice(seat) !== null">{{ getSeatPrice(seat) }}</span>
-            </div>
+          <div class="row-seats" [style.grid-template-columns]="rowGridColumns(row)">
+            <ng-container *ngFor="let seat of getSeatsForRow(row); let i = index">
+              <div class="aisle-spacer" *ngIf="hasAisleBefore(row, i)" title="Folyosó"></div>
+              <div
+                class="seat"
+                [class.sectioned]="seat.section"
+                [class.blocked]="seat.blocked"
+                [class.available]="!seat.blocked"
+                [attr.data-row]="seat.row"
+                [attr.data-col]="seat.column"
+                [attr.title]="getSeatTitle(seat)"
+                [style.--section-color]="getSectionColor(seat.section)"
+                [style.--sector-color]="getSectorColor(getSeatSector(seat)?.name)"
+                (click)="toggleSeat(seat)">
+                <span class="seat-label">{{ seat.column }}</span>
+                <span class="seat-price" *ngIf="!seat.blocked && getSeatPrice(seat) !== null">{{ getSeatPrice(seat) }}</span>
+              </div>
+            </ng-container>
           </div>
         </div>
       </div>

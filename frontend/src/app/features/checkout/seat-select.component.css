@@ -254,6 +254,10 @@
   gap: 6px;
 }
 
+.seat.aisle-gap {
+  margin-left: 26px;
+}
+
 .seat {
   width: 28px;
   height: 28px;
@@ -638,6 +642,7 @@
   .seat-row { gap: 6px; }
   .row-label { width: 20px; font-size: 12px; }
   .seats-line { gap: 3px; }
+  .seat.aisle-gap { margin-left: 12px; }
   .seat { width: 22px; height: 24px; font-size: 9px; flex-shrink: 0; }
   .section-title { margin: 0 auto; }
 }

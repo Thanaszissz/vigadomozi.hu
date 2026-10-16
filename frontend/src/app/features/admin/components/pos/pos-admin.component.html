@@ -112,7 +112,8 @@
           <div *ngFor="let row of group.rows" class="seat-row">
             <div class="row-label">{{ row }}</div>
             <div class="seats-line">
-              <div *ngFor="let seat of getSeatsInRow(row)" class="seat"
+              <div *ngFor="let seat of getSeatsInRow(row); let i = index" class="seat"
+                   [class.aisle-gap]="hasAisleBefore(row, i)"
                    [ngClass]="seatClass(seat)" [class.aisle]="isAisle(seat)"
                    [title]="seat.key + ' – ' + seat.price + ' Ft'"
                    (click)="toggleSeat(seat)">

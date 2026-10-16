@@ -26,8 +26,9 @@
                 <div class="row-label">{{ rowLabel }}</div>
                 <div class="seats-line">
                   <div
-                    *ngFor="let seat of getSeatsInRow(rowLabel)"
+                    *ngFor="let seat of getSeatsInRow(rowLabel); let i = index"
                     class="seat"
+                    [class.aisle-gap]="hasAisleBefore(rowLabel, i)"
                     [ngClass]="getSeatClasses(seat)"
                     [style.--price-color]="getPriceColor(seat)"
                     (click)="toggleSeat(seat)"

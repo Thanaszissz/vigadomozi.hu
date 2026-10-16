@@ -123,9 +123,48 @@ class SeatMapService
                 'screenLabel' => 'VÁSZON',
                 'rows' => $auditorium->rows,
                 'columns' => $auditorium->columns,
+                'aisles' => $this->aisles($layout, $seatMap),
             ],
             'seats' => $seatMap,
             'status' => $status,
         ];
+    }
+
+    /**
+     * Folyosó a sor közepén: sorjel => a folyosó előtti székek száma.
+     * A folyosó szintenként (elkülönített részenként) kapcsolható, a szint nélküli soroknak külön beállítása van.
+     */
+    private function aisles(?array $layout, array $seatMap): array
+    {
+        $aisleSections = [];
+        foreach ($layout['sections'] ?? [] as $section) {
+            if (!empty($section['aisle']) && isset($section['name'])) {
+                $aisleSections[$section['name']] = true;
+            }
+        }
+        $aisleUnsectioned = (bool) ($layout['no_section_aisle'] ?? false);
+
+        $aisles = [];
+        foreach ($seatMap as $rowLabel => $seats) {
+            $count = count($seats);
+            if ($count < 2) {
+                continue;
+            }
+
+            $section = null;
+            foreach ($seats as $seat) {
+                if (!empty($seat['section'])) {
+                    $section = $seat['section'];
+                    break;
+                }
+            }
+
+            $hasAisle = $section !== null ? isset($aisleSections[$section]) : $aisleUnsectioned;
+            if ($hasAisle) {
+                $aisles[$rowLabel] = (int) ceil($count / 2);
+            }
+        }
+
+        return $aisles;
     }
 }

@@ -86,6 +86,12 @@ export class SeatSelectComponent implements OnInit {
     return Object.values(this.showtime.seatMap.seats[rowLabel]);
   }
 
+  /** Folyosó a sor közepén: a megadott sorszámú szék előtt szünet van. */
+  hasAisleBefore(rowLabel: string, index: number): boolean {
+    const aisleAfter = this.showtime?.seatMap.layout?.aisles?.[rowLabel];
+    return aisleAfter !== undefined && index === aisleAfter;
+  }
+
   getSeatClasses(seat: Seat): string {
     if (this.selectedSeats.some(s => s.key === seat.key)) {
       return 'selected';

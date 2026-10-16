@@ -89,6 +89,7 @@ class AuditoriumController extends Controller
             'sectors' => ['nullable', 'array'],
             'sections' => ['nullable', 'array'],
             'rows' => ['nullable', 'array'],
+            'no_section_aisle' => ['nullable', 'boolean'],
         ]);
 
         $auditorium->layout_json = [
@@ -96,6 +97,7 @@ class AuditoriumController extends Controller
             'sectors' => $data['sectors'] ?? [],
             'sections' => $data['sections'] ?? [],
             'rows' => $data['rows'] ?? [],
+            'no_section_aisle' => (bool) ($data['no_section_aisle'] ?? false),
         ];
         $auditorium->save();
 
@@ -105,6 +107,7 @@ class AuditoriumController extends Controller
             'sectors' => $auditorium->layout_json['sectors'] ?? [],
             'sections' => $auditorium->layout_json['sections'] ?? [],
             'rows' => $auditorium->layout_json['rows'] ?? [],
+            'no_section_aisle' => $auditorium->layout_json['no_section_aisle'],
         ]);
     }
 }
