@@ -22,12 +22,10 @@ class AuditoriumController extends Controller
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'rows' => ['required', 'integer', 'min:1'],
-            'columns' => ['required', 'integer', 'min:1'],
-            'total_seats' => ['required', 'integer', 'min:1'],
         ]);
 
-        $auditorium = Auditorium::create($data);
+        // a sorok, oszlopok és a férőhelyek száma a nézőtér elrendezéséből adódik
+        $auditorium = Auditorium::create($data + ['rows' => 0, 'columns' => 0, 'total_seats' => 0]);
 
         return response()->json($auditorium, 201);
     }
@@ -36,9 +34,6 @@ class AuditoriumController extends Controller
     {
         $data = $request->validate([
             'name' => ['sometimes', 'string', 'max:255'],
-            'rows' => ['sometimes', 'integer', 'min:1'],
-            'columns' => ['sometimes', 'integer', 'min:1'],
-            'total_seats' => ['sometimes', 'integer', 'min:1'],
         ]);
 
         $auditorium->update($data);
@@ -86,20 +81,30 @@ class AuditoriumController extends Controller
     {
         // This could be expanded to store seat layout in database if needed
         $data = $request->validate([
-            'seats' => ['required', 'array'],
+            'seats' => ['present', 'array'],
             'sectors' => ['nullable', 'array'],
             'sections' => ['nullable', 'array'],
             'rows' => ['nullable', 'array'],
             'no_section_aisle' => ['nullable', 'boolean'],
         ]);
 
+        $seats = $data['seats'];
+        $rowConfigs = $data['rows'] ?? [];
+
         $auditorium->layout_json = [
-            'seats' => $data['seats'],
+            'seats' => $seats,
             'sectors' => $data['sectors'] ?? [],
             'sections' => $data['sections'] ?? [],
-            'rows' => $data['rows'] ?? [],
+            'rows' => $rowConfigs,
             'no_section_aisle' => (bool) ($data['no_section_aisle'] ?? false),
         ];
+
+        // sorok, oszlopok és férőhelyek száma a felvett székekből
+        $auditorium->rows = $rowConfigs ? count($rowConfigs) : (int) collect($seats)->max('row');
+        $auditorium->columns = $rowConfigs
+            ? (int) collect($rowConfigs)->max('columns')
+            : (int) collect($seats)->max('column');
+        $auditorium->total_seats = count(array_filter($seats, fn ($seat) => empty($seat['blocked'])));
         $auditorium->save();
 
         return response()->json([
@@ -109,6 +114,7 @@ class AuditoriumController extends Controller
             'sections' => $auditorium->layout_json['sections'] ?? [],
             'rows' => $auditorium->layout_json['rows'] ?? [],
             'no_section_aisle' => $auditorium->layout_json['no_section_aisle'],
+            'auditorium' => $auditorium->fresh(),
         ]);
     }
 }

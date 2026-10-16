@@ -204,7 +204,14 @@ export class AuditoriaAdminComponent implements OnInit {
     }));
 
     this.adminService.updateAuditoriumSeats(this.selectedAuditorium.id, seats as Seat[], this.sectors, this.sections, this.rowConfigs, this.noSectionAisle).subscribe({
-      next: () => {
+      next: (response) => {
+        if (response?.auditorium) {
+          Object.assign(this.selectedAuditorium, {
+            rows: response.auditorium.rows,
+            columns: response.auditorium.columns,
+            total_seats: response.auditorium.total_seats
+          });
+        }
         alert('Nézőtér elrendezés sikeresen mentve!');
         this.originalSeatLayout = JSON.parse(JSON.stringify(this.seatLayout));
       },
@@ -265,11 +272,17 @@ export class AuditoriaAdminComponent implements OnInit {
     this.newSectionName = '';
   }
 
-  addRow(): void {
-    const label = this.newRowLabel.trim().toUpperCase();
-    if (!label) {
-      return;
+  /** Az első még nem használt sorjel (A, B, C…). */
+  nextRowLabel(): string {
+    let index = 1;
+    while (this.rowConfigs.some(r => r.label === this.getRowLabel(index))) {
+      index++;
     }
+    return this.getRowLabel(index);
+  }
+
+  addRow(): void {
+    const label = this.newRowLabel.trim().toUpperCase() || this.nextRowLabel();
     if (this.rowConfigs.some(r => r.label === label)) {
       alert('Ez a sor jel már létezik.');
       return;
@@ -452,12 +465,7 @@ export class AuditoriaAdminComponent implements OnInit {
   }
 
   createNewAuditorium(): void {
-    this.editingAuditorium = {
-      name: '',
-      rows: 8,
-      columns: 10,
-      total_seats: 80
-    };
+    this.editingAuditorium = { name: '' };
     this.isNewAuditorium = true;
     this.showEditModal = true;
   }
@@ -470,18 +478,14 @@ export class AuditoriaAdminComponent implements OnInit {
   saveAuditorium(): void {
     if (!this.editingAuditorium) return;
 
-    const auditoriumData = {
-      name: this.editingAuditorium.name,
-      rows: parseInt(this.editingAuditorium.rows),
-      columns: parseInt(this.editingAuditorium.columns),
-      total_seats: parseInt(this.editingAuditorium.rows) * parseInt(this.editingAuditorium.columns)
-    };
+    const auditoriumData = { name: this.editingAuditorium.name };
 
     if (this.isNewAuditorium) {
       this.adminService.createAuditorium(auditoriumData).subscribe({
         next: (newAuditorium) => {
           this.auditoria.push(newAuditorium);
           this.closeModal();
+          this.selectAuditorium(newAuditorium);
         },
         error: (err) => {
           this.error = 'Hiba történt a terem létrehozása során';
@@ -528,12 +532,6 @@ export class AuditoriaAdminComponent implements OnInit {
         console.error('Error deleting auditorium:', err);
       }
     });
-  }
-
-  updateTotalSeats(): void {
-    if (this.editingAuditorium) {
-      this.editingAuditorium.total_seats = parseInt(this.editingAuditorium.rows) * parseInt(this.editingAuditorium.columns);
-    }
   }
 
   goBack(): void {

@@ -31,7 +31,6 @@
         </div>
         <div class="auditorium-info">
           <span>📍 Sorok: {{ auditorium.rows }}</span>
-          <span>💺 Oszlopok: {{ auditorium.columns }}</span>
           <span>✅ Össz. hely: {{ auditorium.total_seats }}</span>
         </div>
       </div>
@@ -165,6 +164,8 @@
           </div>
         </div>
 
+        <p class="row-hint" *ngIf="rowConfigs.length === 0">Még nincs sor. Add meg az oszlopok (székek) számát, majd kattints a „+ Sor” gombra – a sor jele üresen hagyva automatikusan következik (A, B, C…).</p>
+
         <div class="row-list">
           <div class="row-item" *ngFor="let row of rowConfigs">
             <div class="row-label">{{ row.label }}</div>
@@ -243,38 +244,7 @@
         <div class="form-group">
           <label>Terem neve</label>
           <input type="text" [(ngModel)]="editingAuditorium.name" name="name" class="form-input" required>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label>Sorok száma</label>
-            <input 
-              type="number" 
-              [(ngModel)]="editingAuditorium.rows" 
-              name="rows" 
-              class="form-input" 
-              (change)="updateTotalSeats()"
-              min="1"
-              required>
-          </div>
-
-          <div class="form-group">
-            <label>Oszlopok száma</label>
-            <input 
-              type="number" 
-              [(ngModel)]="editingAuditorium.columns" 
-              name="columns" 
-              class="form-input" 
-              (change)="updateTotalSeats()"
-              min="1"
-              required>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label>Össz. helyek száma</label>
-          <input type="number" [(ngModel)]="editingAuditorium.total_seats" name="total_seats" class="form-input" disabled>
-          <small style="color: #888; font-size: 12px;">Automatikusan számítódik: sorok × oszlopok</small>
+          <small style="color: #888; font-size: 12px;">A sorokat, székeket és a férőhelyek számát a nézőtér elrendezésében lehet felvenni, az összes férőhely a székekből számolódik.</small>
         </div>
 
         <div class="modal-actions">
