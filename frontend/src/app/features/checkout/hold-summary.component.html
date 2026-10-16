@@ -60,7 +60,7 @@
           <h3>Kiválasztott székek:</h3>
           <div class="seats-list">
             <div *ngFor="let item of reservation.items" class="seat-item">
-              <span>{{ item.row_label }}-{{ item.seat_number }} szék</span>
+              <span>{{ item.section ? item.section + ' · ' : '' }}{{ item.row_label }}-{{ item.seat_number }} szék</span>
               <span class="price">{{ item.price_amount }} Ft</span>
             </div>
           </div>

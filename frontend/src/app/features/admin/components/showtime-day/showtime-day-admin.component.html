@@ -115,7 +115,7 @@
             <tbody>
               <tr *ngFor="let t of ticketsOf(s)">
                 <td class="num">{{ t.ticket_number }}</td>
-                <td>{{ t.row_label }} / {{ t.seat_number ?? '—' }}</td>
+                <td>{{ t.section ? t.section + ' · ' : '' }}{{ t.row_label }} / {{ t.seat_number ?? '—' }}</td>
                 <td>{{ categoryLabel(t.category) }}</td>
                 <td><span class="badge" [class.cash]="t.payment_method === 'cash'" [class.card]="t.payment_method === 'card'">{{ paymentLabel(t.payment_method) }}</span></td>
                 <td>{{ t.channel === 'online' ? 'Online' : t.channel === 'admin' ? 'Admin' : 'Pénztár' }}</td>

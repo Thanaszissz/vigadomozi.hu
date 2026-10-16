@@ -70,7 +70,7 @@
               <td>{{ t.sold_at | date:'HH:mm' }}</td>
               <td>{{ t.movie_title }}<small class="cat-tag" *ngIf="categoryTag(t)"> {{ categoryTag(t) }}</small><small class="cat-tag svc" *ngIf="isService(t)"> szolgáltatás</small></td>
               <td>{{ isService(t) ? '—' : (t.starts_at | date:'yyyy.MM.dd. HH:mm') }}</td>
-              <td>{{ isService(t) ? '—' : (t.row_label + ' / ' + (t.seat_number ?? '—')) }}</td>
+              <td>{{ isService(t) ? '—' : ((t.section ? t.section + ' · ' : '') + t.row_label + ' / ' + (t.seat_number ?? '—')) }}</td>
               <td><span class="badge" [class.cash]="t.payment_method === 'cash'" [class.card]="t.payment_method === 'card'">{{ paymentLabel(t.payment_method) }}</span></td>
               <td class="r">{{ t.price_amount | number:'1.0-0' }} Ft</td>
             </tr>

@@ -7,6 +7,7 @@ use App\Models\Reservation;
 use App\Models\Setting;
 use App\Models\Ticket;
 use App\Models\User;
+use App\Support\SeatKey;
 use App\Support\TicketCategory;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
@@ -213,7 +214,7 @@ class SzamlazzService
                 'Mozijegy: %s, %s, %s',
                 $t->movie_title,
                 Carbon::parse($t->starts_at)->timezone('Europe/Budapest')->format('Y.m.d. H:i'),
-                $t->seat_key
+                SeatKey::label($t->seat_key)
             ),
             'gross' => (int) round((float) $t->price_amount),
         ])->filter(fn($line) => $line['gross'] > 0)->values()->all();

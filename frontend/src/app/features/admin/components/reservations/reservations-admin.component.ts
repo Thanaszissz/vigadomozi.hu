@@ -165,7 +165,7 @@ export class ReservationsAdminComponent implements OnInit {
     const createdAt = reservation.created_at ? new Date(reservation.created_at).toLocaleString('hu-HU') : '';
     const showtime = reservation.showtime;
     const showtimeDate = showtime?.starts_at ? new Date(showtime.starts_at).toLocaleString('hu-HU') : '';
-    const seats = (reservation.items || []).map((item: any) => `${item.row_label}-${item.seat_number}`).join(', ');
+    const seats = (reservation.items || []).map((item: any) => `${item.section ? item.section + ' ' : ''}${item.row_label}-${item.seat_number}`).join(', ');
     const totalAmount = reservation.total_amount ?? 0;
 
     const receiptHtml = `

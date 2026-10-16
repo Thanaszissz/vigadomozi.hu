@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\SeatKey;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -17,6 +18,13 @@ class ReservationItem extends Model
         'price_amount',
         'category',
     ];
+
+    protected $appends = ['section'];
+
+    public function getSectionAttribute(): ?string
+    {
+        return SeatKey::section($this->seat_key);
+    }
 
     public function reservation()
     {

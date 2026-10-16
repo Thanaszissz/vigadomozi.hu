@@ -69,7 +69,10 @@ class TicketPdfService
         $when = is_string($when) ? $when : ($when ? $when->copy()->timezone('Europe/Budapest')->format('Y.m.d. H:i') : '');
         $title = (string) $get('movie_title');
         $seat = (string) ($get('seat_number') ?? '—');
-        $hall = (string) ($get('auditorium_name') ?: '—');
+        // szintes székeknél a jegyre a terem helyett a szint neve kerül
+        $section = trim((string) $get('section'));
+        $placeLabel = $section !== '' ? 'Szint' : 'Terem';
+        $hall = $section !== '' ? $section : (string) ($get('auditorium_name') ?: '—');
         $row = (string) $get('row_label');
         $money = number_format((int) $get('price_amount'), 0, ',', ' ') . ' Ft';
         $number = (string) $get('ticket_number');
@@ -88,7 +91,7 @@ class TicketPdfService
             . '<div class="abs" style="left:' . $this->px(34) . ';top:' . $this->px(136) . ';width:' . $this->px(566) . ';height:' . $this->px(62) . ';overflow:hidden;display:table;">'
             . '<div class="cell" style="font-weight:bold;line-height:1.1;font-size:' . $this->f($titleSize) . ';">' . $e($title) . '</div></div>'
             . '<div class="abs" style="left:' . $this->px(34) . ';top:' . $this->px(202) . ';width:' . $this->px(566) . ';font-size:' . $this->f(23) . ';">' . $e((string) $when) . '</div>'
-            . $fact(38, 'Terem', $hall) . $fact(156, 'Sor', $row) . $fact(366, 'Szék', $seat) . $fact(484, 'Ár', $money)
+            . $fact(38, $placeLabel, $hall) . $fact(156, 'Sor', $row) . $fact(366, 'Szék', $seat) . $fact(484, 'Ár', $money)
             // a letéphető szelvény
             . '<div class="abs" style="left:' . $this->px(626) . ';top:' . $this->px(190) . ';width:' . $this->px(204) . ';">'
             . '<div style="font-weight:bold;font-size:' . $this->f(14) . ';line-height:1.15;max-height:' . $this->px(33) . ';overflow:hidden;">' . $e($title) . '</div>'

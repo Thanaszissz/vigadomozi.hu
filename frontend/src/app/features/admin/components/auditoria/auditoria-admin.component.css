@@ -400,10 +400,6 @@ h1 {
   margin: 2px auto;
 }
 
-.section-select.no-section {
-  font-style: italic;
-  cursor: default;
-}
 
 .section-item.active {
   border-color: #6b4e3d;
@@ -529,7 +525,7 @@ h1 {
 
 .row-item {
   display: grid;
-  grid-template-columns: 60px 90px 1fr auto;
+  grid-template-columns: minmax(60px, auto) 90px 1fr auto auto;
   gap: 10px;
   align-items: center;
   background: #fff;

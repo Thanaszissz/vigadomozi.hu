@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Reservation;
+use App\Support\SeatKey;
 use Illuminate\Support\Collection;
 use Illuminate\Support\HtmlString;
 
@@ -81,8 +82,8 @@ HTML,
         $showtime = $reservation->showtime;
 
         $seats = $reservation->items
-            ->sortBy(fn($i) => sprintf('%s-%05d', $i->row_label, (int) $i->seat_number))
-            ->pluck('seat_key')
+            ->sortBy(fn($i) => sprintf('%s-%s-%05d', (string) $i->section, $i->row_label, (int) $i->seat_number))
+            ->map(fn($i) => SeatKey::label($i->seat_key))
             ->implode(', ');
 
         $providers = ['stripe' => 'Bankkártya (online)', 'simplepay' => 'Bankkártya (online)', 'card' => 'Bankkártya', 'cash' => 'Készpénz'];
@@ -308,6 +309,7 @@ HTML;
         foreach ($tickets as $t) {
             $get = fn(string $k) => data_get($t, $k);
             $seat = (string) ($get('seat_number') ?? '—');
+            $section = trim((string) $get('section'));
             $price = $get('price_amount') !== null ? $this->money((int) $get('price_amount')) : '';
 
             $html .= '<tr><td style="padding:0 0 10px;">'
@@ -318,7 +320,7 @@ HTML;
                 . '</td>'
                 . '<td valign="middle" align="right" style="padding:13px 18px 13px 8px;">'
                 . '<div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#8a7258;">Hely</div>'
-                . '<div style="font-size:15px;font-weight:700;color:#2b2018;">' . e((string) $get('row_label')) . '. sor · ' . e($seat) . '. szék</div>'
+                . '<div style="font-size:15px;font-weight:700;color:#2b2018;">' . ($section !== '' ? e($section) . ' · ' : '') . e((string) $get('row_label')) . '. sor · ' . e($seat) . '. szék</div>'
                 . ($price !== '' ? '<div style="font-size:12px;color:#8a7258;">' . e($price) . '</div>' : '')
                 . '</td>'
                 . '</tr></table></td></tr>';

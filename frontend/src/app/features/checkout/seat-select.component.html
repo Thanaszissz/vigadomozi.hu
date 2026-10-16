@@ -23,7 +23,7 @@
             <div class="section-title">{{ group.name }}</div>
             <div class="seats-container">
               <div *ngFor="let rowLabel of group.rows" class="seat-row">
-                <div class="row-label">{{ rowLabel }}</div>
+                <div class="row-label">{{ rowLabelOf(rowLabel) }}</div>
                 <div class="seats-line">
                   <div
                     *ngFor="let seat of getSeatsInRow(rowLabel); let i = index"
@@ -33,7 +33,7 @@
                     [style.--price-color]="getPriceColor(seat)"
                     (click)="toggleSeat(seat)"
                     [title]="getSeatTitle(seat)">
-                    <span *ngIf="!isAisle(seat)" class="seat-number">{{ seat.key.split('-')[1] }}</span>
+                    <span *ngIf="!isAisle(seat)" class="seat-number">{{ seatNumberOf(seat.key) }}</span>
                     <span *ngIf="isAisle(seat)" class="aisle-marker">||</span>
                   </div>
                 </div>
@@ -78,7 +78,7 @@
 
             <div *ngIf="selectedSeats.length > 0" class="selected-seats-list">
               <div *ngFor="let seat of selectedSeats" class="seat-item">
-                <span>{{ seat.key }} - {{ seat.price }} Ft</span>
+                <span>{{ seatLabel(seat.key) }} - {{ seat.price }} Ft</span>
               </div>
 
               <div class="total">

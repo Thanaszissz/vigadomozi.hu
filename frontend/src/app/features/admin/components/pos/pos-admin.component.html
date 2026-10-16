@@ -77,7 +77,7 @@
           <tbody>
             <tr *ngFor="let t of soldList">
               <td class="num">{{ t.ticket_number }}</td>
-              <td>{{ t.seat_key }}</td>
+              <td>{{ seatLabel(t.seat_key) }}</td>
               <td>{{ t.price_amount | number:'1.0-0' }} Ft</td>
               <td>{{ t.payment_method === 'cash' ? 'Készpénz' : t.payment_method === 'card' ? 'Kártya' : t.payment_method === 'experience_card' ? 'Élménykártya' : 'Online' }}</td>
               <td>{{ t.sold_at | date:'MM.dd. HH:mm' }}</td>
@@ -98,7 +98,7 @@
           <span class="r-name">{{ r.customer_name || 'Névtelen' }}</span>
           <span class="r-phone">{{ r.customer_phone || '—' }}</span>
           <span class="r-seats">
-            <span class="chip" *ngFor="let i of r.items">{{ i.seat_key }}</span>
+            <span class="chip" *ngFor="let i of r.items">{{ seatLabel(i.seat_key) }}</span>
           </span>
           <span class="r-total">{{ r.total_amount | number:'1.0-0' }} Ft</span>
         </button>
@@ -110,14 +110,14 @@
         <div class="section-title" *ngIf="getSectionGroups().length > 1">{{ group.name }}</div>
         <div class="seats-container">
           <div *ngFor="let row of group.rows" class="seat-row">
-            <div class="row-label">{{ row }}</div>
+            <div class="row-label">{{ rowLabelOf(row) }}</div>
             <div class="seats-line">
               <div *ngFor="let seat of getSeatsInRow(row); let i = index" class="seat"
                    [class.aisle-gap]="hasAisleBefore(row, i)"
                    [ngClass]="seatClass(seat)" [class.aisle]="isAisle(seat)"
                    [title]="seat.key + ' – ' + seat.price + ' Ft'"
                    (click)="toggleSeat(seat)">
-                <span *ngIf="!isAisle(seat)">{{ seat.key.split('-')[1] }}</span>
+                <span *ngIf="!isAisle(seat)">{{ seatNumberOf(seat.key) }}</span>
               </div>
             </div>
           </div>
@@ -156,7 +156,7 @@
           <ng-container *ngIf="mode === 'reservations' && selectedReservation">
             <li class="who">{{ selectedReservation.customer_name }} • {{ selectedReservation.customer_phone }}</li>
             <li *ngFor="let i of selectedReservation.items">
-              <span>{{ i.seat_key }} <small class="cat-tag" *ngIf="i.category && i.category !== 'standard'">{{ categoryLabel(i.category) }}</small></span><b>{{ i.price_amount | number:'1.0-0' }} Ft</b>
+              <span>{{ seatLabel(i.seat_key) }} <small class="cat-tag" *ngIf="i.category && i.category !== 'standard'">{{ categoryLabel(i.category) }}</small></span><b>{{ i.price_amount | number:'1.0-0' }} Ft</b>
             </li>
           </ng-container>
         </ul>
@@ -366,7 +366,7 @@
       <h3>Jegy sztornózása</h3>
       <p>
         Biztosan sztornózod a(z) <b>{{ voidTarget.ticket_number }}</b> jegyet
-        ({{ voidTarget.seat_key }}, {{ voidTarget.price_amount | number:'1.0-0' }} Ft)?
+        ({{ seatLabel(voidTarget.seat_key) }}, {{ voidTarget.price_amount | number:'1.0-0' }} Ft)?
         A szék újra szabad lesz, az eladás pedig kikerül a statisztikákból és a napi zárásból. A művelet nem vonható vissza.
       </p>
       <label class="field">

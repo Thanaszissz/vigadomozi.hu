@@ -83,6 +83,7 @@ class ReservationController extends Controller
             'auditorium_name' => $t->auditorium_name,
             'row_label' => $t->row_label,
             'seat_number' => $t->seat_number,
+            'section' => $t->section,
             'price_amount' => $t->price_amount,
             'sold_at' => $t->sold_at,
         ])->values());

@@ -190,7 +190,7 @@ export class DailyCloseAdminComponent implements OnInit {
           <td>${esc(tm(t.sold_at))}</td>
           <td>${esc(t.movie_title)}${this.categoryTag(t) ? ` <i>(${esc(this.categoryTag(t))})</i>` : ''}${this.isService(t) ? ' <i>(szolgáltatás)</i>' : ''}</td>
           <td>${this.isService(t) ? '-' : esc(dt(t.starts_at))}</td>
-          <td>${this.isService(t) ? '-' : `${esc(t.row_label)} / ${esc(t.seat_number ?? '-')}`}</td>
+          <td>${this.isService(t) ? '-' : `${esc((t.section ? t.section + ' · ' : '') + t.row_label)} / ${esc(t.seat_number ?? '-')}`}</td>
           <td>${esc(paymentLabel(t.payment_method))}</td>
           <td class="r">${esc(ft(t.price_amount))}</td>
         </tr>`).join('');

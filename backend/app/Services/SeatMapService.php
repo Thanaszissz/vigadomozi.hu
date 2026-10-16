@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Showtime;
 use App\Models\ReservationItem;
 use App\Models\SeatLock;
+use App\Support\SeatKey;
 
 class SeatMapService
 {
@@ -61,25 +62,28 @@ class SeatMapService
         }
 
         $seatMap = [];
+        $aisles = [];
 
         $rowsConfig = $layout['rows'] ?? [];
         if (!empty($rowsConfig)) {
             $rowIndex = 1;
             foreach ($rowsConfig as $rowConfig) {
-                $rowLabel = $rowConfig['label'] ?? chr(64 + $rowIndex);
+                $rowLabel = (string) ($rowConfig['label'] ?? chr(64 + $rowIndex));
                 $columns = (int) ($rowConfig['columns'] ?? $auditorium->columns);
-                $defaultSection = $rowConfig['section'] ?? null;
+                $defaultSection = !empty($rowConfig['section']) ? (string) $rowConfig['section'] : null;
+                $rowKey = SeatKey::rowKey($defaultSection, $rowLabel);
 
-                $seatMap[$rowLabel] = [];
+                $seatMap[$rowKey] = [];
                 for ($col = 1; $col <= $columns; $col++) {
-                    $seatKey = $rowLabel . '-' . str_pad($col, 2, '0', STR_PAD_LEFT);
-                    $override = $seatOverrides[$seatKey] ?? null;
+                    $seatKey = SeatKey::make($defaultSection, $rowLabel, $col);
+                    // a korábbi, szint nélküli kulccsal mentett székbeállítások is érvényesek maradnak
+                    $override = $seatOverrides[$seatKey] ?? $seatOverrides[SeatKey::make(null, $rowLabel, $col)] ?? null;
                     $blocked = (bool) ($override['blocked'] ?? false);
                     $bookable = !$blocked;
                     $type = $override['sector'] ?? 'STANDARD';
-                    $section = $override['section'] ?? $defaultSection;
+                    $section = $defaultSection ?? ($override['section'] ?? null);
 
-                    $seatMap[$rowLabel][$seatKey] = [
+                    $seatMap[$rowKey][$seatKey] = [
                         'key' => $seatKey,
                         'type' => $type,
                         'section' => $section,
@@ -88,6 +92,11 @@ class SeatMapService
                                    : (in_array($seatKey, $status['locked']) ? 'locked' : 'available')),
                         'price' => $pricingService->priceForSeat($showtime, $seatKey),
                     ];
+                }
+
+                // folyosó a sor közepén: az előtte lévő székek száma
+                if (!empty($rowConfig['aisle']) && $columns >= 2) {
+                    $aisles[$rowKey] = (int) ceil($columns / 2);
                 }
                 $rowIndex++;
             }
@@ -123,48 +132,10 @@ class SeatMapService
                 'screenLabel' => 'VÁSZON',
                 'rows' => $auditorium->rows,
                 'columns' => $auditorium->columns,
-                'aisles' => $this->aisles($layout, $seatMap),
+                'aisles' => $aisles,
             ],
             'seats' => $seatMap,
             'status' => $status,
         ];
-    }
-
-    /**
-     * Folyosó a sor közepén: sorjel => a folyosó előtti székek száma.
-     * A folyosó szintenként (elkülönített részenként) kapcsolható, a szint nélküli soroknak külön beállítása van.
-     */
-    private function aisles(?array $layout, array $seatMap): array
-    {
-        $aisleSections = [];
-        foreach ($layout['sections'] ?? [] as $section) {
-            if (!empty($section['aisle']) && isset($section['name'])) {
-                $aisleSections[$section['name']] = true;
-            }
-        }
-        $aisleUnsectioned = (bool) ($layout['no_section_aisle'] ?? false);
-
-        $aisles = [];
-        foreach ($seatMap as $rowLabel => $seats) {
-            $count = count($seats);
-            if ($count < 2) {
-                continue;
-            }
-
-            $section = null;
-            foreach ($seats as $seat) {
-                if (!empty($seat['section'])) {
-                    $section = $seat['section'];
-                    break;
-                }
-            }
-
-            $hasAisle = $section !== null ? isset($aisleSections[$section]) : $aisleUnsectioned;
-            if ($hasAisle) {
-                $aisles[$rowLabel] = (int) ceil($count / 2);
-            }
-        }
-
-        return $aisles;
     }
 }

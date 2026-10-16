@@ -11,6 +11,7 @@ export interface PaidTicket {
   movie_title: string;
   starts_at: string;
   auditorium_name: string | null;
+  section?: string | null;
   row_label: string;
   seat_number: number | null;
   price_amount: number;
@@ -78,6 +79,7 @@ export interface ShowtimeDetail extends Showtime {
 export interface ReservationItem {
   id: number;
   seat_key: string;
+  section?: string | null;
   row_label: string;
   seat_number: number;
   price_amount: number;

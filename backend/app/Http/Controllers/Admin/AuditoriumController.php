@@ -73,7 +73,6 @@ class AuditoriumController extends Controller
             'sectors' => [],
             'sections' => [],
             'rows' => [],
-            'no_section_aisle' => (bool) ($auditorium->layout_json['no_section_aisle'] ?? false),
         ]);
     }
 
@@ -85,7 +84,6 @@ class AuditoriumController extends Controller
             'sectors' => ['nullable', 'array'],
             'sections' => ['nullable', 'array'],
             'rows' => ['nullable', 'array'],
-            'no_section_aisle' => ['nullable', 'boolean'],
         ]);
 
         $seats = $data['seats'];
@@ -96,7 +94,6 @@ class AuditoriumController extends Controller
             'sectors' => $data['sectors'] ?? [],
             'sections' => $data['sections'] ?? [],
             'rows' => $rowConfigs,
-            'no_section_aisle' => (bool) ($data['no_section_aisle'] ?? false),
         ];
 
         // sorok, oszlopok és férőhelyek száma a felvett székekből
@@ -113,7 +110,6 @@ class AuditoriumController extends Controller
             'sectors' => $auditorium->layout_json['sectors'] ?? [],
             'sections' => $auditorium->layout_json['sections'] ?? [],
             'rows' => $auditorium->layout_json['rows'] ?? [],
-            'no_section_aisle' => $auditorium->layout_json['no_section_aisle'],
             'auditorium' => $auditorium->fresh(),
         ]);
     }

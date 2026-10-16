@@ -8,6 +8,7 @@ use App\Models\Reservation;
 use App\Models\ReservationItem;
 use App\Models\SeatLock;
 use App\Models\Showtime;
+use App\Support\SeatKey;
 use App\Support\TicketCategory;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Carbon;
@@ -45,10 +46,10 @@ class SeatClaimService
             $seat = $seats[$key] ?? null;
 
             if (!$seat || !$seat['bookable'] || $seat['type'] === 'aisle') {
-                throw new SeatUnavailableException("A(z) {$key} szék nem foglalható.", 422);
+                throw new SeatUnavailableException('A(z) ' . SeatKey::label($key) . ' szék nem foglalható.', 422);
             }
             if ($seat['status'] !== 'available') {
-                throw new SeatUnavailableException("A(z) {$key} szék már foglalt vagy eladott.", 409);
+                throw new SeatUnavailableException('A(z) ' . SeatKey::label($key) . ' szék már foglalt vagy eladott.', 409);
             }
         }
 
@@ -60,13 +61,13 @@ class SeatClaimService
                 TicketCategory::STAFF => $staffPrice ??= ExtraService::staffPrice(),
                 default => (int) $seats[$key]['price'],
             };
-            [$rowLabel, $number] = array_pad(explode('-', $key), 2, null);
+            $parsed = SeatKey::parse($key);
 
             ReservationItem::create([
                 'reservation_id' => $reservation->id,
                 'seat_key' => $key,
-                'row_label' => $rowLabel,
-                'seat_number' => intval($number) ?: null,
+                'row_label' => $parsed['row'],
+                'seat_number' => $parsed['number'],
                 'price_amount' => $price,
                 'category' => $category,
             ]);
@@ -101,7 +102,7 @@ class SeatClaimService
             $lock = SeatLock::where('showtime_id', $reservation->showtime_id)->where('seat_key', $item->seat_key)->first();
 
             if ($soldElsewhere || ($lock && $lock->reservation_id !== $reservation->id)) {
-                throw new SeatUnavailableException("A(z) {$item->seat_key} szék időközben másé lett.", 409);
+                throw new SeatUnavailableException('A(z) ' . SeatKey::label($item->seat_key) . ' szék időközben másé lett.', 409);
             }
 
             if (!$lock) {
@@ -179,7 +180,7 @@ class SeatClaimService
         } catch (QueryException $e) {
             // Az (előadás, szék) egyediség sérült: közben más megszerezte a széket
             if (in_array((string) $e->getCode(), ['23000', '23505'], true)) {
-                throw new SeatUnavailableException("A(z) {$seatKey} szék közben már foglalttá vált.", 409);
+                throw new SeatUnavailableException('A(z) ' . SeatKey::label($seatKey) . ' szék közben már foglalttá vált.', 409);
             }
 
             throw $e;

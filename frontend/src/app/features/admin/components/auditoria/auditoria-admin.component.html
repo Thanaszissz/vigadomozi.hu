@@ -95,7 +95,7 @@
         <div class="section-header">
           <div>
             <h3>Szintek / elkülönített részek</h3>
-            <p class="section-hint">Válassz szintet (pl. Földszint, Emelet), majd kattints az ülésekre.</p>
+            <p class="section-hint">A szint neve elválasztóként jelenik meg a nézőtéren és a jegyen. A sorokat lentebb rendelheted szintekhez.</p>
           </div>
           <div class="section-form">
             <input
@@ -116,18 +116,7 @@
               <span class="section-dot" [style.background]="getSectionColor(section.name)"></span>
               {{ section.name }}
             </button>
-            <label class="aisle-toggle" title="A sorok közepén szünet (folyosó) lesz a megjelenítésnél">
-              <input type="checkbox" [(ngModel)]="section.aisle">
-              Folyosó középen
-            </label>
             <button type="button" class="section-remove" (click)="removeSection(section)">✕</button>
-          </div>
-          <div class="section-item">
-            <span class="section-select no-section">Nincs szint (szint nélküli sorok)</span>
-            <label class="aisle-toggle" title="A szint nélküli sorok közepén szünet (folyosó) lesz a megjelenítésnél">
-              <input type="checkbox" [(ngModel)]="noSectionAisle">
-              Folyosó középen
-            </label>
           </div>
         </div>
 
@@ -143,32 +132,32 @@
         <div class="row-header">
           <div>
             <h3>Sorok és oszlopszámok</h3>
-            <p class="row-hint">Itt állíthatod, hogy soronként hány oszlop legyen, és melyik szinthez tartozzon.</p>
+            <p class="row-hint">Itt állíthatod, hogy soronként hány szék legyen, melyik szinthez tartozzon, és legyen-e folyosó a sor közepén. A sorjelek szintenként újrakezdődhetnek (pl. Emelet 1. sor és Földszint 1. sor).</p>
           </div>
           <div class="row-form">
-            <input
-              type="text"
-              [(ngModel)]="newRowLabel"
-              placeholder="Sor jel (A, B...)"
-              class="row-input">
-            <input
-              type="number"
-              [(ngModel)]="newRowColumns"
-              placeholder="Oszlopok"
-              class="row-input">
             <select [(ngModel)]="newRowSection" class="row-input">
               <option [ngValue]="null">Nincs szint</option>
               <option *ngFor="let section of sections" [ngValue]="section.name">{{ section.name }}</option>
             </select>
+            <input
+              type="text"
+              [(ngModel)]="newRowLabel"
+              [placeholder]="'Sor jel (üresen: ' + nextRowLabel(newRowSection) + ')'"
+              class="row-input">
+            <input
+              type="number"
+              [(ngModel)]="newRowColumns"
+              placeholder="Székek száma"
+              class="row-input">
             <button type="button" class="btn-add-row" (click)="addRow()">+ Sor</button>
           </div>
         </div>
 
-        <p class="row-hint" *ngIf="rowConfigs.length === 0">Még nincs sor. Add meg az oszlopok (székek) számát, majd kattints a „+ Sor” gombra – a sor jele üresen hagyva automatikusan következik (A, B, C…).</p>
+        <p class="row-hint" *ngIf="rowConfigs.length === 0">Még nincs sor. Válassz szintet, add meg a székek számát, majd kattints a „+ Sor” gombra – a sor jele üresen hagyva automatikusan következik (szint nélkül A, B, C…, szinten 1, 2, 3…).</p>
 
         <div class="row-list">
           <div class="row-item" *ngFor="let row of rowConfigs">
-            <div class="row-label">{{ row.label }}</div>
+            <div class="row-label" [title]="row.section || 'Nincs szint'">{{ row.section ? row.section + ' ' : '' }}{{ row.label }}</div>
             <input
               type="number"
               [(ngModel)]="row.columns"
@@ -178,6 +167,10 @@
               <option [ngValue]="null">Nincs szint</option>
               <option *ngFor="let section of sections" [ngValue]="section.name">{{ section.name }}</option>
             </select>
+            <label class="aisle-toggle" title="Szünet (folyosó) a sor közepén a megjelenítésnél">
+              <input type="checkbox" [(ngModel)]="row.aisle">
+              Folyosó középen
+            </label>
             <button type="button" class="row-remove" (click)="removeRow(row)">✕</button>
           </div>
         </div>

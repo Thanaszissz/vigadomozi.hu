@@ -3,6 +3,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService, ShowtimeDetail, Seat } from '../../core/api/api.service';
+import { rowLabelOf, seatNumberOf, seatLabel } from '../../core/util/seat';
 
 @Component({
   selector: 'app-seat-select',
@@ -23,6 +24,9 @@ export class SeatSelectComponent implements OnInit {
   lockError: string | null = null;
   showtimeId: number = 0;
 
+  readonly rowLabelOf = rowLabelOf;
+  readonly seatNumberOf = seatNumberOf;
+  readonly seatLabel = seatLabel;
   constructor(
     private apiService: ApiService,
     private route: ActivatedRoute,
@@ -100,7 +104,7 @@ export class SeatSelectComponent implements OnInit {
   }
 
   getSeatTitle(seat: Seat): string {
-    return `${seat.key} - ${seat.price} Ft`;
+    return `${seatLabel(seat.key)} - ${seat.price} Ft`;
   }
 
   /** A különböző árú (szektoros) székek színjelölése; egyetlen ár esetén nincs rá szükség. */

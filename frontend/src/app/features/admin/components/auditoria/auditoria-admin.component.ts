@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AdminService } from '../../../../services/admin.service';
+import { seatKey } from '../../../../core/util/seat';
 
 interface Seat {
   row: number;
@@ -21,13 +22,13 @@ interface Sector {
 
 interface Section {
   name: string;
-  aisle?: boolean;
 }
 
 interface RowConfig {
   label: string;
   columns: number;
   section?: string | null;
+  aisle?: boolean;
 }
 
 @Component({
@@ -44,7 +45,6 @@ export class AuditoriaAdminComponent implements OnInit {
   originalSeatLayout: Seat[] = [];
   sectors: Sector[] = [];
   sections: Section[] = [];
-  noSectionAisle = false;
   selectedSectorName: string | null = null;
   rowConfigs: RowConfig[] = [];
   newSectorName = '';
@@ -104,7 +104,6 @@ export class AuditoriaAdminComponent implements OnInit {
         this.originalSeatLayout = JSON.parse(JSON.stringify(this.seatLayout));
         this.sectors = sectors.length ? sectors : this.getDefaultSectors();
         this.sections = sections.length ? sections : this.getDefaultSections();
-        this.noSectionAisle = !!response?.no_section_aisle;
         this.rowConfigs = Array.isArray(response?.rows) && response.rows.length
           ? response.rows
           : this.getDefaultRowConfigs();
@@ -115,7 +114,6 @@ export class AuditoriaAdminComponent implements OnInit {
         this.originalSeatLayout = JSON.parse(JSON.stringify(this.seatLayout));
         this.sectors = this.getDefaultSectors();
         this.sections = this.getDefaultSections();
-        this.noSectionAisle = false;
         this.rowConfigs = this.getDefaultRowConfigs();
         console.log('No custom layout, using default', err);
       }
@@ -197,13 +195,13 @@ export class AuditoriaAdminComponent implements OnInit {
   saveSeatLayout(): void {
     if (!this.selectedAuditorium) return;
 
-    // a szék kulcsát is elmentjük, így az árazás a sor jelétől függetlenül a megfelelő székhez kötődik
+    // a szék kulcsa a szintet is tartalmazza, így két szinten is lehet "1. sor 1. szék"
     const seats = this.seatLayout.map(seat => ({
       ...seat,
-      key: `${seat.rowLabel || this.getRowLabel(seat.row)}-${String(seat.column).padStart(2, '0')}`
+      key: seatKey(seat.section, seat.rowLabel || this.getRowLabel(seat.row), seat.column)
     }));
 
-    this.adminService.updateAuditoriumSeats(this.selectedAuditorium.id, seats as Seat[], this.sectors, this.sections, this.rowConfigs, this.noSectionAisle).subscribe({
+    this.adminService.updateAuditoriumSeats(this.selectedAuditorium.id, seats as Seat[], this.sectors, this.sections, this.rowConfigs).subscribe({
       next: (response) => {
         if (response?.auditorium) {
           Object.assign(this.selectedAuditorium, {
@@ -260,7 +258,8 @@ export class AuditoriaAdminComponent implements OnInit {
   }
 
   addSection(): void {
-    const name = this.newSectionName.trim();
+    // a "|" a szék kulcsában elválasztó jel, ezért nem szerepelhet a szint nevében
+    const name = this.newSectionName.replace(/\|/g, '').trim();
     if (!name) {
       return;
     }
@@ -272,63 +271,89 @@ export class AuditoriaAdminComponent implements OnInit {
     this.newSectionName = '';
   }
 
-  /** Az első még nem használt sorjel (A, B, C…). */
-  nextRowLabel(): string {
+  private sameSection(a?: string | null, b?: string | null): boolean {
+    return (a || null) === (b || null);
+  }
+
+  private rowExists(label: string, section?: string | null): boolean {
+    return this.rowConfigs.some(r => r.label === label && this.sameSection(r.section, section));
+  }
+
+  /** Az adott szint első még nem használt sorjele: szintnél 1, 2, 3…, szint nélkül A, B, C… */
+  nextRowLabel(section?: string | null): string {
     let index = 1;
-    while (this.rowConfigs.some(r => r.label === this.getRowLabel(index))) {
+    const labelOf = (i: number) => (section ? String(i) : this.getRowLabel(i));
+    while (this.rowExists(labelOf(index), section)) {
       index++;
     }
-    return this.getRowLabel(index);
+    return labelOf(index);
   }
 
   addRow(): void {
-    const label = this.newRowLabel.trim().toUpperCase() || this.nextRowLabel();
-    if (this.rowConfigs.some(r => r.label === label)) {
-      alert('Ez a sor jel már létezik.');
+    // a "-" és "|" a szék kulcsában elválasztó jel
+    const typed = this.newRowLabel.replace(/[-|]/g, '').trim().toUpperCase();
+    const label = typed || this.nextRowLabel(this.newRowSection);
+    if (this.rowExists(label, this.newRowSection)) {
+      alert('Ez a sor jel ezen a szinten már létezik.');
       return;
     }
     this.rowConfigs.push({
       label,
       columns: Number(this.newRowColumns) || 1,
-      section: this.newRowSection
+      section: this.newRowSection,
+      aisle: false
     });
     this.newRowLabel = '';
     this.newRowColumns = 10;
-    this.newRowSection = null;
     this.rebuildSeatsFromRows();
   }
 
   removeRow(row: RowConfig): void {
-    if (!confirm(`Biztosan törlöd a "${row.label}" sort?`)) {
+    if (!confirm(`Biztosan törlöd a "${row.section ? row.section + ' ' : ''}${row.label}" sort?`)) {
       return;
     }
-    this.rowConfigs = this.rowConfigs.filter(r => r.label !== row.label);
+    this.rowConfigs = this.rowConfigs.filter(r => r !== row);
     this.rebuildSeatsFromRows();
   }
 
   updateRowConfig(): void {
+    // szintváltásnál a sorjelnek az új szinten is egyedinek kell lennie
+    const seen = new Set<string>();
+    for (const row of this.rowConfigs) {
+      let key = `${row.section || ''}|${row.label}`;
+      if (seen.has(key)) {
+        row.label = this.nextRowLabel(row.section);
+        key = `${row.section || ''}|${row.label}`;
+      }
+      seen.add(key);
+    }
     this.rebuildSeatsFromRows();
   }
 
   rebuildSeatsFromRows(): void {
-    const seatMap = new Map<string, Seat>();
+    const valid = new Set(this.rowConfigs.map(r => `${r.section || ''}|${r.label}`));
+    const exact = new Map<string, Seat>();
+    // csak a már nem létező (szintet váltott) sorok székei vihetők át az új helyükre
+    const orphans = new Map<string, Seat>();
     for (const seat of this.seatLayout) {
-      seatMap.set(`${seat.rowLabel}-${seat.column}`, seat);
+      exact.set(`${seat.section || ''}|${seat.rowLabel}-${seat.column}`, seat);
+      if (!valid.has(`${seat.section || ''}|${seat.rowLabel}`) && !orphans.has(`${seat.rowLabel}-${seat.column}`)) {
+        orphans.set(`${seat.rowLabel}-${seat.column}`, seat);
+      }
     }
 
     const newSeats: Seat[] = [];
     let rowIndex = 1;
     for (const row of this.rowConfigs) {
       for (let col = 1; col <= row.columns; col++) {
-        const key = `${row.label}-${col}`;
-        const existing = seatMap.get(key);
+        const existing = exact.get(`${row.section || ''}|${row.label}-${col}`) ?? orphans.get(`${row.label}-${col}`);
         newSeats.push({
           row: rowIndex,
           column: col,
           blocked: existing?.blocked ?? false,
           sector: existing?.sector ?? null,
           price: existing?.price ?? null,
-          section: row.section ?? existing?.section ?? null,
+          section: row.section || null,
           rowLabel: row.label
         });
       }
@@ -359,15 +384,12 @@ export class AuditoriaAdminComponent implements OnInit {
   }
 
   getSeatsForRow(row: RowConfig): Seat[] {
-    return this.seatLayout.filter(seat => seat.rowLabel === row.label);
+    return this.seatLayout.filter(seat => seat.rowLabel === row.label && this.sameSection(seat.section, row.section));
   }
 
-  /** A sor szintjének (szint nélkül: a „Nincs szint” beállításnak) megfelelően van-e folyosó a sor közepén. */
+  /** Folyosó a sor közepén (soronként kapcsolható). */
   rowHasAisle(row: RowConfig): boolean {
-    if (row.columns < 2) return false;
-    return row.section
-      ? !!this.sections.find(s => s.name === row.section)?.aisle
-      : this.noSectionAisle;
+    return !!row.aisle && row.columns >= 2;
   }
 
   hasAisleBefore(row: RowConfig, index: number): boolean {
@@ -403,16 +425,13 @@ export class AuditoriaAdminComponent implements OnInit {
       return;
     }
     this.sections = this.sections.filter(s => s.name !== section.name);
-    for (const seat of this.seatLayout) {
-      if (seat.section === section.name) {
-        seat.section = null;
-      }
-    }
     for (const row of this.rowConfigs) {
       if (row.section === section.name) {
         row.section = null;
       }
     }
+    // a szint nélkülivé vált sorok jelei ütközhetnek, ezeket új jelet kapnak
+    this.updateRowConfig();
   }
 
   updateSectorPrice(sector: Sector): void {
@@ -441,12 +460,13 @@ export class AuditoriaAdminComponent implements OnInit {
   }
 
   getSeatTitle(seat: Seat): string {
+    const place = (seat.section ? seat.section + ' ' : '') + `${seat.rowLabel}-${seat.column}`;
     if (seat.blocked) {
-      return `${seat.rowLabel}-${seat.column} • tiltott`;
+      return `${place} • tiltott`;
     }
     const sector = this.getSeatSector(seat);
     const price = this.getSeatPrice(seat);
-    return `${seat.rowLabel}-${seat.column}` + (sector ? ` • ${sector.name}` : '') + (price !== null ? ` • ${price} Ft` : '');
+    return place + (sector ? ` • ${sector.name}` : '') + (price !== null ? ` • ${price} Ft` : '');
   }
 
   getSectionColor(sectionName?: string | null): string {

@@ -9,6 +9,7 @@ import { AdminService, InvoiceBuyer, PaymentMethod, PosInvoice, Ticket, TicketCa
 import { TicketPrintComponent } from '../ticket-print/ticket-print.component';
 import { AuthService } from '../../../../services/auth.service';
 import { PosServicesComponent } from './pos-services.component';
+import { rowLabelOf, seatNumberOf, seatLabel } from '../../../../core/util/seat';
 
 interface DayTab {
   key: string;
@@ -41,6 +42,10 @@ export class PosAdminComponent implements OnInit, OnDestroy {
   mode: SaleMode = 'seats';
   area: 'cinema' | 'services' = 'cinema';
   selectedSeats: Seat[] = [];
+
+  readonly rowLabelOf = rowLabelOf;
+  readonly seatNumberOf = seatNumberOf;
+  readonly seatLabel = seatLabel;
 
   // Székenkénti jegykategória (normál / Dolgozó jegy / Élménykártya) és a Dolgozó jegy beállított ára
   seatCategories: Record<string, TicketCategory> = {};
@@ -410,7 +415,7 @@ export class PosAdminComponent implements OnInit, OnDestroy {
       next: (result) => {
         this.processing = false;
         this.voidTarget = null;
-        this.heldNotice = `↩️ A(z) ${ticket.ticket_number} jegy sztornózva, a(z) ${ticket.seat_key} szék újra szabad.`
+        this.heldNotice = `↩️ A(z) ${ticket.ticket_number} jegy sztornózva, a(z) ${seatLabel(ticket.seat_key)} szék újra szabad.`
           + (result.nav_correction_needed ? ' Figyelem: erre a napra már volt NAV-beküldés, ezért helyesbítést kell beküldeni.' : '');
         this.refresh();
       },
@@ -781,7 +786,7 @@ export class PosAdminComponent implements OnInit, OnDestroy {
       seat_categories: this.seatCategoriesPayload()
     }).subscribe({
       next: (response) => {
-        const seats = this.selectedSeats.map(s => s.key).join(', ');
+        const seats = this.selectedSeats.map(s => seatLabel(s.key)).join(', ');
         this.heldNotice = `📌 Foglalás rögzítve (#${response.reservation.id}): ${this.holdName.trim()}, ${seats}.`
           + (this.holdEmail.trim() ? ' A visszaigazoló e-mailt elküldtük.' : '');
         this.processing = false;

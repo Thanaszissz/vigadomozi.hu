@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Showtime;
+use App\Support\SeatKey;
 
 class PricingService
 {
@@ -42,6 +43,8 @@ class PricingService
         // 2. & 3. Auditorium layout
         if ($showtime->auditorium && $showtime->auditorium->layout_json) {
             $layout = $showtime->auditorium->layout_json;
+            $parts = SeatKey::parse($seatKey);
+            $legacyKey = SeatKey::make(null, $parts['row'], (int) $parts['number']);
             
             // New schema: flat seats array with sector/price
             if (isset($layout['seats']) && is_array($layout['seats'])) {
@@ -51,7 +54,7 @@ class PricingService
                         $rowLabel = chr(64 + (int) $seat['row']);
                         $key = $rowLabel . '-' . str_pad((string) $seat['column'], 2, '0', STR_PAD_LEFT);
                     }
-                    if ($key === $seatKey) {
+                    if ($key === $seatKey || ($parts['section'] !== null && $key === $legacyKey)) {
                         // A szektor ára az irányadó (így a szektor árának módosítása a már kijelölt székekre is érvényes)
                         if (isset($seat['sector']) && isset($layout['sectors']) && is_array($layout['sectors'])) {
                             foreach ($layout['sectors'] as $sector) {
@@ -70,10 +73,10 @@ class PricingService
             }
             
             // Find the row
-            [$rowLabel] = explode('-', $seatKey);
+            $rowLabel = $parts['row'];
             
             foreach ($layout['rows'] ?? [] as $row) {
-                if ($row['label'] === $rowLabel) {
+                if ((string) $row['label'] === $rowLabel && ($row['section'] ?? null) == $parts['section']) {
                     // Find seat in row
                     foreach ($row['seats'] ?? [] as $seat) {
                         if ($seat['key'] === $seatKey) {

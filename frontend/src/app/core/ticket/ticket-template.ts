@@ -6,6 +6,7 @@ export interface TicketView {
   movie_title: string;
   starts_at: string;
   auditorium_name: string | null;
+  section?: string | null;
   row_label: string;
   seat_number: number | null;
   price_amount: number;
@@ -78,7 +79,9 @@ export function ticketMarkup(t: TicketView, scale = 1): string {
   const when = formatWhen(service ? (t.sold_at ?? t.starts_at) : t.starts_at);
   const whenLine = tag ? `${when} • ${tag}` : when;
   const seat = t.seat_number ?? '—';
-  const hall = t.auditorium_name || '—';
+  // szintes székeknél a terem helyett a szint neve szerepel a jegyen
+  const hall = t.section || t.auditorium_name || '—';
+  const hallLabel = t.section ? 'Szint' : 'Terem';
 
   const facts = service
     ? `<div class="tk-abs tk-facts left">
@@ -89,7 +92,7 @@ export function ticketMarkup(t: TicketView, scale = 1): string {
         <div class="tk-fact"><span>Ár</span><b>${esc(formatMoney(t.price_amount))}</b></div>
       </div>`
     : `<div class="tk-abs tk-facts left">
-        <div class="tk-fact"><span>Terem</span><b>${esc(hall)}</b></div>
+        <div class="tk-fact"><span>${hallLabel}</span><b>${esc(hall)}</b></div>
         <div class="tk-fact"><span>Sor</span><b>${esc(t.row_label)}</b></div>
       </div>
       <div class="tk-abs tk-facts right">

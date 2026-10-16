@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\SeatKey;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
@@ -45,6 +46,14 @@ class Ticket extends Model
         'sold_at' => 'datetime',
         'voided_at' => 'datetime',
     ];
+
+    /** A jegyen szereplő szint (a szék kulcsából), szint nélküli széknél null. */
+    protected $appends = ['section'];
+
+    public function getSectionAttribute(): ?string
+    {
+        return SeatKey::section($this->seat_key);
+    }
 
     public function reservation()
     {
