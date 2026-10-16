@@ -15,9 +15,12 @@ class ShowtimeController extends Controller
         // A terem teljes elrendezése (layout_json) a listához nem kell, csak a neve
         $query = Showtime::with(['movie', 'auditorium:id,name']);
 
+        // A műsorlista az aktuális naptól kezdve mutatja az előadásokat, a korábbi napok előadásai nem kellenek
+        // (konkrét nap kérhető a date paraméterrel)
         if ($request->has('date')) {
-            $date = $request->date;
-            $query->whereDate('starts_at', $date);
+            $query->whereDate('starts_at', $request->date);
+        } else {
+            $query->where('starts_at', '>=', now('Europe/Budapest')->startOfDay()->utc());
         }
 
         if ($request->has('movie_id')) {

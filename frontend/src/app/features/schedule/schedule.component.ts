@@ -28,9 +28,13 @@ export class ScheduleComponent implements OnInit {
   ngOnInit(): void {
     this.apiService.getShowtimes().subscribe({
       next: (showtimes) => {
-        const sorted = [...showtimes].sort(
-          (a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime()
-        );
+        // csak a mai naptól kezdődő előadások (a szerver is így szűr, ez a már megnyitott oldal éjfél utáni frissüléséhez kell)
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const sorted = showtimes
+          .filter(showtime => new Date(showtime.starts_at).getTime() >= today.getTime())
+          .sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime());
 
         const dayNames = ['Vasárnap', 'Hétfő', 'Kedd', 'Szerda', 'Csütörtök', 'Péntek', 'Szombat'];
         const monthNames = ['Január', 'Február', 'Március', 'Április', 'Május', 'Június', 'Július', 'Augusztus', 'Szeptember', 'Október', 'November', 'December'];
