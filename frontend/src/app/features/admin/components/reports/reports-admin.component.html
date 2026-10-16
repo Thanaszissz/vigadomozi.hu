@@ -6,13 +6,7 @@
 
   <div class="date-selector">
     <label for="reportDate">Dátum:</label>
-    <input 
-      type="date" 
-      id="reportDate" 
-      [(ngModel)]="selectedDate" 
-      (change)="loadReport()"
-      class="date-input"
-    />
+    <app-date-input id="reportDate" [(ngModel)]="selectedDate" (ngModelChange)="loadReport()"></app-date-input>
     <button (click)="loadReport()" class="btn-refresh">🔄 Frissítés</button>
     <button (click)="exportPDF()" class="btn-export" *ngIf="!loading && !error && summary">📄 PDF exportálás</button>
   </div>

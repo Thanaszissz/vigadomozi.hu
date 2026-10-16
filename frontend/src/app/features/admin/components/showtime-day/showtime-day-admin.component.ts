@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { DateInputComponent } from '../../../../shared/date-time-inputs.component';
 import { Router } from '@angular/router';
 import { AdminService, ShowtimeDay, Ticket, categoryLabel } from '../../../../services/admin.service';
 import { paymentLabel } from '../ticket-print/ticket-print.component';
@@ -9,7 +10,7 @@ import { paymentLabel } from '../ticket-print/ticket-print.component';
 @Component({
   selector: 'app-showtime-day-admin',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, DateInputComponent],
   templateUrl: './showtime-day-admin.component.html',
   styleUrls: ['./showtime-day-admin.component.css']
 })

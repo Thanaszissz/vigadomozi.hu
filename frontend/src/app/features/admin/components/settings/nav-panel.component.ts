@@ -1,12 +1,13 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { DateInputComponent, TimeInputComponent } from '../../../../shared/date-time-inputs.component';
 import { AdminService, NavPreview, NavSendPlan, NavState, NavTestResult } from '../../../../services/admin.service';
 
 @Component({
   selector: 'app-nav-panel',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, DateInputComponent, TimeInputComponent],
   templateUrl: './nav-panel.component.html',
   styleUrls: ['./nav-panel.component.css']
 })

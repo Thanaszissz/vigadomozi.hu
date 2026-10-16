@@ -1,13 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { DateInputComponent, TimeInputComponent } from '../../../../shared/date-time-inputs.component';
 import { Router } from '@angular/router';
 import { AdminService } from '../../../../services/admin.service';
 
 @Component({
   selector: 'app-showtimes-admin',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, DateInputComponent, TimeInputComponent],
   templateUrl: './showtimes-admin.component.html',
   styleUrls: ['./showtimes-admin.component.css']
 })
@@ -123,7 +124,7 @@ export class ShowtimesAdminComponent implements OnInit {
     this.auditoriumSearchTerm = '';
     const now = new Date();
     this.dateString = this.formatDateForInput(now);
-    this.timeString = this.formatTimeForInput(now);
+    this.timeString = '18:00';
     this.isNewShowtime = true;
     this.showEditModal = true;
   }
@@ -135,6 +136,11 @@ export class ShowtimesAdminComponent implements OnInit {
 
   saveShowtime(): void {
     if (!this.editingShowtime) return;
+
+    if (!this.dateString || !this.timeString) {
+      this.error = 'Adj meg érvényes dátumot (éééé-hh-nn) és időpontot (24 órás, pl. 18:00).';
+      return;
+    }
 
     const startsAt = this.combineDateAndTime(this.dateString, this.timeString);
 

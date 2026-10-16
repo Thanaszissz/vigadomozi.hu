@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule, formatDate } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { DateInputComponent } from '../../../../shared/date-time-inputs.component';
 import { Router } from '@angular/router';
 import { AdminService, DailyClose, SalesLogEntry, Ticket, TicketCategory, categoryLabel } from '../../../../services/admin.service';
 import { AuthService } from '../../../../services/auth.service';
@@ -33,7 +34,7 @@ const PRINT_CSS = `
 @Component({
   selector: 'app-daily-close-admin',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, DateInputComponent],
   templateUrl: './daily-close-admin.component.html',
   styleUrls: ['./daily-close-admin.component.css']
 })

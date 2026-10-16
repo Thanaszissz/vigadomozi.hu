@@ -1,13 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { DateInputComponent } from '../../../../shared/date-time-inputs.component';
 import { Router } from '@angular/router';
 import { ActivityLogEntry, ActivityLogPage, ActivityMeta, AdminService } from '../../../../services/admin.service';
 
 @Component({
   selector: 'app-activity-log-admin',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, DateInputComponent],
   templateUrl: './activity-log-admin.component.html',
   styleUrls: ['./activity-log-admin.component.css']
 })

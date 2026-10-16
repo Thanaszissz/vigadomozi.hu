@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { DateInputComponent } from '../../../../shared/date-time-inputs.component';
 import { Router } from '@angular/router';
 import { AdminService, Ticket, TicketPage, categoryLabel } from '../../../../services/admin.service';
 import { TicketPrintComponent, paymentLabel } from '../ticket-print/ticket-print.component';
@@ -8,7 +9,7 @@ import { TicketPrintComponent, paymentLabel } from '../ticket-print/ticket-print
 @Component({
   selector: 'app-tickets-admin',
   standalone: true,
-  imports: [CommonModule, FormsModule, TicketPrintComponent],
+  imports: [CommonModule, FormsModule, DateInputComponent, TicketPrintComponent],
   templateUrl: './tickets-admin.component.html',
   styleUrls: ['./tickets-admin.component.css']
 })

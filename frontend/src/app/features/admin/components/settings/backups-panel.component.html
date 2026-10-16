@@ -56,7 +56,7 @@
 
       <label class="field" *ngIf="form.frequency === 'daily' || form.frequency === 'weekly'">
         <span>Időpont</span>
-        <input type="time" [(ngModel)]="form.time" [disabled]="!form.enabled" />
+        <app-time-input [(ngModel)]="form.time" [disabled]="!form.enabled"></app-time-input>
       </label>
 
       <label class="field">

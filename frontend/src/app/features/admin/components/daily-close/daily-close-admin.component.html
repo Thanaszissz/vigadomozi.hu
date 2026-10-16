@@ -8,7 +8,7 @@
     <button type="button" class="btn small" (click)="shiftDay(-1)">‹</button>
     <label>
       <span>Nap</span>
-      <input type="date" [(ngModel)]="date" (ngModelChange)="load()" />
+      <app-date-input [(ngModel)]="date" (ngModelChange)="load()"></app-date-input>
     </label>
     <button type="button" class="btn small" (click)="shiftDay(1)">›</button>
 

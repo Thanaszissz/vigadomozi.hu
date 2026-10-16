@@ -124,7 +124,7 @@
     <div class="form-grid" [class.off]="!schedule.auto_enabled">
       <label class="field">
         <span>Időpont (naponta, budapesti idő)</span>
-        <input type="time" [(ngModel)]="schedule.auto_time" [disabled]="!schedule.auto_enabled" />
+        <app-time-input [(ngModel)]="schedule.auto_time" [disabled]="!schedule.auto_enabled"></app-time-input>
       </label>
       <label class="field">
         <span>Elmaradt napok pótlása (ennyi napra visszamenőleg)</span>
@@ -162,7 +162,7 @@
     <div class="date-row">
       <label class="field inline">
         <span>Tárgynap</span>
-        <input type="date" [(ngModel)]="date" [max]="data.today" (ngModelChange)="loadPreview()" />
+        <app-date-input [(ngModel)]="date" [max]="data.today" (ngModelChange)="loadPreview()"></app-date-input>
       </label>
       <button type="button" class="btn small" (click)="setDate('yesterday')">Tegnap</button>
       <button type="button" class="btn small" (click)="setDate('today')">Ma</button>

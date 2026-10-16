@@ -149,23 +149,19 @@
 
         <div class="form-row">
           <div class="form-group">
-            <label>Dátum</label>
-            <input 
-              type="date" 
-              [(ngModel)]="dateString" 
-              name="dateString" 
-              class="form-input" 
-              required>
+            <label>Dátum (éééé-hh-nn)</label>
+            <app-date-input
+              [(ngModel)]="dateString"
+              name="dateString"
+              required></app-date-input>
           </div>
 
           <div class="form-group">
-            <label>Időpont (24 órás)</label>
-            <input 
-              type="time" 
-              [(ngModel)]="timeString" 
-              name="timeString" 
-              class="form-input" 
-              required>
+            <label>Időpont (24 órás, pl. 18:00)</label>
+            <app-time-input
+              [(ngModel)]="timeString"
+              name="timeString"
+              required></app-time-input>
           </div>
         </div>
 

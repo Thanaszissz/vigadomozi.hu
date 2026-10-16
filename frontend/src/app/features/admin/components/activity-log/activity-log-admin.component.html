@@ -7,11 +7,11 @@
   <div class="filters">
     <label>
       <span>Ettől</span>
-      <input type="date" [(ngModel)]="from" (ngModelChange)="load()" />
+      <app-date-input [(ngModel)]="from" (ngModelChange)="load()"></app-date-input>
     </label>
     <label>
       <span>Eddig</span>
-      <input type="date" [(ngModel)]="to" (ngModelChange)="load()" />
+      <app-date-input [(ngModel)]="to" (ngModelChange)="load()"></app-date-input>
     </label>
     <label>
       <span>Felhasználó</span>

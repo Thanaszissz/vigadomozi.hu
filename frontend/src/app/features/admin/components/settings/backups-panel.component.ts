@@ -1,6 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { TimeInputComponent } from '../../../../shared/date-time-inputs.component';
 import { Router } from '@angular/router';
 import { AdminService, BackupItem, BackupOverview, BackupRestorePlan } from '../../../../services/admin.service';
 import { AuthService } from '../../../../services/auth.service';
@@ -8,7 +9,7 @@ import { AuthService } from '../../../../services/auth.service';
 @Component({
   selector: 'app-backups-panel',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TimeInputComponent],
   templateUrl: './backups-panel.component.html',
   styleUrls: ['./backups-panel.component.css']
 })
