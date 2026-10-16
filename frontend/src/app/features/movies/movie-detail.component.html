@@ -22,6 +22,7 @@
 
         <div class="info-section">
           <h1>{{ movie.title }}</h1>
+          <app-movie-badges [badges]="movie.badges"></app-movie-badges>
           <p *ngIf="movie.film_info" class="film-info">{{ movie.film_info }}</p>
           <div class="meta-info">
             <span *ngIf="movie.duration_min" class="duration">⏱️ {{ movie.duration_min }} perc</span>

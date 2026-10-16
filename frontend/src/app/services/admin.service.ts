@@ -12,6 +12,7 @@ export interface Movie {
   rating?: 'general' | '6' | '12' | '16' | '18';
   genre?: string;
   film_info?: string | null;
+  badges?: string[] | null;
   duration_min?: number;
   poster_path?: string;
   trailer_youtube_url?: string;

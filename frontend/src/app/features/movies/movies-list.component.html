@@ -18,6 +18,7 @@
         </div>
         <div class="movie-info">
           <h2>{{ movie.title }}</h2>
+          <app-movie-badges [badges]="movie.badges"></app-movie-badges>
           <p class="film-info" *ngIf="movie.film_info">{{ movie.film_info }}</p>
           <p class="duration" *ngIf="movie.duration_min">⏱️ {{ movie.duration_min }} perc</p>
           <p class="description">{{ movie.description | slice:0:100 }}...</p>

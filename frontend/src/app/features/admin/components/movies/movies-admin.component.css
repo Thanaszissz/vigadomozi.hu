@@ -139,6 +139,23 @@ h1 {
   color: #e8d5b7;
 }
 
+.badge-picker { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0; }
+
+.badge-choice {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1.5px solid #5c3d2e;
+  background: #4a3425;
+  color: #e8d5b7;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.badge-choice:hover { border-color: #d4a574; }
+
+.badge-choice.selected { background: #c62828; border-color: #c62828; color: #fff; }
+
 .film-info {
   color: #e8d5b7;
   font-size: 13px;

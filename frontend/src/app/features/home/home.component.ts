@@ -3,6 +3,7 @@ import { RouterLink } from "@angular/router";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { ApiService } from "../../core/api/api.service";
+import { MovieBadgesComponent } from "../../shared/movie-badges.component";
 import { youtubeId } from "../../core/util/html";
 import { DomSanitizer, SafeResourceUrl } from "@angular/platform-browser";
 
@@ -14,6 +15,7 @@ interface ShowtimeWithMovie {
     title: string;
     description: string;
     film_info?: string | null;
+    badges?: string[] | null;
     poster_path: string;
   };
 }
@@ -30,7 +32,7 @@ interface WeekDay {
 @Component({
   selector: "app-home",
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule],
+  imports: [CommonModule, RouterLink, FormsModule, MovieBadgesComponent],
   templateUrl: "./home.component.html",
   styleUrls: ["./home.component.css"]
 })

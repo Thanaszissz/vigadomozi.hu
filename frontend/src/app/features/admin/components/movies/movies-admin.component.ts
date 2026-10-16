@@ -3,15 +3,17 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AdminService, Movie } from '../../../../services/admin.service';
+import { MOVIE_BADGES, MovieBadgesComponent } from '../../../../shared/movie-badges.component';
 
 @Component({
   selector: 'app-movies-admin',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MovieBadgesComponent],
   templateUrl: './movies-admin.component.html',
   styleUrls: ['./movies-admin.component.css']
 })
 export class MoviesAdminComponent implements OnInit {
+  readonly availableBadges = MOVIE_BADGES;
   movies: Movie[] = [];
   searchTerm: string = '';
   currentPage: number = 1;
@@ -49,7 +51,7 @@ export class MoviesAdminComponent implements OnInit {
   }
 
   editMovie(movie: Movie): void {
-    this.editingMovie = { ...movie };
+    this.editingMovie = { ...movie, badges: [...(movie.badges ?? [])] };
     this.isCreating = false;
     this.showEditModal = true;
     this.selectedFile = null;
@@ -65,12 +67,23 @@ export class MoviesAdminComponent implements OnInit {
       duration_min: 0,
       rating: 'general',
       film_info: '',
+      badges: [],
       trailer_youtube_url: ''
     } as Movie;
     this.isCreating = true;
     this.showEditModal = true;
     this.selectedFile = null;
     this.previewUrl = null;
+  }
+
+  hasBadge(key: string): boolean {
+    return !!this.editingMovie?.badges?.includes(key);
+  }
+
+  toggleBadge(key: string): void {
+    if (!this.editingMovie) return;
+    const current = this.editingMovie.badges ?? [];
+    this.editingMovie.badges = current.includes(key) ? current.filter(b => b !== key) : [...current, key];
   }
 
   closeModal(): void {
@@ -103,6 +116,14 @@ export class MoviesAdminComponent implements OnInit {
     formData.append('duration_min', String(this.editingMovie.duration_min || this.editingMovie.duration_minutes || 0));
     formData.append('rating', this.editingMovie.rating || 'general');
     formData.append('film_info', this.editingMovie.film_info || '');
+
+    // a jelvények tömbként mennek; ha egy sincs kiválasztva, az üres érték törli a korábbiakat
+    const badges = this.editingMovie.badges ?? [];
+    if (badges.length) {
+      badges.forEach(badge => formData.append('badges[]', badge));
+    } else {
+      formData.append('badges', '');
+    }
 
     if (this.selectedFile) {
       formData.append('poster_file', this.selectedFile);

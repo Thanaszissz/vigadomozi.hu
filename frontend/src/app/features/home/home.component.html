@@ -56,6 +56,7 @@
           <img [src]="showtime.movie.poster_path" [alt]="showtime.movie.title" class="poster" />
           <div class="card-info">
             <h3 class="movie-title">{{ showtime.movie.title }}</h3>
+            <app-movie-badges [badges]="showtime.movie.badges"></app-movie-badges>
             <p class="movie-type" *ngIf="showtime.movie.film_info">{{ showtime.movie.film_info }}</p>
             <p class="movie-desc">{{ showtime.movie.description }}</p>
             <div class="time-row">

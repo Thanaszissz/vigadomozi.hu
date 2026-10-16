@@ -3,11 +3,12 @@ import { RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService, Movie } from '../../core/api/api.service';
+import { MovieBadgesComponent } from '../../shared/movie-badges.component';
 
 @Component({
   selector: 'app-movies-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule],
+  imports: [CommonModule, RouterLink, FormsModule, MovieBadgesComponent],
   templateUrl: './movies-list.component.html',
   styleUrls: ['./movies-list.component.css']
 })

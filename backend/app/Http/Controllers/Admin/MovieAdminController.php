@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Movie;
+use App\Support\MovieBadges;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class MovieAdminController extends Controller
 {
@@ -29,6 +31,8 @@ class MovieAdminController extends Controller
             'duration_min' => ['nullable', 'integer'],
             'rating' => ['nullable', 'in:general,6,12,16,18'],
             'film_info' => ['nullable', 'string', 'max:255'],
+            'badges' => ['nullable', 'array'],
+            'badges.*' => ['string', Rule::in(MovieBadges::keys())],
         ]);
 
         if ($request->hasFile('poster_file')) {
@@ -53,6 +57,8 @@ class MovieAdminController extends Controller
             'duration_min' => ['sometimes', 'integer'],
             'rating' => ['sometimes', 'in:general,6,12,16,18'],
             'film_info' => ['nullable', 'string', 'max:255'],
+            'badges' => ['nullable', 'array'],
+            'badges.*' => ['string', Rule::in(MovieBadges::keys())],
         ]);
 
         if ($request->hasFile('poster_file')) {
@@ -90,6 +96,8 @@ class MovieAdminController extends Controller
             'duration_min' => ['nullable', 'integer'],
             'rating' => ['nullable', 'in:general,6,12,16,18'],
             'film_info' => ['nullable', 'string', 'max:255'],
+            'badges' => ['nullable', 'array'],
+            'badges.*' => ['string', Rule::in(MovieBadges::keys())],
         ]);
 
         if ($request->hasFile('poster_file')) {

@@ -26,6 +26,7 @@ export interface Movie {
   duration_min: number;
   rating: string;
   film_info?: string | null;
+  badges?: string[] | null;
   created_at: string;
   updated_at: string;
 }

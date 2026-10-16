@@ -56,7 +56,7 @@ class DemoProgramSeeder extends Seeder
         }
 
         $fill = [];
-        foreach (['description', 'poster_path', 'trailer_youtube_url', 'duration_min', 'film_info'] as $column) {
+        foreach (['description', 'poster_path', 'trailer_youtube_url', 'duration_min', 'film_info', 'badges'] as $column) {
             if (empty($existing->{$column}) && !empty($data[$column] ?? null)) {
                 $fill[$column] = $data[$column];
             }
@@ -163,6 +163,7 @@ class DemoProgramSeeder extends Seeder
             [
                 'title' => 'Még egy kívánság',
                 'film_info' => 'magyar vígjáték, 108 perc, 2026',
+                'badges' => ['premier', 'magyar'],
                 'description' => 'Juli harmincéves zenei menedzser, aki szerint az élet folyamatosan keresztbe tesz neki. Egy kínos baki után utolsó esélyként egy széteső rockzenekart bíznak rá, ugyanazon az éjszakán pedig a kezébe kerül egy füzet: amit beleír, az eltűnik a világból.',
                 'poster_file' => 'meg-egy-kivansag.webp',
                 'trailer_youtube_url' => 'https://www.youtube.com/watch?v=ThGsC3DZL1Y',
@@ -172,6 +173,7 @@ class DemoProgramSeeder extends Seeder
             [
                 'title' => 'Digger',
                 'film_info' => 'amerikai fekete komédia, 129 perc, 2026',
+                'badges' => ['premier', 'feliratos'],
                 'description' => 'A Birdman rendezője, Alejandro G. Iñárritu Tom Cruise főszereplésével készítette legújabb fekete komédiáját, amelyben a világ legnagyobb hatalmú embere mindenáron be akarja bizonyítani, hogy ő a legnagyobb.',
                 'poster_file' => 'digger.webp',
                 'trailer_youtube_url' => 'https://www.youtube.com/watch?v=RQIUW81bg5g',
@@ -199,6 +201,7 @@ class DemoProgramSeeder extends Seeder
             [
                 'title' => 'Az örökség',
                 'film_info' => 'magyar thriller, 89 perc, 2026',
+                'badges' => ['magyar'],
                 'description' => 'Árpi bácsi évek óta egyedül él, és az összes megtakarított pénzét elköltötte. Amikor két fia rájön, hogy a pénz egy fiatal lányra ment, kezdetét veszi életük leghosszabb éjszakája.',
                 'poster_file' => 'az-orokseg.webp',
                 'trailer_youtube_url' => 'https://www.youtube.com/watch?v=vBe0rS8Kh7g',
@@ -208,6 +211,7 @@ class DemoProgramSeeder extends Seeder
             [
                 'title' => 'Street Fighter',
                 'film_info' => 'amerikai akciófilm, 119 perc, 2026',
+                'badges' => ['premier'],
                 'description' => '1993-ban járunk: a két elidegenedett utcai harcos, Ryu és Ken Masters újra visszaszáll a csatába, amikor a titokzatos Chun-Li beveszi őket a következő World Warrior versenybe.',
                 'poster_file' => 'street-fighter.webp',
                 'trailer_youtube_url' => 'https://www.youtube.com/watch?v=d0OurRWxx5w',
@@ -226,6 +230,7 @@ class DemoProgramSeeder extends Seeder
             [
                 'title' => 'Heidi és a kis hiúz',
                 'film_info' => 'családi animációs film, 79 perc, 2026',
+                'badges' => ['szinkronizalt'],
                 'description' => 'Heidi nagyapjával él egy hegyvidéki kunyhóban. Amikor egy sérült hiúzkölyköt talál, a szárnyai alá veszi és ápolni kezdi, de a kis hiúznak vissza kell térnie a családjához.',
                 'poster_file' => 'heidi-es-a-kis-hiuz.webp',
                 'trailer_youtube_url' => 'https://www.youtube.com/watch?v=YpcRhHoFZCo',
