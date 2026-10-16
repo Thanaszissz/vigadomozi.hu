@@ -78,6 +78,7 @@ class AuditoriumController extends Controller
             'sectors' => [],
             'sections' => [],
             'rows' => [],
+            'no_section_aisle' => (bool) ($auditorium->layout_json['no_section_aisle'] ?? false),
         ]);
     }
 
