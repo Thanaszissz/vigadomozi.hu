@@ -96,8 +96,8 @@ export class ApiService {
 
   // Movies
   // Public API methods
-  getSiteStatus(): Observable<{ test_mode: boolean }> {
-    return this.http.get<{ test_mode: boolean }>(`${API_URL}/site-status`);
+  getSiteStatus(): Observable<{ test_mode: boolean; maintenance?: boolean; maintenance_message?: string | null }> {
+    return this.http.get<{ test_mode: boolean; maintenance?: boolean; maintenance_message?: string | null }>(`${API_URL}/site-status`);
   }
 
   getMovies(): Observable<Movie[]> {

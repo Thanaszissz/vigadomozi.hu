@@ -1,0 +1,32 @@
+<div class="card">
+  <h2>🛠️ Karbantartás mód</h2>
+  <p class="muted">
+    Rendszerfrissítéskor kapcsold be: a nyilvános oldal helyett karbantartási üzenet jelenik meg, és online vásárlás sem indítható.
+    Az admin felület és a pénztár (POS) közben használható. A már folyamatban lévő kártyás fizetések lezárulnak, a vásárló a fizetés utáni oldalt továbbra is látja.
+  </p>
+
+  <div *ngIf="loading" class="muted">Betöltés...</div>
+  <div *ngIf="error" class="alert">{{ error }}</div>
+  <div *ngIf="notice" class="ok">✅ {{ notice }}</div>
+
+  <ng-container *ngIf="!loading">
+    <div class="warn" *ngIf="maintenance">
+      ⚠️ A karbantartás mód <b>be van kapcsolva</b>: a látogatók most nem érik el az oldalt. Frissítés után ne felejtsd el kikapcsolni!
+    </div>
+
+    <label class="switch">
+      <input type="checkbox" [(ngModel)]="maintenance" (change)="toggle()" [disabled]="saving">
+      <span>Karbantartás mód (a nyilvános oldal nem elérhető)</span>
+    </label>
+
+    <div class="field">
+      <label for="maintenanceMessage">A látogatóknak megjelenő üzenet</label>
+      <textarea id="maintenanceMessage" rows="3" maxlength="500" [(ngModel)]="message" [placeholder]="defaultMessage"></textarea>
+      <span class="muted small">Ha üresen hagyod, ez az alapértelmezett üzenet jelenik meg: „{{ defaultMessage }}"</span>
+    </div>
+
+    <div class="row-actions">
+      <button type="button" class="btn" (click)="saveMessage()" [disabled]="saving">💾 Üzenet mentése</button>
+    </div>
+  </ng-container>
+</div>

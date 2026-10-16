@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\SimplePayController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\TheaterShowController;
 use App\Http\Controllers\Api\SiteStatusController;
+use App\Http\Middleware\BlockDuringMaintenance;
 
 // Auth routes (public)
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:30,1');
@@ -27,8 +28,8 @@ Route::get('/showtimes', [ShowtimeController::class, 'index']);
 Route::get('/showtimes/{showtime}', [ShowtimeController::class, 'show']);
 
 // Seat locking and reservation (a hold e-mailt is küld, ezért korlátozzuk a gyakoriságát)
-Route::post('/showtimes/{showtime}/lock', [SeatLockController::class, 'lock'])->middleware('throttle:20,1');
-Route::post('/showtimes/{showtime}/hold', [SeatLockController::class, 'hold'])->middleware('throttle:10,1');
+Route::post('/showtimes/{showtime}/lock', [SeatLockController::class, 'lock'])->middleware([BlockDuringMaintenance::class, 'throttle:20,1']);
+Route::post('/showtimes/{showtime}/hold', [SeatLockController::class, 'hold'])->middleware([BlockDuringMaintenance::class, 'throttle:10,1']);
 
 // Reservation management
 Route::get('/reservations/{reservation}', [ReservationController::class, 'show'])
@@ -36,7 +37,7 @@ Route::get('/reservations/{reservation}', [ReservationController::class, 'show']
 Route::get('/reservations/{reservation}/tickets', [ReservationController::class, 'tickets'])
     ->whereNumber('reservation')->middleware('throttle:30,1');
 Route::post('/reservations/{reservation}/pay', [ReservationController::class, 'pay'])
-    ->whereNumber('reservation')->middleware('throttle:20,1');
+    ->whereNumber('reservation')->middleware([BlockDuringMaintenance::class, 'throttle:20,1']);
 
 // Protected routes (auth required)
 Route::middleware(['auth:sanctum', 'abilities:admin:access'])->group(function () {

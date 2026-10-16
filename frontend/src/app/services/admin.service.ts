@@ -705,6 +705,15 @@ export class AdminService {
     return this.http.put<{ test_mode: boolean }>(`${this.apiUrl}/settings/test-mode`, { test_mode: testMode });
   }
 
+  // Beállítások: karbantartás mód
+  getMaintenance(): Observable<{ maintenance: boolean; message: string; default_message: string }> {
+    return this.http.get<{ maintenance: boolean; message: string; default_message: string }>(`${this.apiUrl}/settings/maintenance`);
+  }
+
+  saveMaintenance(maintenance: boolean, message: string): Observable<{ maintenance: boolean; message: string; default_message: string }> {
+    return this.http.put<{ maintenance: boolean; message: string; default_message: string }>(`${this.apiUrl}/settings/maintenance`, { maintenance, message });
+  }
+
   // Beállítások: OTP SimplePay
   getSimplePay(): Observable<SimplePaySettings> {
     return this.http.get<SimplePaySettings>(`${this.apiUrl}/settings/simplepay`);
