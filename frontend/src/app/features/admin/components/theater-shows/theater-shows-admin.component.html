@@ -12,10 +12,6 @@
     <div class="movie-card" *ngFor="let show of paginatedShows">
       <div class="movie-poster" [style.background-image]="show.poster_url ? 'url(' + show.poster_url + ')' : (show.poster_path ? 'url(' + show.poster_path + ')' : 'none')">
         <span *ngIf="!show.poster_url && !show.poster_path" class="no-poster">🎭</span>
-        <div class="rating-badge-card" *ngIf="show.rating" [ngClass]="'badge-' + show.rating">
-          <span *ngIf="show.rating === 'general'"></span>
-          <span *ngIf="show.rating !== 'general'">{{ show.rating }}</span>
-        </div>
       </div>
       <div class="movie-info">
         <p class="film-info category" *ngIf="show.category">{{ categoryLabel(show.category) }}</p>
@@ -161,47 +157,19 @@
             <section class="form-section">
               <h3>🏷️ Jelölések</h3>
 
-              <div class="form-grid">
-                <div class="form-group">
-                  <label>Korhatár besorolás</label>
-                  <div class="rating-selector">
-                    <label class="rating-option" [class.selected]="editingShow.rating === 'general'">
-                      <input type="radio" [(ngModel)]="editingShow.rating" name="rating" value="general">
-                      <div class="rating-badge badge-general">KORHATÁR NÉLKÜLI</div>
-                    </label>
-                    <label class="rating-option" [class.selected]="editingShow.rating === '6'">
-                      <input type="radio" [(ngModel)]="editingShow.rating" name="rating" value="6">
-                      <div class="rating-badge badge-6">6</div>
-                    </label>
-                    <label class="rating-option" [class.selected]="editingShow.rating === '12'">
-                      <input type="radio" [(ngModel)]="editingShow.rating" name="rating" value="12">
-                      <div class="rating-badge badge-12">12</div>
-                    </label>
-                    <label class="rating-option" [class.selected]="editingShow.rating === '16'">
-                      <input type="radio" [(ngModel)]="editingShow.rating" name="rating" value="16">
-                      <div class="rating-badge badge-16">16</div>
-                    </label>
-                    <label class="rating-option" [class.selected]="editingShow.rating === '18'">
-                      <input type="radio" [(ngModel)]="editingShow.rating" name="rating" value="18">
-                      <div class="rating-badge badge-18">18</div>
-                    </label>
-                  </div>
+              <div class="form-group">
+                <label>Jelvények</label>
+                <div class="badge-picker">
+                  <button
+                    type="button"
+                    class="badge-choice"
+                    *ngFor="let badge of availableBadges"
+                    [class.selected]="hasBadge(badge.key)"
+                    (click)="toggleBadge(badge.key)">
+                    {{ hasBadge(badge.key) ? '✓ ' : '' }}{{ badge.label }}
+                  </button>
                 </div>
-
-                <div class="form-group">
-                  <label>Jelvények</label>
-                  <div class="badge-picker">
-                    <button
-                      type="button"
-                      class="badge-choice"
-                      *ngFor="let badge of availableBadges"
-                      [class.selected]="hasBadge(badge.key)"
-                      (click)="toggleBadge(badge.key)">
-                      {{ hasBadge(badge.key) ? '✓ ' : '' }}{{ badge.label }}
-                    </button>
-                  </div>
-                  <small class="form-hint">A kijelölt jelvények az előadás kártyáján jelennek meg (pl. „Bemutató").</small>
-                </div>
+                <small class="form-hint">A kijelölt jelvények az előadás kártyáján jelennek meg (pl. „Bemutató").</small>
               </div>
             </section>
           </div>

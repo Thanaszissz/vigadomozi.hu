@@ -71,7 +71,6 @@ export class TheaterShowsAdminComponent implements OnInit {
       description: '',
       duration_minutes: 0,
       duration_min: 0,
-      rating: 'general',
       poster_path: '',
       trailer_youtube_url: ''
     } as TheaterShow;
@@ -123,7 +122,6 @@ export class TheaterShowsAdminComponent implements OnInit {
     formData.append('title', this.editingShow.title);
     formData.append('description', this.editingShow.description || '');
     formData.append('duration_min', String(this.editingShow.duration_min || this.editingShow.duration_minutes || 0));
-    formData.append('rating', this.editingShow.rating || 'general');
     formData.append('category', this.editingShow.category || '');
     formData.append('performer', this.editingShow.performer || '');
     formData.append('venue', this.editingShow.venue || '');

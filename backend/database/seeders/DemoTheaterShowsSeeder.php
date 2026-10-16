@@ -18,6 +18,11 @@ class DemoTheaterShowsSeeder extends Seeder
         $created = 0;
 
         foreach ($this->shows() as $data) {
+            if (isset($data['poster_file'])) {
+                $data['poster_path'] = rtrim((string) config('app.url'), '/') . '/posters/' . $data['poster_file'];
+                unset($data['poster_file']);
+            }
+
             $wanted = $this->normalize($data['title']);
             $existing = TheaterShow::all()->first(fn (TheaterShow $s) => $this->normalize($s->title) === $wanted);
 
@@ -28,7 +33,7 @@ class DemoTheaterShowsSeeder extends Seeder
             }
 
             $fill = [];
-            foreach (['category', 'performer', 'venue', 'show_info', 'description', 'duration_min', 'badges'] as $column) {
+            foreach (['category', 'performer', 'venue', 'show_info', 'description', 'duration_min', 'badges', 'poster_path'] as $column) {
                 if (empty($existing->{$column}) && !empty($data[$column] ?? null)) {
                     $fill[$column] = $data[$column];
                 }
@@ -57,7 +62,7 @@ class DemoTheaterShowsSeeder extends Seeder
                 'show_info' => 'vígjáték két részben, 120 perc',
                 'description' => 'Demóadat: könnyed, humoros színházi est két felvonásban, az egész család szórakoztatására.',
                 'duration_min' => 120,
-                'rating' => '12',
+                'poster_file' => 'tavaszi-vigjatekest.webp',
                 'badges' => ['premier', 'vendegjatek'],
             ],
             [
@@ -68,7 +73,7 @@ class DemoTheaterShowsSeeder extends Seeder
                 'show_info' => 'mesejáték bábokkal, 55 perc',
                 'description' => 'Demóadat: népmesei bábjáték a legkisebbeknek, dalokkal és közös játékkal.',
                 'duration_min' => 55,
-                'rating' => 'general',
+                'poster_file' => 'babszinhaz-aranyszoru-barany.webp',
                 'badges' => ['gyerekeknek'],
             ],
             [
@@ -79,7 +84,7 @@ class DemoTheaterShowsSeeder extends Seeder
                 'show_info' => 'komolyzenei és könnyűzenei hangverseny, 90 perc',
                 'description' => 'Demóadat: ismert dallamok koncertátiratokban, szünettel.',
                 'duration_min' => 90,
-                'rating' => 'general',
+                'poster_file' => 'oszi-hangversenyest.webp',
                 'badges' => ['ingyenes'],
             ],
             [
@@ -90,7 +95,7 @@ class DemoTheaterShowsSeeder extends Seeder
                 'show_info' => 'néptáncbemutató táncházzal, 100 perc',
                 'description' => 'Demóadat: hagyományőrző néptáncbemutató, utána táncház kezdőknek is.',
                 'duration_min' => 100,
-                'rating' => 'general',
+                'poster_file' => 'nepi-tanchaz.webp',
                 'badges' => ['ingyenes', 'gyerekeknek'],
             ],
             [
@@ -101,7 +106,7 @@ class DemoTheaterShowsSeeder extends Seeder
                 'show_info' => 'családi ünnepi műsor, 60 perc',
                 'description' => 'Demóadat: téli hangulatú műsor versekkel, dalokkal és ajándékosztással.',
                 'duration_min' => 60,
-                'rating' => 'general',
+                'poster_file' => 'mikulas-musor.webp',
                 'badges' => ['gyerekeknek'],
             ],
             [
@@ -112,7 +117,7 @@ class DemoTheaterShowsSeeder extends Seeder
                 'show_info' => 'monodráma, 75 perc',
                 'description' => 'Demóadat: egyszereplős, felnőtteknek szóló drámai előadás.',
                 'duration_min' => 75,
-                'rating' => '16',
+                'poster_file' => 'dramai-monodrama-est.webp',
                 'badges' => ['premier'],
             ],
             [
@@ -123,7 +128,7 @@ class DemoTheaterShowsSeeder extends Seeder
                 'show_info' => 'kiállításmegnyitó, 45 perc',
                 'description' => 'Demóadat: a város múltját bemutató tárlat ünnepélyes megnyitója.',
                 'duration_min' => 45,
-                'rating' => 'general',
+                'poster_file' => 'helytorteneti-kiallitas.webp',
                 'badges' => ['ingyenes'],
             ],
             [
@@ -134,7 +139,7 @@ class DemoTheaterShowsSeeder extends Seeder
                 'show_info' => 'operettgála, 110 perc',
                 'description' => 'Demóadat: ismert operettslágerek ünnepi hangulatban.',
                 'duration_min' => 110,
-                'rating' => '6',
+                'poster_file' => 'szilveszteri-operett-gala.webp',
                 'badges' => ['premier', 'vendegjatek'],
             ],
         ];
