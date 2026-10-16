@@ -525,7 +525,7 @@ h1 {
 
 .row-item {
   display: grid;
-  grid-template-columns: minmax(60px, auto) 90px 1fr auto auto;
+  grid-template-columns: minmax(130px, 1.4fr) 90px 110px auto 44px;
   gap: 10px;
   align-items: center;
   background: #fff;
@@ -534,13 +534,26 @@ h1 {
   padding: 8px 10px;
 }
 
+.row-item.row-list-head {
+  background: transparent;
+  border: none;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #8a7258;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
 .row-label {
   font-weight: 700;
   color: #3d2817;
 }
 
+.row-label-input,
 .row-columns-input {
-  width: 80px;
+  width: 100%;
+  box-sizing: border-box;
   padding: 6px 8px;
   border-radius: 6px;
   border: 1px solid #d4a574;

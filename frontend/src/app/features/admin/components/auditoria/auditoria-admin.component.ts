@@ -316,6 +316,28 @@ export class AuditoriaAdminComponent implements OnInit {
     this.rebuildSeatsFromRows();
   }
 
+  /** Sorjel átírása: a sor székbeállításai (szektor, tiltás) megmaradnak, a jel a szinten belül egyedi marad. */
+  renameRow(row: RowConfig, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const next = input.value.replace(/[-|]/g, '').trim().toUpperCase();
+    if (!next || next === row.label) {
+      input.value = row.label;
+      return;
+    }
+    if (this.rowExists(next, row.section)) {
+      alert('Ez a sor jel ezen a szinten már létezik.');
+      input.value = row.label;
+      return;
+    }
+    for (const seat of this.seatLayout) {
+      if (seat.rowLabel === row.label && this.sameSection(seat.section, row.section)) {
+        seat.rowLabel = next;
+      }
+    }
+    row.label = next;
+    input.value = next;
+  }
+
   updateRowConfig(): void {
     // szintváltásnál a sorjelnek az új szinten is egyedinek kell lennie
     const seen = new Set<string>();

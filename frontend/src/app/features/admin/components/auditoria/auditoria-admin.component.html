@@ -156,20 +156,35 @@
         <p class="row-hint" *ngIf="rowConfigs.length === 0">Még nincs sor. Válassz szintet, add meg a székek számát, majd kattints a „+ Sor” gombra – a sor jele üresen hagyva automatikusan következik (szint nélkül A, B, C…, szinten 1, 2, 3…).</p>
 
         <div class="row-list">
+          <div class="row-item row-list-head" *ngIf="rowConfigs.length > 0">
+            <span>Szint</span>
+            <span>Sor</span>
+            <span>Székek száma</span>
+            <span>Folyosó</span>
+            <span></span>
+          </div>
           <div class="row-item" *ngFor="let row of rowConfigs">
-            <div class="row-label" [title]="row.section || 'Nincs szint'">{{ row.section ? row.section + ' ' : '' }}{{ row.label }}</div>
-            <input
-              type="number"
-              [(ngModel)]="row.columns"
-              (change)="updateRowConfig()"
-              class="row-columns-input">
-            <select [(ngModel)]="row.section" (change)="updateRowConfig()" class="row-section-select">
+            <select [(ngModel)]="row.section" (change)="updateRowConfig()" class="row-section-select" title="Szint">
               <option [ngValue]="null">Nincs szint</option>
               <option *ngFor="let section of sections" [ngValue]="section.name">{{ section.name }}</option>
             </select>
+            <input
+              type="text"
+              [ngModel]="row.label"
+              (change)="renameRow(row, $event)"
+              maxlength="10"
+              class="row-label-input"
+              title="Sor jele">
+            <input
+              type="number"
+              min="1"
+              [(ngModel)]="row.columns"
+              (change)="updateRowConfig()"
+              class="row-columns-input"
+              title="Székek száma a sorban">
             <label class="aisle-toggle" title="Szünet (folyosó) a sor közepén a megjelenítésnél">
               <input type="checkbox" [(ngModel)]="row.aisle">
-              Folyosó középen
+              Középen
             </label>
             <button type="button" class="row-remove" (click)="removeRow(row)">✕</button>
           </div>
