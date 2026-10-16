@@ -513,7 +513,7 @@ export class AuditoriaAdminComponent implements OnInit {
   }
 
   deleteAuditorium(auditorium: any): void {
-    if (!confirm(`Biztosan törlöd a "${auditorium.name}" termet?`)) {
+    if (!confirm(`Biztosan törlöd a "${auditorium.name}" termet?\n\nFIGYELEM: a terem törlésével a hozzá tartozó összes előadás-időpont és az azokra szóló foglalások, jegyek is törlődnek!`)) {
       return;
     }
 
