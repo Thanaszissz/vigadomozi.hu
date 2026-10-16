@@ -4,13 +4,14 @@ import { NavigationEnd, Router, RouterOutlet, RouterLink } from '@angular/router
 import { SiteHeaderComponent } from './shared/site-header.component';
 import { SiteFooterComponent } from './shared/site-footer.component';
 import { TestModeBannerComponent } from './shared/test-mode-banner.component';
+import { CookieNoticeComponent } from './shared/cookie-notice.component';
 import { SeoService } from './core/seo/seo.service';
 import { seoForPath } from './core/seo/seo-routes';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, SiteHeaderComponent, SiteFooterComponent, TestModeBannerComponent],
+  imports: [CommonModule, RouterOutlet, RouterLink, SiteHeaderComponent, SiteFooterComponent, TestModeBannerComponent, CookieNoticeComponent],
   template: `
     <div class="app-container">
       <app-test-mode-banner *ngIf="showHeader"></app-test-mode-banner>
@@ -19,6 +20,7 @@ import { seoForPath } from './core/seo/seo-routes';
         <router-outlet></router-outlet>
       </main>
       <app-site-footer *ngIf="showHeader"></app-site-footer>
+      <app-cookie-notice *ngIf="showHeader"></app-cookie-notice>
     </div>
   `,
   styles: [`
