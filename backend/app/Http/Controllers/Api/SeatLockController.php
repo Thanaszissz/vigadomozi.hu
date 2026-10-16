@@ -63,7 +63,7 @@ class SeatLockController extends Controller
             'name' => ['required', 'string', 'max:255', 'regex:/^[^<>\x00-\x1F\x7F]+$/u'],
             'phone' => ['required', 'string', 'max:20', 'regex:/^[0-9+()\-\s\/.]{6,20}$/'],
             'seatKeys' => ['required', 'array', 'min:1', 'max:20'],
-            'seatKeys.*' => ['string', 'max:32', 'distinct'],
+            'seatKeys.*' => ['string', 'max:120', 'distinct'],
         ]);
     }
 

@@ -42,7 +42,7 @@ class PosController extends Controller
         $data = $request->validate([
             'showtime_id' => ['required', 'integer', 'exists:showtimes,id'],
             'seatKeys' => ['required', 'array', 'min:1', 'max:20'],
-            'seatKeys.*' => ['string', 'max:32', 'distinct'],
+            'seatKeys.*' => ['string', 'max:120', 'distinct'],
             'payment_method' => ['required', 'string', 'in:cash,card'],
             'customer_name' => ['nullable', 'string', 'max:255', 'regex:/^[^<>\x00-\x1F\x7F]+$/u'],
             'customer_phone' => ['nullable', 'string', 'max:20'],
@@ -91,7 +91,7 @@ class PosController extends Controller
         $data = $request->validate([
             'showtime_id' => ['required', 'integer', 'exists:showtimes,id'],
             'seatKeys' => ['required', 'array', 'min:1', 'max:20'],
-            'seatKeys.*' => ['string', 'max:32', 'distinct'],
+            'seatKeys.*' => ['string', 'max:120', 'distinct'],
             'customer_name' => ['required', 'string', 'max:255', 'regex:/^[^<>\x00-\x1F\x7F]+$/u'],
             'customer_phone' => ['required', 'string', 'max:20'],
             'customer_email' => ['nullable', 'email', 'max:255'],
@@ -242,7 +242,7 @@ class PosController extends Controller
             'customer_phone' => ['required', 'string', 'max:20'],
             'customer_email' => ['nullable', 'email', 'max:255'],
             'seatKeys' => ['sometimes', 'array', 'min:1', 'max:20'],
-            'seatKeys.*' => ['string', 'max:32', 'distinct'],
+            'seatKeys.*' => ['string', 'max:120', 'distinct'],
         ]);
 
         try {
