@@ -15,7 +15,8 @@ const STYLES = `
   input.text:disabled { background: #f3f3f3; color: #888; }
   button.picker {
     position: absolute; right: 4px; top: 50%; transform: translateY(-50%); border: none; background: transparent;
-    cursor: pointer; font-size: 18px; padding: 4px 8px; line-height: 1;
+    cursor: pointer; font-size: 18px; padding: 4px 8px; line-height: 1; width: auto !important; min-width: 0 !important;
+    height: auto !important; margin: 0 !important; box-shadow: none;
   }
   button.picker:disabled { cursor: default; opacity: 0.4; }
   input.native { position: absolute; right: 8px; top: 100%; width: 1px; height: 1px; opacity: 0; pointer-events: none; border: 0; padding: 0; }
