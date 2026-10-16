@@ -550,6 +550,12 @@ h1 {
   color: #3d2817;
 }
 
+.row > .row-label {
+  position: absolute;
+  right: 100%;
+  margin-right: 8px;
+}
+
 .row-label-input,
 .row-columns-input {
   width: 100%;
@@ -595,6 +601,7 @@ h1 {
 }
 
 .row {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 12px;

@@ -208,9 +208,10 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  align-items: flex-start;
+  align-items: center;
   width: max-content;
   margin: 0 auto;
+  padding: 0 34px;
 }
 
 .section-group {
@@ -237,12 +238,18 @@
 }
 
 .seat-row {
+  position: relative;
   display: flex;
   gap: 10px;
   align-items: center;
+  justify-content: center;
 }
 
+/* a sorjel a székek bal oldalán lóg, így maguk a székek pontosan középre kerülnek */
 .row-label {
+  position: absolute;
+  right: 100%;
+  margin-right: 8px;
   width: 22px;
   color: #a08060;
   font-weight: 600;
