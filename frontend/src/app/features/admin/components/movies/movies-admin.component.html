@@ -85,86 +85,111 @@
       </div>
       
       <form *ngIf="editingMovie" (ngSubmit)="saveMovie()" class="edit-form">
-        <div class="form-group">
-          <label>Film címe</label>
-          <input type="text" [(ngModel)]="editingMovie.title" name="title" class="form-input" required>
-        </div>
+        <div class="form-layout">
+          <!-- Bal oldal: poszter -->
+          <aside class="poster-column">
+            <section class="form-section">
+              <h3>🖼️ Poszter</h3>
 
-        <div class="form-group">
-          <label>Film fajtája / adatai</label>
-          <input type="text" [(ngModel)]="editingMovie.film_info" name="film_info" class="form-input" maxlength="255" placeholder="pl. amerikai kalandfilm, 101 perc, 2026">
-        </div>
+              <div class="preview-container" *ngIf="previewUrl || editingMovie.poster_path; else noPoster">
+                <img [src]="previewUrl || editingMovie.poster_path || editingMovie.poster_url" alt="Poszter előnézet" class="poster-preview">
+              </div>
+              <ng-template #noPoster>
+                <div class="poster-placeholder">🎬<span>Még nincs poszter</span></div>
+              </ng-template>
 
-        <div class="form-group">
-          <label>Jelvények (badge-ek)</label>
-          <div class="badge-picker">
-            <button
-              type="button"
-              class="badge-choice"
-              *ngFor="let badge of availableBadges"
-              [class.selected]="hasBadge(badge.key)"
-              (click)="toggleBadge(badge.key)">
-              {{ hasBadge(badge.key) ? '✓ ' : '' }}{{ badge.label }}
-            </button>
+              <div class="form-group">
+                <label>Poszter feltöltése</label>
+                <input type="file" (change)="onFileSelected($event)" accept="image/*" class="form-input">
+              </div>
+
+              <div class="form-group">
+                <label>Poszter URL (opcionális)</label>
+                <input type="text" [(ngModel)]="editingMovie.poster_path" name="poster_path" class="form-input" [disabled]="!!selectedFile" placeholder="vagy adja meg a kép címét">
+              </div>
+            </section>
+          </aside>
+
+          <!-- Jobb oldal: adatok -->
+          <div class="fields-column">
+            <section class="form-section">
+              <h3>📋 Alapadatok</h3>
+
+              <div class="form-grid">
+                <div class="form-group span-2">
+                  <label>Film címe</label>
+                  <input type="text" [(ngModel)]="editingMovie.title" name="title" class="form-input" required>
+                </div>
+
+                <div class="form-group span-2">
+                  <label>Film fajtája / adatai</label>
+                  <input type="text" [(ngModel)]="editingMovie.film_info" name="film_info" class="form-input" maxlength="255" placeholder="pl. amerikai kalandfilm, 101 perc, 2026">
+                </div>
+
+                <div class="form-group">
+                  <label>Időtartam (perc)</label>
+                  <input type="number" [(ngModel)]="editingMovie.duration_min" name="duration_min" class="form-input" required>
+                </div>
+
+                <div class="form-group">
+                  <label>YouTube Trailer URL</label>
+                  <input type="url" [(ngModel)]="editingMovie.trailer_youtube_url" name="trailer_youtube_url" class="form-input" placeholder="https://www.youtube.com/watch?v=...">
+                </div>
+
+                <div class="form-group span-2">
+                  <label>Leírás</label>
+                  <textarea [(ngModel)]="editingMovie.description" name="description" class="form-textarea" rows="5" required></textarea>
+                </div>
+              </div>
+            </section>
+
+            <section class="form-section">
+              <h3>🏷️ Jelölések</h3>
+
+              <div class="form-grid">
+                <div class="form-group">
+                  <label>Korhatár besorolás</label>
+                  <div class="rating-selector">
+                    <label class="rating-option" [class.selected]="editingMovie.rating === 'general'">
+                      <input type="radio" [(ngModel)]="editingMovie.rating" name="rating" value="general">
+                      <div class="rating-badge badge-general">KORHATÁR NÉLKÜLI</div>
+                    </label>
+                    <label class="rating-option" [class.selected]="editingMovie.rating === '6'">
+                      <input type="radio" [(ngModel)]="editingMovie.rating" name="rating" value="6">
+                      <div class="rating-badge badge-6">6</div>
+                    </label>
+                    <label class="rating-option" [class.selected]="editingMovie.rating === '12'">
+                      <input type="radio" [(ngModel)]="editingMovie.rating" name="rating" value="12">
+                      <div class="rating-badge badge-12">12</div>
+                    </label>
+                    <label class="rating-option" [class.selected]="editingMovie.rating === '16'">
+                      <input type="radio" [(ngModel)]="editingMovie.rating" name="rating" value="16">
+                      <div class="rating-badge badge-16">16</div>
+                    </label>
+                    <label class="rating-option" [class.selected]="editingMovie.rating === '18'">
+                      <input type="radio" [(ngModel)]="editingMovie.rating" name="rating" value="18">
+                      <div class="rating-badge badge-18">18</div>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label>Jelvények (badge-ek)</label>
+                  <div class="badge-picker">
+                    <button
+                      type="button"
+                      class="badge-choice"
+                      *ngFor="let badge of availableBadges"
+                      [class.selected]="hasBadge(badge.key)"
+                      (click)="toggleBadge(badge.key)">
+                      {{ hasBadge(badge.key) ? '✓ ' : '' }}{{ badge.label }}
+                    </button>
+                  </div>
+                  <small class="form-hint">A kijelölt jelvények a film kártyáján és oldalán jelennek meg (pl. „Premier").</small>
+                </div>
+              </div>
+            </section>
           </div>
-          <small style="color: #888; font-size: 12px;">A kijelölt jelvények a film kártyáján és oldalán jelennek meg (pl. „Premier").</small>
-        </div>
-
-        <div class="form-group">
-          <label>Leírás</label>
-          <textarea [(ngModel)]="editingMovie.description" name="description" class="form-textarea" rows="4" required></textarea>
-        </div>
-
-        <div class="form-group">
-          <label>Időtartam (perc)</label>
-          <input type="number" [(ngModel)]="editingMovie.duration_min" name="duration_min" class="form-input" required>
-        </div>
-
-        <div class="form-group">
-          <label>YouTube Trailer URL</label>
-          <input type="url" [(ngModel)]="editingMovie.trailer_youtube_url" name="trailer_youtube_url" class="form-input" placeholder="https://www.youtube.com/watch?v=...">
-          <small style="color: #888; font-size: 12px;">Teljes YouTube link (pl: https://www.youtube.com/watch?v=dQw4w9WgXcQ)</small>
-        </div>
-
-        <div class="form-group">
-          <label>Korhatár besorolás</label>
-          <div class="rating-selector">
-            <label class="rating-option" [class.selected]="editingMovie.rating === 'general'">
-              <input type="radio" [(ngModel)]="editingMovie.rating" name="rating" value="general">
-              <div class="rating-badge badge-general">KORHATÁR NÉLKÜLI</div>
-            </label>
-            <label class="rating-option" [class.selected]="editingMovie.rating === '6'">
-              <input type="radio" [(ngModel)]="editingMovie.rating" name="rating" value="6">
-              <div class="rating-badge badge-6">6</div>
-            </label>
-            <label class="rating-option" [class.selected]="editingMovie.rating === '12'">
-              <input type="radio" [(ngModel)]="editingMovie.rating" name="rating" value="12">
-              <div class="rating-badge badge-12">12</div>
-            </label>
-            <label class="rating-option" [class.selected]="editingMovie.rating === '16'">
-              <input type="radio" [(ngModel)]="editingMovie.rating" name="rating" value="16">
-              <div class="rating-badge badge-16">16</div>
-            </label>
-            <label class="rating-option" [class.selected]="editingMovie.rating === '18'">
-              <input type="radio" [(ngModel)]="editingMovie.rating" name="rating" value="18">
-              <div class="rating-badge badge-18">18</div>
-            </label>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label>Poszter feltöltése</label>
-          <input type="file" (change)="onFileSelected($event)" accept="image/*" class="form-input">
-          <small class="form-hint">vagy adjon meg URL-t alább</small>
-        </div>
-
-        <div class="preview-container" *ngIf="previewUrl || editingMovie.poster_path">
-          <img [src]="previewUrl || editingMovie.poster_path || editingMovie.poster_url" alt="Poszter előnézet" class="poster-preview">
-        </div>
-
-        <div class="form-group">
-          <label>Poszter URL (opcionális)</label>
-          <input type="text" [(ngModel)]="editingMovie.poster_path" name="poster_path" class="form-input" [disabled]="!!selectedFile">
         </div>
 
         <div class="form-actions">

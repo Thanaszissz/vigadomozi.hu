@@ -251,8 +251,8 @@ h1 {
   background: #2a1810;
   border-radius: 12px;
   width: 100%;
-  max-width: 600px;
-  max-height: 90vh;
+  max-width: 1100px;
+  max-height: 92vh;
   overflow-y: auto;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
   border: 1px solid #d4a574;
@@ -296,8 +296,97 @@ h1 {
   padding: 20px;
 }
 
+/* Kétoszlopos elrendezés: bal oldalt a poszter, jobb oldalt az adatok; szűk képernyőn egymás alá kerülnek */
+.form-layout {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.fields-column {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+.form-section {
+  background: #33200f;
+  border: 1px solid #5c3d2e;
+  border-radius: 10px;
+  padding: 16px 18px;
+}
+
+.form-section h3 {
+  margin: 0 0 14px;
+  font-size: 16px;
+  color: #d4a574;
+  letter-spacing: 0.3px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 18px;
+}
+
+.form-grid .span-2 {
+  grid-column: 1 / -1;
+}
+
 .form-group {
-  margin-bottom: 20px;
+  margin-bottom: 16px;
+}
+
+.form-group:last-child {
+  margin-bottom: 0;
+}
+
+.poster-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 260px;
+  margin-bottom: 16px;
+  border: 2px dashed #5c3d2e;
+  border-radius: 8px;
+  font-size: 42px;
+  color: #a08060;
+}
+
+.poster-placeholder span {
+  font-size: 13px;
+}
+
+@media (max-width: 900px) {
+  .form-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .poster-column .preview-container {
+    margin-top: 0;
+  }
+}
+
+@media (max-width: 560px) {
+  .modal-overlay {
+    padding: 8px;
+  }
+
+  .edit-form {
+    padding: 12px;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-section {
+    padding: 14px;
+  }
 }
 
 .form-group label {
@@ -337,6 +426,10 @@ h1 {
   margin-top: 20px;
   padding-top: 20px;
   border-top: 1px solid #d4a574;
+  position: sticky;
+  bottom: 0;
+  background: #2a1810;
+  padding-bottom: 4px;
 }
 
 .btn-cancel,
@@ -377,15 +470,17 @@ h1 {
 }
 
 .preview-container {
-  margin: 15px 0;
+  margin: 0 0 16px;
   text-align: center;
 }
 
 .poster-preview {
-  max-width: 200px;
-  max-height: 300px;
+  width: 100%;
+  max-width: 240px;
+  max-height: 360px;
+  object-fit: contain;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .rating-selector {
