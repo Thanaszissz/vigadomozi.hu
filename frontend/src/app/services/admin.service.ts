@@ -25,6 +25,7 @@ export interface TheaterShow {
   performer?: string | null;
   venue?: string | null;
   show_info?: string | null;
+  ticket_price?: number | null;
   badges?: string[] | null;
   description: string;
   duration_minutes: number;

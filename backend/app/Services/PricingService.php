@@ -11,6 +11,7 @@ class PricingService
      * 
      * Priority:
      * 1. Showtime pricing_override_json
+     * 1b. Theater show ticket_price
      * 2. Auditorium layout: seat.price
      * 3. Row basePrice
      * 4. Global default
@@ -31,6 +32,11 @@ class PricingService
                     return $override['rows'][$row];
                 }
             }
+        }
+
+        // Előadás / program: saját jegyár, a terem szektorárai helyett
+        if ($showtime->theater_show_id !== null && $showtime->theaterShow?->ticket_price !== null) {
+            return (int) $showtime->theaterShow->ticket_price;
         }
 
         // 2. & 3. Auditorium layout

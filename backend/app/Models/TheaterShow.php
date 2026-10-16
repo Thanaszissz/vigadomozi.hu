@@ -16,6 +16,7 @@ class TheaterShow extends Model
         'performer',
         'venue',
         'show_info',
+        'ticket_price',
         'description',
         'poster_path',
         'trailer_youtube_url',
@@ -26,6 +27,7 @@ class TheaterShow extends Model
 
     protected $casts = [
         'badges' => 'array',
+        'ticket_price' => 'integer',
     ];
 
     protected $appends = ['poster_url', 'duration_minutes'];

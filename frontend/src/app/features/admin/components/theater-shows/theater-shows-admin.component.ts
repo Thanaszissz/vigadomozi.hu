@@ -67,6 +67,7 @@ export class TheaterShowsAdminComponent implements OnInit {
       performer: '',
       venue: '',
       show_info: '',
+      ticket_price: null,
       badges: [],
       description: '',
       duration_minutes: 0,
@@ -126,6 +127,8 @@ export class TheaterShowsAdminComponent implements OnInit {
     formData.append('performer', this.editingShow.performer || '');
     formData.append('venue', this.editingShow.venue || '');
     formData.append('show_info', this.editingShow.show_info || '');
+    const price = this.editingShow.ticket_price;
+    formData.append('ticket_price', price === null || price === undefined || (price as unknown) === '' ? '' : String(price));
 
     // a jelvények tömbként mennek; ha egy sincs kiválasztva, az üres érték törli a korábbiakat
     const badges = this.editingShow.badges ?? [];

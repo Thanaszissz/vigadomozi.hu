@@ -35,6 +35,7 @@ class TheaterShowAdminController extends Controller
             'performer' => ['nullable', 'string', 'max:255'],
             'venue' => ['nullable', 'string', 'max:255'],
             'show_info' => ['nullable', 'string', 'max:255'],
+            'ticket_price' => ['nullable', 'integer', 'min:0', 'max:1000000'],
             'badges' => ['nullable', 'array'],
             'badges.*' => ['string', Rule::in(ShowOptions::badgeKeys())],
         ]);
@@ -64,6 +65,7 @@ class TheaterShowAdminController extends Controller
             'performer' => ['nullable', 'string', 'max:255'],
             'venue' => ['nullable', 'string', 'max:255'],
             'show_info' => ['nullable', 'string', 'max:255'],
+            'ticket_price' => ['nullable', 'integer', 'min:0', 'max:1000000'],
             'badges' => ['nullable', 'array'],
             'badges.*' => ['string', Rule::in(ShowOptions::badgeKeys())],
         ]);

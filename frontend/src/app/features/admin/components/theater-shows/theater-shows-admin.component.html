@@ -23,6 +23,7 @@
           <span *ngIf="show.performer">🎤 {{ show.performer }}</span>
           <span *ngIf="show.venue">📍 {{ show.venue }}</span>
           <span>⏱️ {{ show.duration_minutes || show.duration_min }} perc</span>
+          <span *ngIf="show.ticket_price">🎟️ {{ show.ticket_price }} Ft</span>
         </div>
         <div class="actions">
           <button class="btn-edit" (click)="editShow(show)">✏️ Szerkesztés</button>
@@ -137,9 +138,15 @@
                   <input type="number" [(ngModel)]="editingShow.duration_min" name="duration_min" class="form-input" required>
                 </div>
 
-                <div class="form-group span-2">
+                <div class="form-group">
                   <label>Rövid adatsor</label>
                   <input type="text" [(ngModel)]="editingShow.show_info" name="show_info" class="form-input" maxlength="255" placeholder="pl. vígjáték két részben, 120 perc">
+                </div>
+
+                <div class="form-group">
+                  <label>Jegyár (Ft / jegy)</label>
+                  <input type="number" min="0" step="100" [(ngModel)]="editingShow.ticket_price" name="ticket_price" class="form-input" placeholder="pl. 3500">
+                  <small class="hint">Ez az ár érvényes minden székre, a terem szektorárai helyett. Üresen hagyva a terem árai számítanak.</small>
                 </div>
 
                 <div class="form-group span-2">

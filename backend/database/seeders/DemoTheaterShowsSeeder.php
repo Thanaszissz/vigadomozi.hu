@@ -40,7 +40,7 @@ class DemoTheaterShowsSeeder extends Seeder
             $programs[] = $existing;
 
             $fill = [];
-            foreach (['category', 'performer', 'venue', 'show_info', 'description', 'duration_min', 'badges', 'poster_path'] as $column) {
+            foreach (['category', 'performer', 'venue', 'show_info', 'ticket_price', 'description', 'duration_min', 'badges', 'poster_path'] as $column) {
                 if (empty($existing->{$column}) && !empty($data[$column] ?? null)) {
                     $fill[$column] = $data[$column];
                 }
@@ -113,6 +113,7 @@ class DemoTheaterShowsSeeder extends Seeder
                 'performer' => 'Vendég színtársulat',
                 'venue' => 'Vigadó nagyterem',
                 'show_info' => 'vígjáték két részben, 120 perc',
+                'ticket_price' => 3500,
                 'description' => 'Demóadat: könnyed, humoros színházi est két felvonásban, az egész család szórakoztatására.',
                 'duration_min' => 120,
                 'poster_file' => 'tavaszi-vigjatekest.webp',
@@ -124,6 +125,7 @@ class DemoTheaterShowsSeeder extends Seeder
                 'performer' => 'Vándor Bábszínház',
                 'venue' => 'Vigadó nagyterem',
                 'show_info' => 'mesejáték bábokkal, 55 perc',
+                'ticket_price' => 1800,
                 'description' => 'Demóadat: népmesei bábjáték a legkisebbeknek, dalokkal és közös játékkal.',
                 'duration_min' => 55,
                 'poster_file' => 'babszinhaz-aranyszoru-barany.webp',
@@ -135,6 +137,7 @@ class DemoTheaterShowsSeeder extends Seeder
                 'performer' => 'Városi fúvószenekar',
                 'venue' => 'Vigadó nagyterem',
                 'show_info' => 'komolyzenei és könnyűzenei hangverseny, 90 perc',
+                'ticket_price' => 3000,
                 'description' => 'Demóadat: ismert dallamok koncertátiratokban, szünettel.',
                 'duration_min' => 90,
                 'poster_file' => 'oszi-hangversenyest.webp',
@@ -146,6 +149,7 @@ class DemoTheaterShowsSeeder extends Seeder
                 'performer' => 'Helyi néptáncegyüttes',
                 'venue' => 'Vigadó előcsarnok',
                 'show_info' => 'néptáncbemutató táncházzal, 100 perc',
+                'ticket_price' => 2000,
                 'description' => 'Demóadat: hagyományőrző néptáncbemutató, utána táncház kezdőknek is.',
                 'duration_min' => 100,
                 'poster_file' => 'nepi-tanchaz.webp',
@@ -157,6 +161,7 @@ class DemoTheaterShowsSeeder extends Seeder
                 'performer' => 'Művelődési Központ gyerekcsoportja',
                 'venue' => 'Vigadó nagyterem',
                 'show_info' => 'családi ünnepi műsor, 60 perc',
+                'ticket_price' => 1500,
                 'description' => 'Demóadat: téli hangulatú műsor versekkel, dalokkal és ajándékosztással.',
                 'duration_min' => 60,
                 'poster_file' => 'mikulas-musor.webp',
@@ -168,6 +173,7 @@ class DemoTheaterShowsSeeder extends Seeder
                 'performer' => 'Vendég színművész',
                 'venue' => 'Vigadó kamaraterem',
                 'show_info' => 'monodráma, 75 perc',
+                'ticket_price' => 2500,
                 'description' => 'Demóadat: egyszereplős, felnőtteknek szóló drámai előadás.',
                 'duration_min' => 75,
                 'poster_file' => 'dramai-monodrama-est.webp',
@@ -179,6 +185,7 @@ class DemoTheaterShowsSeeder extends Seeder
                 'performer' => 'Városi Múzeum',
                 'venue' => 'Vigadó galéria',
                 'show_info' => 'kiállításmegnyitó, 45 perc',
+                'ticket_price' => 1000,
                 'description' => 'Demóadat: a város múltját bemutató tárlat ünnepélyes megnyitója.',
                 'duration_min' => 45,
                 'poster_file' => 'helytorteneti-kiallitas.webp',
@@ -190,6 +197,7 @@ class DemoTheaterShowsSeeder extends Seeder
                 'performer' => 'Vendég operett-társulat',
                 'venue' => 'Vigadó nagyterem',
                 'show_info' => 'operettgála, 110 perc',
+                'ticket_price' => 4500,
                 'description' => 'Demóadat: ismert operettslágerek ünnepi hangulatban.',
                 'duration_min' => 110,
                 'poster_file' => 'szilveszteri-operett-gala.webp',

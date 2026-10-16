@@ -72,6 +72,7 @@ class Showtime extends Model
                 'category' => $show->category,
                 'performer' => $show->performer,
                 'venue' => $show->venue,
+                'ticket_price' => $show->ticket_price,
                 'is_theater' => true,
             ];
         }

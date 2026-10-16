@@ -32,6 +32,7 @@ export interface Movie {
   performer?: string | null;
   venue?: string | null;
   show_info?: string | null;
+  ticket_price?: number | null;
   created_at: string;
   updated_at: string;
 }

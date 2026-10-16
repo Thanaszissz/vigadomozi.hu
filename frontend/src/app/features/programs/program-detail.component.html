@@ -29,6 +29,7 @@
             <span *ngIf="show.performer">🎤 {{ show.performer }}</span>
             <span *ngIf="show.venue">📍 {{ show.venue }}</span>
             <span *ngIf="show.duration_min" class="duration">⏱️ {{ show.duration_min }} perc</span>
+            <span *ngIf="show.ticket_price" class="price-tag">🎟️ Jegyár: {{ show.ticket_price | number: '1.0-0' }} Ft</span>
           </div>
           <p class="description">{{ show.description }}</p>
 
@@ -58,6 +59,7 @@
             <div class="showtime-date">{{ showtime.starts_at | date: 'yyyy.MM.dd.' }}</div>
             <div class="showtime-time">{{ showtime.starts_at | date: 'HH:mm' }}</div>
             <div class="showtime-auditorium">📍 {{ show.venue || showtime.auditorium.name }}</div>
+            <div class="showtime-auditorium" *ngIf="show.ticket_price">🎟️ {{ show.ticket_price | number: '1.0-0' }} Ft / jegy</div>
             <a [routerLink]="'/showtimes/' + showtime.id + '/select-seats'" class="book-btn">
               <span>🎟️ Jegyek foglalása</span>
               <span class="arrow">→</span>
