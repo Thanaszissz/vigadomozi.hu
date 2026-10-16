@@ -21,6 +21,11 @@ export interface Movie {
 export interface TheaterShow {
   id: number;
   title: string;
+  category?: string | null;
+  performer?: string | null;
+  venue?: string | null;
+  show_info?: string | null;
+  badges?: string[] | null;
   description: string;
   duration_minutes: number;
   poster_url?: string;

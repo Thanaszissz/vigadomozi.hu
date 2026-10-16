@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\TheaterShow;
+use App\Support\ShowOptions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 
 class TheaterShowAdminController extends Controller
 {
@@ -29,6 +31,12 @@ class TheaterShowAdminController extends Controller
             'trailer_youtube_url' => ['nullable', 'url'],
             'duration_min' => ['nullable', 'integer'],
             'rating' => ['nullable', 'in:general,6,12,16,18'],
+            'category' => ['nullable', Rule::in(ShowOptions::categoryKeys())],
+            'performer' => ['nullable', 'string', 'max:255'],
+            'venue' => ['nullable', 'string', 'max:255'],
+            'show_info' => ['nullable', 'string', 'max:255'],
+            'badges' => ['nullable', 'array'],
+            'badges.*' => ['string', Rule::in(ShowOptions::badgeKeys())],
         ]);
 
         if ($request->hasFile('poster_file')) {
@@ -52,6 +60,12 @@ class TheaterShowAdminController extends Controller
             'trailer_youtube_url' => ['sometimes', 'url'],
             'duration_min' => ['sometimes', 'integer'],
             'rating' => ['sometimes', 'in:general,6,12,16,18'],
+            'category' => ['nullable', Rule::in(ShowOptions::categoryKeys())],
+            'performer' => ['nullable', 'string', 'max:255'],
+            'venue' => ['nullable', 'string', 'max:255'],
+            'show_info' => ['nullable', 'string', 'max:255'],
+            'badges' => ['nullable', 'array'],
+            'badges.*' => ['string', Rule::in(ShowOptions::badgeKeys())],
         ]);
 
         if ($request->hasFile('poster_file')) {

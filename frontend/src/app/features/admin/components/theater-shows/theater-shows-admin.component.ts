@@ -3,15 +3,18 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AdminService, TheaterShow } from '../../../../services/admin.service';
+import { MovieBadgesComponent, SHOW_BADGES, SHOW_CATEGORIES, showCategoryLabel } from '../../../../shared/movie-badges.component';
 
 @Component({
   selector: 'app-theater-shows-admin',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MovieBadgesComponent],
   templateUrl: './theater-shows-admin.component.html',
   styleUrls: ['../movies/movies-admin.component.css']
 })
 export class TheaterShowsAdminComponent implements OnInit {
+  readonly categories = SHOW_CATEGORIES;
+  readonly availableBadges = SHOW_BADGES;
   shows: TheaterShow[] = [];
   searchTerm: string = '';
   currentPage: number = 1;
@@ -49,7 +52,7 @@ export class TheaterShowsAdminComponent implements OnInit {
   }
 
   editShow(show: TheaterShow): void {
-    this.editingShow = { ...show };
+    this.editingShow = { ...show, badges: [...(show.badges ?? [])] };
     this.isCreating = false;
     this.showEditModal = true;
     this.selectedFile = null;
@@ -60,6 +63,11 @@ export class TheaterShowsAdminComponent implements OnInit {
     this.editingShow = {
       id: 0,
       title: '',
+      category: 'szinhaz',
+      performer: '',
+      venue: '',
+      show_info: '',
+      badges: [],
       description: '',
       duration_minutes: 0,
       duration_min: 0,
@@ -71,6 +79,20 @@ export class TheaterShowsAdminComponent implements OnInit {
     this.showEditModal = true;
     this.selectedFile = null;
     this.previewUrl = null;
+  }
+
+  hasBadge(key: string): boolean {
+    return !!this.editingShow?.badges?.includes(key);
+  }
+
+  toggleBadge(key: string): void {
+    if (!this.editingShow) return;
+    const current = this.editingShow.badges ?? [];
+    this.editingShow.badges = current.includes(key) ? current.filter(b => b !== key) : [...current, key];
+  }
+
+  categoryLabel(key: string | null | undefined): string {
+    return showCategoryLabel(key);
   }
 
   closeModal(): void {
@@ -102,6 +124,18 @@ export class TheaterShowsAdminComponent implements OnInit {
     formData.append('description', this.editingShow.description || '');
     formData.append('duration_min', String(this.editingShow.duration_min || this.editingShow.duration_minutes || 0));
     formData.append('rating', this.editingShow.rating || 'general');
+    formData.append('category', this.editingShow.category || '');
+    formData.append('performer', this.editingShow.performer || '');
+    formData.append('venue', this.editingShow.venue || '');
+    formData.append('show_info', this.editingShow.show_info || '');
+
+    // a jelvények tömbként mennek; ha egy sincs kiválasztva, az üres érték törli a korábbiakat
+    const badges = this.editingShow.badges ?? [];
+    if (badges.length) {
+      badges.forEach(badge => formData.append('badges[]', badge));
+    } else {
+      formData.append('badges', '');
+    }
 
     if (this.selectedFile) {
       formData.append('poster_file', this.selectedFile);
@@ -169,6 +203,9 @@ export class TheaterShowsAdminComponent implements OnInit {
     const search = this.searchTerm.toLowerCase();
     return this.shows.filter(show =>
       show.title.toLowerCase().includes(search) ||
+      show.performer?.toLowerCase().includes(search) ||
+      show.venue?.toLowerCase().includes(search) ||
+      this.categoryLabel(show.category).toLowerCase().includes(search) ||
       show.description?.toLowerCase().includes(search)
     );
   }

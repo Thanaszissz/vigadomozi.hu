@@ -1,9 +1,9 @@
 <div class="admin-container">
   <div class="header">
-    <h1>🎭 Színházi előadások kezelése</h1>
+    <h1>🎭 Előadások és programok kezelése</h1>
     <div class="header-actions">
-      <input type="text" [(ngModel)]="searchTerm" placeholder="Előadások keresése..." class="search-input" />
-      <button (click)="newShow()" class="btn-edit">➕ Új előadás</button>
+      <input type="text" [(ngModel)]="searchTerm" placeholder="Keresés cím, előadó, helyszín szerint..." class="search-input" />
+      <button (click)="newShow()" class="btn-edit">➕ Új előadás / program</button>
       <button (click)="goBack()" class="btn-back">← Vissza</button>
     </div>
   </div>
@@ -18,9 +18,14 @@
         </div>
       </div>
       <div class="movie-info">
+        <p class="film-info category" *ngIf="show.category">{{ categoryLabel(show.category) }}</p>
         <h3>{{ show.title }}</h3>
+        <app-movie-badges kind="show" [badges]="show.badges"></app-movie-badges>
+        <p class="film-info" *ngIf="show.show_info">{{ show.show_info }}</p>
         <p class="description">{{ show.description }}</p>
         <div class="movie-meta">
+          <span *ngIf="show.performer">🎤 {{ show.performer }}</span>
+          <span *ngIf="show.venue">📍 {{ show.venue }}</span>
           <span>⏱️ {{ show.duration_minutes || show.duration_min }} perc</span>
         </div>
         <div class="actions">
@@ -31,7 +36,7 @@
     </div>
 
     <div *ngIf="shows.length === 0" class="empty-state">
-      <p>📭 Még nincsenek előadások az adatbázisban.</p>
+      <p>📭 Még nincsenek előadások vagy programok az adatbázisban.</p>
     </div>
 
     <div *ngIf="shows.length > 0 && filteredShows.length === 0" class="empty-state">
@@ -73,71 +78,133 @@
   <div class="modal-overlay" *ngIf="showEditModal" (click)="closeModal()">
     <div class="modal-content" (click)="$event.stopPropagation()">
       <div class="modal-header">
-        <h2>{{ isCreating ? '➕ Új előadás hozzáadása' : '✏️ Előadás szerkesztése' }}</h2>
+        <h2>{{ isCreating ? '➕ Új előadás / program hozzáadása' : '✏️ Előadás / program szerkesztése' }}</h2>
         <button class="btn-close" (click)="closeModal()">✕</button>
       </div>
 
       <form *ngIf="editingShow" (ngSubmit)="saveShow()" class="edit-form">
-        <div class="form-group">
-          <label>Előadás címe</label>
-          <input type="text" [(ngModel)]="editingShow.title" name="title" class="form-input" required>
-        </div>
+        <div class="form-layout">
+          <!-- Bal oldal: plakát -->
+          <aside class="poster-column">
+            <section class="form-section">
+              <h3>🖼️ Plakát</h3>
 
-        <div class="form-group">
-          <label>Leírás</label>
-          <textarea [(ngModel)]="editingShow.description" name="description" class="form-textarea" rows="4" required></textarea>
-        </div>
+              <div class="preview-container" *ngIf="previewUrl || editingShow.poster_path; else noPoster">
+                <img [src]="previewUrl || editingShow.poster_path || editingShow.poster_url" alt="Plakát előnézet" class="poster-preview">
+              </div>
+              <ng-template #noPoster>
+                <div class="poster-placeholder">🎭<span>Még nincs plakát</span></div>
+              </ng-template>
 
-        <div class="form-group">
-          <label>Időtartam (perc)</label>
-          <input type="number" [(ngModel)]="editingShow.duration_min" name="duration_min" class="form-input" required>
-        </div>
+              <div class="form-group">
+                <label>Plakát feltöltése</label>
+                <input type="file" (change)="onFileSelected($event)" accept="image/*" class="form-input">
+              </div>
 
-        <div class="form-group">
-          <label>YouTube Trailer URL</label>
-          <input type="url" [(ngModel)]="editingShow.trailer_youtube_url" name="trailer_youtube_url" class="form-input" placeholder="https://www.youtube.com/watch?v=...">
-          <small style="color: #888; font-size: 12px;">Teljes YouTube link</small>
-        </div>
+              <div class="form-group">
+                <label>Plakát URL (opcionális)</label>
+                <input type="text" [(ngModel)]="editingShow.poster_path" name="poster_path" class="form-input" [disabled]="!!selectedFile" placeholder="vagy adja meg a kép címét">
+              </div>
+            </section>
+          </aside>
 
-        <div class="form-group">
-          <label>Korhatár besorolás</label>
-          <div class="rating-selector">
-            <label class="rating-option" [class.selected]="editingShow.rating === 'general'">
-              <input type="radio" [(ngModel)]="editingShow.rating" name="rating" value="general">
-              <div class="rating-badge badge-general">KORHATÁR NÉLKÜLI</div>
-            </label>
-            <label class="rating-option" [class.selected]="editingShow.rating === '6'">
-              <input type="radio" [(ngModel)]="editingShow.rating" name="rating" value="6">
-              <div class="rating-badge badge-6">6</div>
-            </label>
-            <label class="rating-option" [class.selected]="editingShow.rating === '12'">
-              <input type="radio" [(ngModel)]="editingShow.rating" name="rating" value="12">
-              <div class="rating-badge badge-12">12</div>
-            </label>
-            <label class="rating-option" [class.selected]="editingShow.rating === '16'">
-              <input type="radio" [(ngModel)]="editingShow.rating" name="rating" value="16">
-              <div class="rating-badge badge-16">16</div>
-            </label>
-            <label class="rating-option" [class.selected]="editingShow.rating === '18'">
-              <input type="radio" [(ngModel)]="editingShow.rating" name="rating" value="18">
-              <div class="rating-badge badge-18">18</div>
-            </label>
+          <!-- Jobb oldal: adatok -->
+          <div class="fields-column">
+            <section class="form-section">
+              <h3>📋 Az előadás / program adatai</h3>
+
+              <div class="form-grid">
+                <div class="form-group span-2">
+                  <label>Előadás / program címe</label>
+                  <input type="text" [(ngModel)]="editingShow.title" name="title" class="form-input" required>
+                </div>
+
+                <div class="form-group">
+                  <label>Típus</label>
+                  <select [(ngModel)]="editingShow.category" name="category" class="form-input">
+                    <option *ngFor="let category of categories" [value]="category.key">{{ category.label }}</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label>Előadó / társulat</label>
+                  <input type="text" [(ngModel)]="editingShow.performer" name="performer" class="form-input" maxlength="255" placeholder="pl. Vándor Bábszínház">
+                </div>
+
+                <div class="form-group">
+                  <label>Helyszín</label>
+                  <input type="text" [(ngModel)]="editingShow.venue" name="venue" class="form-input" maxlength="255" placeholder="pl. Vigadó nagyterem">
+                </div>
+
+                <div class="form-group">
+                  <label>Időtartam (perc)</label>
+                  <input type="number" [(ngModel)]="editingShow.duration_min" name="duration_min" class="form-input" required>
+                </div>
+
+                <div class="form-group span-2">
+                  <label>Rövid adatsor</label>
+                  <input type="text" [(ngModel)]="editingShow.show_info" name="show_info" class="form-input" maxlength="255" placeholder="pl. vígjáték két részben, 120 perc">
+                </div>
+
+                <div class="form-group span-2">
+                  <label>Leírás</label>
+                  <textarea [(ngModel)]="editingShow.description" name="description" class="form-textarea" rows="5" required></textarea>
+                </div>
+
+                <div class="form-group span-2">
+                  <label>YouTube előzetes URL</label>
+                  <input type="url" [(ngModel)]="editingShow.trailer_youtube_url" name="trailer_youtube_url" class="form-input" placeholder="https://www.youtube.com/watch?v=...">
+                </div>
+              </div>
+            </section>
+
+            <section class="form-section">
+              <h3>🏷️ Jelölések</h3>
+
+              <div class="form-grid">
+                <div class="form-group">
+                  <label>Korhatár besorolás</label>
+                  <div class="rating-selector">
+                    <label class="rating-option" [class.selected]="editingShow.rating === 'general'">
+                      <input type="radio" [(ngModel)]="editingShow.rating" name="rating" value="general">
+                      <div class="rating-badge badge-general">KORHATÁR NÉLKÜLI</div>
+                    </label>
+                    <label class="rating-option" [class.selected]="editingShow.rating === '6'">
+                      <input type="radio" [(ngModel)]="editingShow.rating" name="rating" value="6">
+                      <div class="rating-badge badge-6">6</div>
+                    </label>
+                    <label class="rating-option" [class.selected]="editingShow.rating === '12'">
+                      <input type="radio" [(ngModel)]="editingShow.rating" name="rating" value="12">
+                      <div class="rating-badge badge-12">12</div>
+                    </label>
+                    <label class="rating-option" [class.selected]="editingShow.rating === '16'">
+                      <input type="radio" [(ngModel)]="editingShow.rating" name="rating" value="16">
+                      <div class="rating-badge badge-16">16</div>
+                    </label>
+                    <label class="rating-option" [class.selected]="editingShow.rating === '18'">
+                      <input type="radio" [(ngModel)]="editingShow.rating" name="rating" value="18">
+                      <div class="rating-badge badge-18">18</div>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label>Jelvények</label>
+                  <div class="badge-picker">
+                    <button
+                      type="button"
+                      class="badge-choice"
+                      *ngFor="let badge of availableBadges"
+                      [class.selected]="hasBadge(badge.key)"
+                      (click)="toggleBadge(badge.key)">
+                      {{ hasBadge(badge.key) ? '✓ ' : '' }}{{ badge.label }}
+                    </button>
+                  </div>
+                  <small class="form-hint">A kijelölt jelvények az előadás kártyáján jelennek meg (pl. „Bemutató").</small>
+                </div>
+              </div>
+            </section>
           </div>
-        </div>
-
-        <div class="form-group">
-          <label>Poszter feltöltése</label>
-          <input type="file" (change)="onFileSelected($event)" accept="image/*" class="form-input">
-          <small class="form-hint">vagy adjon meg URL-t alább</small>
-        </div>
-
-        <div class="preview-container" *ngIf="previewUrl || editingShow.poster_path">
-          <img [src]="previewUrl || editingShow.poster_path || editingShow.poster_url" alt="Poszter előnézet" class="poster-preview">
-        </div>
-
-        <div class="form-group">
-          <label>Poszter URL (opcionális)</label>
-          <input type="text" [(ngModel)]="editingShow.poster_path" name="poster_path" class="form-input" [disabled]="!!selectedFile">
         </div>
 
         <div class="form-actions">

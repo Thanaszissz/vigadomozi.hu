@@ -12,11 +12,20 @@ class TheaterShow extends Model
 
     protected $fillable = [
         'title',
+        'category',
+        'performer',
+        'venue',
+        'show_info',
         'description',
         'poster_path',
         'trailer_youtube_url',
         'duration_min',
         'rating',
+        'badges',
+    ];
+
+    protected $casts = [
+        'badges' => 'array',
     ];
 
     protected $appends = ['poster_url', 'duration_minutes'];
