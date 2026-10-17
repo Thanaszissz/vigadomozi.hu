@@ -22,7 +22,7 @@ interface Sector {
 
 interface Section {
   name: string;
-  /** a szint az előtte lévő szinttel egy sorban jelenik meg (csak 5 széknél kisebb szintnél) */
+  /** a szint az előtte lévő szinttel egy sorban jelenik meg (csak ha a sorai 5 széknél rövidebbek) */
   inline?: boolean;
 }
 
@@ -407,23 +407,23 @@ export class AuditoriaAdminComponent implements OnInit {
     return groups;
   }
 
-  /** A szint székeinek száma (a hozzá rendelt sorok oszlopszámainak összege). */
-  sectionSeatCount(name: string): number {
-    return this.rowConfigs.filter(r => r.section === name).reduce((sum, r) => sum + (Number(r.columns) || 0), 0);
+  /** A szint leghosszabb sora (székek száma). */
+  sectionWidestRow(name: string): number {
+    return Math.max(0, ...this.rowConfigs.filter(r => r.section === name).map(r => Number(r.columns) || 0));
   }
 
   canInline(section: Section): boolean {
-    const count = this.sectionSeatCount(section.name);
-    return count > 0 && count < INLINE_SECTION_MAX_SEATS;
+    const widest = this.sectionWidestRow(section.name);
+    return widest > 0 && widest < INLINE_SECTION_MAX_SEATS;
   }
 
-  /** A szintek megjelenítési blokkjai: az "egy sorba" jelölésű kis szintek egymás mellé kerülnek (mint a nézőtéren). */
+  /** A szintek megjelenítési blokkjai: az "egy sorba" jelölésű keskeny szintek egymás mellé kerülnek (mint a nézőtéren). */
   getSectionBlocks(): Array<Array<{ name: string; rows: RowConfig[]; color: string }>> {
     const inline: Record<string, boolean> = {};
     for (const s of this.sections) {
       inline[s.name] = !!s.inline;
     }
-    return sectionBlocks(this.getSectionGroups(), inline, g => g.rows.reduce((sum, r) => sum + (Number(r.columns) || 0), 0));
+    return sectionBlocks(this.getSectionGroups(), inline, g => Math.max(0, ...g.rows.map(r => Number(r.columns) || 0)));
   }
 
   getSeatsForRow(row: RowConfig): Seat[] {

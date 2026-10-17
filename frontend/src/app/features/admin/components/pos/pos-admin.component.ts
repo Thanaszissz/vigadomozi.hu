@@ -284,7 +284,7 @@ export class PosAdminComponent implements OnInit, OnDestroy {
       this.blocksSource = source;
       this.blocksCache = source
         ? sectionBlocks(this.getSectionGroups(), source.layout?.inlineSections,
-            g => g.rows.reduce((sum, row) => sum + this.getSeatsInRow(row).length, 0))
+            g => Math.max(0, ...g.rows.map(row => this.getSeatsInRow(row).length)))
         : [];
     }
     return this.blocksCache;

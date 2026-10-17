@@ -117,7 +117,7 @@
               {{ section.name }}
             </button>
             <label class="aisle-toggle"
-                   [title]="canInline(section) ? 'A szint az előtte lévő szinttel egy sorban jelenik meg (pl. Bal és Jobb páholy)' : 'Csak az 5 széknél kisebb szint kerülhet az előzővel egy sorba (jelenleg ' + sectionSeatCount(section.name) + ' szék)'">
+                   [title]="canInline(section) ? 'A szint az előtte lévő szinttel egy sorban jelenik meg (pl. Bal és Jobb páholy)' : 'Csak olyan szint kerülhet az előzővel egy sorba, amelynek sorai 5 széknél rövidebbek (jelenleg a leghosszabb sor: ' + sectionWidestRow(section.name) + ' szék)'">
               <input type="checkbox" [(ngModel)]="section.inline" [disabled]="!canInline(section)">
               Egy sorba az előzővel
             </label>

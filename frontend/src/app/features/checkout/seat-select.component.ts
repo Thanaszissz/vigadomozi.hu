@@ -114,7 +114,7 @@ export class SeatSelectComponent implements OnInit {
       this.blocksSource = source;
       this.blocksCache = source
         ? sectionBlocks(this.getSectionGroups(), source.layout?.inlineSections,
-            g => g.rows.reduce((sum, key) => sum + this.getSeatsInRow(key).length, 0))
+            g => Math.max(0, ...g.rows.map(key => this.getSeatsInRow(key).length)))
         : [];
     }
     return this.blocksCache;
