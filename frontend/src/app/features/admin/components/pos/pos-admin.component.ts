@@ -9,7 +9,7 @@ import { AdminService, InvoiceBuyer, PaymentMethod, PosInvoice, Ticket, TicketCa
 import { TicketPrintComponent, preloadTicketBackground, printTickets } from '../ticket-print/ticket-print.component';
 import { AuthService } from '../../../../services/auth.service';
 import { PosServicesComponent } from './pos-services.component';
-import { rowLabelOf, seatNumberOf, seatLabel } from '../../../../core/util/seat';
+import { rowLabelOf, seatNumberOf, seatLabel, sectionBlocks } from '../../../../core/util/seat';
 
 interface DayTab {
   key: string;
@@ -272,6 +272,22 @@ export class PosAdminComponent implements OnInit, OnDestroy {
       groups.set(section, [...(groups.get(section) ?? []), row]);
     }
     return Array.from(groups.entries()).map(([name, rows]) => ({ name, rows }));
+  }
+
+  private blocksSource: unknown = null;
+  private blocksCache: Array<Array<{ name: string; rows: string[] }>> = [];
+
+  /** A szintek megjelenítési blokkjai: az "egy sorba" jelölésű kis szintek egymás mellé kerülnek. */
+  getSectionBlocks(): Array<Array<{ name: string; rows: string[] }>> {
+    const source = this.showtime?.seatMap ?? null;
+    if (source !== this.blocksSource) {
+      this.blocksSource = source;
+      this.blocksCache = source
+        ? sectionBlocks(this.getSectionGroups(), source.layout?.inlineSections,
+            g => g.rows.reduce((sum, row) => sum + this.getSeatsInRow(row).length, 0))
+        : [];
+    }
+    return this.blocksCache;
   }
 
   getSeatsInRow(row: string): Seat[] {

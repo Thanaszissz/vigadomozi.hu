@@ -237,6 +237,7 @@ h1 { margin: 0; color: #e8d5b7; }
   margin: 8px auto 14px;
 }
 
+.section-block { display: flex; justify-content: center; align-items: flex-start; gap: 18px; }
 .section-group { padding: 6px 0; overflow-x: auto; }
 .section-title {
   font-weight: 700;

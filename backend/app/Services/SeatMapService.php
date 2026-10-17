@@ -63,6 +63,12 @@ class SeatMapService
 
         $seatMap = [];
         $aisles = [];
+        $inlineSections = [];
+        foreach ($layout['sections'] ?? [] as $section) {
+            if (isset($section['name'])) {
+                $inlineSections[$section['name']] = !empty($section['inline']);
+            }
+        }
 
         $rowsConfig = $layout['rows'] ?? [];
         if (!empty($rowsConfig)) {
@@ -133,6 +139,7 @@ class SeatMapService
                 'rows' => $auditorium->rows,
                 'columns' => $auditorium->columns,
                 'aisles' => $aisles,
+                'inlineSections' => $inlineSections,
             ],
             'seats' => $seatMap,
             'status' => $status,

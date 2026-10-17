@@ -3,7 +3,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService, ShowtimeDetail, Seat } from '../../core/api/api.service';
-import { rowLabelOf, seatNumberOf, seatLabel } from '../../core/util/seat';
+import { rowLabelOf, seatNumberOf, seatLabel, sectionBlocks } from '../../core/util/seat';
 
 @Component({
   selector: 'app-seat-select',
@@ -74,14 +74,20 @@ export class SeatSelectComponent implements OnInit {
     const available = section.clientWidth;
     const pad = window.innerWidth <= 640 ? 26 : 34;
     const aisles = this.showtime.seatMap.layout?.aisles ?? {};
-    const rows = this.getRowsArray().map(key => ({ count: this.getSeatsInRow(key).length, aisle: aisles[key] !== undefined }));
+    const blockGap = 18;
+    const blocks = this.getSectionBlocks().map(block => block.map(group => ({
+      rows: group.rows.map(key => ({ count: this.getSeatsInRow(key).length, aisle: aisles[key] !== undefined }))
+    })));
 
     let size = 10;
     for (let s = 28; s >= 10; s--) {
       const gap = Math.max(2, Math.round(s * 0.22));
       const aisle = Math.round(s * 0.9);
-      const widest = Math.max(0, ...rows.map(r => r.count * s + Math.max(0, r.count - 1) * gap + (r.aisle ? aisle : 0)));
-      if (widest + 2 * pad <= available) {
+      const groupWidth = (g: { rows: Array<{ count: number; aisle: boolean }> }) =>
+        Math.max(0, ...g.rows.map(r => r.count * s + Math.max(0, r.count - 1) * gap + (r.aisle ? aisle : 0))) + 2 * pad;
+      // az egymás mellé kerülő szintek szélessége összeadódik
+      const widest = Math.max(0, ...blocks.map(block => block.reduce((sum, g) => sum + groupWidth(g), 0) + blockGap * (block.length - 1)));
+      if (widest <= available) {
         size = s;
         break;
       }
@@ -96,6 +102,22 @@ export class SeatSelectComponent implements OnInit {
   getRowsArray(): string[] {
     if (!this.showtime?.seatMap.seats) return [];
     return Object.keys(this.showtime.seatMap.seats);
+  }
+
+  private blocksSource: unknown = null;
+  private blocksCache: Array<Array<{ name: string; rows: string[] }>> = [];
+
+  /** A szintek megjelenítési blokkjai (az "egy sorba" jelölésű kis szintek egymás mellé kerülnek); a nézőtér betöltésekor egyszer épül fel. */
+  getSectionBlocks(): Array<Array<{ name: string; rows: string[] }>> {
+    const source = this.showtime?.seatMap ?? null;
+    if (source !== this.blocksSource) {
+      this.blocksSource = source;
+      this.blocksCache = source
+        ? sectionBlocks(this.getSectionGroups(), source.layout?.inlineSections,
+            g => g.rows.reduce((sum, key) => sum + this.getSeatsInRow(key).length, 0))
+        : [];
+    }
+    return this.blocksCache;
   }
 
   getSectionGroups(): Array<{ name: string; rows: string[] }> {

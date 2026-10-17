@@ -38,3 +38,29 @@ export function seatLabel(key: string | null | undefined): string {
 export function placeLabel(item: { section?: string | null; row_label?: string | null; seat_number?: number | null }): string {
   return (item.section ? item.section + ' · ' : '') + `${item.row_label ?? ''}. sor ${item.seat_number ?? '—'}. szék`;
 }
+
+/** Ennél kevesebb székes szintek kerülhetnek egymás mellé, egy sorba a megjelenítésben. */
+export const INLINE_SECTION_MAX_SEATS = 5;
+
+/**
+ * A szinteket megjelenítési blokkokba rendezi: az "inline" jelölésű szint az előző szinttel egy sorba kerül
+ * (pl. Bal páholy + Jobb páholy), de csak ha mindkettő 5 széknél kisebb. Egyébként minden szint külön blokk.
+ */
+export function sectionBlocks<T extends { name: string }>(
+  groups: T[],
+  inline: Record<string, boolean> | null | undefined,
+  seatCount: (group: T) => number
+): T[][] {
+  const blocks: T[][] = [];
+  for (const group of groups) {
+    const last = blocks[blocks.length - 1]?.slice(-1)[0];
+    const canJoin = !!last && !!inline?.[group.name]
+      && seatCount(group) < INLINE_SECTION_MAX_SEATS && seatCount(last) < INLINE_SECTION_MAX_SEATS;
+    if (canJoin) {
+      blocks[blocks.length - 1].push(group);
+    } else {
+      blocks.push([group]);
+    }
+  }
+  return blocks;
+}

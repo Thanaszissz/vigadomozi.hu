@@ -214,6 +214,14 @@
   padding: 0 34px;
 }
 
+/* az "egy sorba" jelölésű kis szintek (pl. Bal és Jobb páholy) egymás mellett jelennek meg */
+.section-block {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 18px;
+}
+
 .section-group {
   display: flex;
   flex-direction: column;

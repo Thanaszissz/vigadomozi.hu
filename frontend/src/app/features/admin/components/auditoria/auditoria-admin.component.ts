@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AdminService } from '../../../../services/admin.service';
-import { seatKey } from '../../../../core/util/seat';
+import { INLINE_SECTION_MAX_SEATS, sectionBlocks, seatKey } from '../../../../core/util/seat';
 
 interface Seat {
   row: number;
@@ -22,6 +22,8 @@ interface Sector {
 
 interface Section {
   name: string;
+  /** a szint az előtte lévő szinttel egy sorban jelenik meg (csak 5 széknél kisebb szintnél) */
+  inline?: boolean;
 }
 
 interface RowConfig {
@@ -403,6 +405,25 @@ export class AuditoriaAdminComponent implements OnInit {
       groups.unshift(floorGroup);
     }
     return groups;
+  }
+
+  /** A szint székeinek száma (a hozzá rendelt sorok oszlopszámainak összege). */
+  sectionSeatCount(name: string): number {
+    return this.rowConfigs.filter(r => r.section === name).reduce((sum, r) => sum + (Number(r.columns) || 0), 0);
+  }
+
+  canInline(section: Section): boolean {
+    const count = this.sectionSeatCount(section.name);
+    return count > 0 && count < INLINE_SECTION_MAX_SEATS;
+  }
+
+  /** A szintek megjelenítési blokkjai: az "egy sorba" jelölésű kis szintek egymás mellé kerülnek (mint a nézőtéren). */
+  getSectionBlocks(): Array<Array<{ name: string; rows: RowConfig[]; color: string }>> {
+    const inline: Record<string, boolean> = {};
+    for (const s of this.sections) {
+      inline[s.name] = !!s.inline;
+    }
+    return sectionBlocks(this.getSectionGroups(), inline, g => g.rows.reduce((sum, r) => sum + (Number(r.columns) || 0), 0));
   }
 
   getSeatsForRow(row: RowConfig): Seat[] {

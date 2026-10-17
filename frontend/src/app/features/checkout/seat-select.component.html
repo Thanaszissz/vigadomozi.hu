@@ -23,7 +23,8 @@
              [style.--seat-font.px]="seatFont">
           <div class="screen">{{ showtime.seatMap.layout.screenLabel || 'VÁSZON' }}</div>
 
-          <div class="section-group" *ngFor="let group of getSectionGroups()">
+          <div class="section-block" *ngFor="let block of getSectionBlocks()">
+          <div class="section-group" *ngFor="let group of block">
             <div class="section-title">{{ group.name }}</div>
             <div class="seats-container">
               <div *ngFor="let rowLabel of group.rows" class="seat-row">
@@ -43,6 +44,7 @@
                 </div>
               </div>
             </div>
+          </div>
           </div>
 
           <div class="legend">

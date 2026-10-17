@@ -582,6 +582,13 @@ h1 {
   cursor: pointer;
 }
 
+.section-block {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 28px;
+}
+
 .section-group {
   display: flex;
   flex-direction: column;

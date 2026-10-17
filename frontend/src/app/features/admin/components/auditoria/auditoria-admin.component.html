@@ -116,6 +116,11 @@
               <span class="section-dot" [style.background]="getSectionColor(section.name)"></span>
               {{ section.name }}
             </button>
+            <label class="aisle-toggle"
+                   [title]="canInline(section) ? 'A szint az előtte lévő szinttel egy sorban jelenik meg (pl. Bal és Jobb páholy)' : 'Csak az 5 széknél kisebb szint kerülhet az előzővel egy sorba (jelenleg ' + sectionSeatCount(section.name) + ' szék)'">
+              <input type="checkbox" [(ngModel)]="section.inline" [disabled]="!canInline(section)">
+              Egy sorba az előzővel
+            </label>
             <button type="button" class="section-remove" (click)="removeSection(section)">✕</button>
           </div>
         </div>
@@ -193,7 +198,8 @@
 
       <div class="screen">VÁSZON</div>
       
-      <div class="section-group" *ngFor="let group of getSectionGroups()">
+      <div class="section-block" *ngFor="let block of getSectionBlocks()">
+      <div class="section-group" *ngFor="let group of block">
         <div class="section-title" [style.border-color]="group.color">
           <span class="section-dot" [style.background]="group.color"></span>
           {{ group.name }}
@@ -220,6 +226,7 @@
             </ng-container>
           </div>
         </div>
+      </div>
       </div>
 
       <div class="legend">
