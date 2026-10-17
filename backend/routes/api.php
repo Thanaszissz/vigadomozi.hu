@@ -12,19 +12,20 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\TheaterShowController;
 use App\Http\Controllers\Api\SiteStatusController;
 use App\Http\Middleware\BlockDuringMaintenance;
+use App\Http\Middleware\StorePublicListCache;
 
 // Auth routes (public)
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:30,1');
 
 // Public routes
 Route::get('/site-status', [SiteStatusController::class, 'show'])->middleware('throttle:120,1');
-Route::get('/movies', [MovieController::class, 'index']);
+Route::get('/movies', [MovieController::class, 'index'])->middleware(StorePublicListCache::class);
 Route::get('/movies/{movie}', [MovieController::class, 'show']);
 
-Route::get('/theater-shows', [TheaterShowController::class, 'index']);
+Route::get('/theater-shows', [TheaterShowController::class, 'index'])->middleware(StorePublicListCache::class);
 Route::get('/theater-shows/{theater_show}', [TheaterShowController::class, 'show']);
 
-Route::get('/showtimes', [ShowtimeController::class, 'index']);
+Route::get('/showtimes', [ShowtimeController::class, 'index'])->middleware(StorePublicListCache::class);
 Route::get('/showtimes/{showtime}', [ShowtimeController::class, 'show']);
 
 // Seat locking and reservation (a hold e-mailt is küld, ezért korlátozzuk a gyakoriságát)

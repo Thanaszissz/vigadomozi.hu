@@ -9,6 +9,7 @@ use App\Models\Showtime;
 use App\Models\TheaterShow;
 use App\Models\User;
 use App\Observers\AuditObserver;
+use App\Support\ResponseCache;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -44,6 +45,12 @@ class AppServiceProvider extends ServiceProvider
     {
         foreach ([Movie::class, TheaterShow::class, Showtime::class, Auditorium::class, User::class, EmailTemplate::class] as $model) {
             $model::observe(AuditObserver::class);
+        }
+
+        // a publikus listák gyorsítótára azonnal törlődik, ha film, előadás, időpont vagy terem változik
+        foreach ([Movie::class, TheaterShow::class, Showtime::class, Auditorium::class] as $model) {
+            $model::saved(fn () => ResponseCache::flush());
+            $model::deleted(fn () => ResponseCache::flush());
         }
     }
 }

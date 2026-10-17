@@ -19,6 +19,7 @@ backend/node_modules/
 backend/.idea/
 backend/*.log
 backend/storage/logs/
+backend/storage/framework/response-cache/
 backend/storage/cache/
 backend/public/uploads/
 backend/database.sqlite
