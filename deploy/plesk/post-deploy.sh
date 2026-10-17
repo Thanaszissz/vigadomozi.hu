@@ -61,6 +61,7 @@ fi
 
 echo "== migrációk"
 # a jailben nincs MySQL unix socket, ezért itt TCP-n kapcsolódunk (csak erre a parancsra érvényes)
+"$php_bin" artisan config:clear
 DB_HOST=127.0.0.1 "$php_bin" artisan migrate --force
 
 echo "== gyorsítótárak törlése"
@@ -70,6 +71,13 @@ echo "== gyorsítótárak törlése"
 "$php_bin" artisan route:clear
 "$php_bin" artisan event:clear
 "$php_bin" artisan view:clear
+
+# Gyorsitotarak ujraepitese (kb. 200+ ms megtakaritas kereseknent). A jailes utvonalak a konfigban
+# futasidoben felulirodnak (AppServiceProvider), a DB_HOST=127.0.0.1 miatt pedig a jailben es a webszerveren
+# ugyanaz a kapcsolat mukodik. Ha .env-et szerkesztesz, futtasd ujra a telepitest (config:cache).
+for cmd in config:cache route:cache event:cache; do
+    "$php_bin" artisan $cmd || echo "FIGYELEM: a(z) $cmd nem sikerult, gyorsitotar nelkul fut tovabb"
+done
 
 # Feltöltött fájlok: relatív symlink, mert a jailen kívül az abszolút útvonal más
 "$php_bin" -r '

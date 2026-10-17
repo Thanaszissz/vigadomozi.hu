@@ -18,7 +18,23 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // A Plesk jailben (CLI) és a webszerveren (FPM) a projekt útvonala eltér. A gyorsítótárazott konfiguráció a
+        // jailes útvonalakat tartalmazná, ezért az útvonalakat futásidőben, a tényleges könyvtárból állítjuk be.
+        $storage = storage_path();
+        config([
+            'view.paths' => [resource_path('views')],
+            'view.compiled' => $storage . '/framework/views',
+            'cache.stores.file.path' => $storage . '/framework/cache/data',
+            'cache.stores.file.lock_path' => $storage . '/framework/cache/data',
+            'filesystems.disks.local.root' => $storage . '/app/private',
+            'filesystems.disks.public.root' => $storage . '/app/public',
+            'filesystems.links' => [public_path('storage') => $storage . '/app/public'],
+            'logging.channels.single.path' => $storage . '/logs/laravel.log',
+            'logging.channels.daily.path' => $storage . '/logs/laravel.log',
+            'logging.channels.emergency.path' => $storage . '/logs/laravel.log',
+            'mail.markdown.paths' => [resource_path('views/vendor/mail')],
+            'session.files' => $storage . '/framework/sessions',
+        ]);
     }
 
     /**

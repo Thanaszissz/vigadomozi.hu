@@ -46,29 +46,17 @@ class PricingService
             $parts = SeatKey::parse($seatKey);
             $legacyKey = SeatKey::make(null, $parts['row'], (int) $parts['number']);
             
-            // New schema: flat seats array with sector/price
-            if (isset($layout['seats']) && is_array($layout['seats'])) {
-                foreach ($layout['seats'] as $seat) {
-                    $key = $seat['key'] ?? null;
-                    if (!$key && isset($seat['row'], $seat['column'])) {
-                        $rowLabel = chr(64 + (int) $seat['row']);
-                        $key = $rowLabel . '-' . str_pad((string) $seat['column'], 2, '0', STR_PAD_LEFT);
-                    }
-                    if ($key === $seatKey || ($parts['section'] !== null && $key === $legacyKey)) {
-                        // A szektor ára az irányadó (így a szektor árának módosítása a már kijelölt székekre is érvényes)
-                        if (isset($seat['sector']) && isset($layout['sectors']) && is_array($layout['sectors'])) {
-                            foreach ($layout['sectors'] as $sector) {
-                                if (($sector['name'] ?? null) === $seat['sector'] && isset($sector['price'])) {
-                                    return (int) $sector['price'];
-                                }
-                            }
-                        }
+            // New schema: flat seats array with sector/price (kulcs szerint indexelve, hogy sok széknél is gyors legyen)
+            $index = $this->layoutIndex($showtime->auditorium->id, $layout);
+            $seat = $index['seats'][$seatKey] ?? ($parts['section'] !== null ? ($index['seats'][$legacyKey] ?? null) : null);
+            if ($seat !== null) {
+                // A szektor ára az irányadó (így a szektor árának módosítása a már kijelölt székekre is érvényes)
+                if (isset($seat['sector']) && isset($index['sectorPrices'][$seat['sector']])) {
+                    return $index['sectorPrices'][$seat['sector']];
+                }
 
-                        if (isset($seat['price'])) {
-                            return (int) $seat['price'];
-                        }
-                        break;
-                    }
+                if (isset($seat['price'])) {
+                    return (int) $seat['price'];
                 }
             }
             
@@ -104,5 +92,36 @@ class PricingService
 
         // 4. Global default
         return $defaultPrice;
+    }
+
+    /** @var array<int,array{seats: array<string,array>, sectorPrices: array<string,int>}> */
+    private array $layoutIndexCache = [];
+
+    /** A terem elrendezése kulcs szerint indexelve (egy kérésen belül egyszer épül fel). */
+    private function layoutIndex(int $auditoriumId, array $layout): array
+    {
+        if (isset($this->layoutIndexCache[$auditoriumId])) {
+            return $this->layoutIndexCache[$auditoriumId];
+        }
+
+        $seats = [];
+        foreach ($layout['seats'] ?? [] as $seat) {
+            $key = $seat['key'] ?? null;
+            if (!$key && isset($seat['row'], $seat['column'])) {
+                $key = chr(64 + (int) $seat['row']) . '-' . str_pad((string) $seat['column'], 2, '0', STR_PAD_LEFT);
+            }
+            if ($key !== null && !isset($seats[$key])) {
+                $seats[$key] = $seat;
+            }
+        }
+
+        $sectorPrices = [];
+        foreach ($layout['sectors'] ?? [] as $sector) {
+            if (isset($sector['name'], $sector['price']) && !isset($sectorPrices[$sector['name']])) {
+                $sectorPrices[$sector['name']] = (int) $sector['price'];
+            }
+        }
+
+        return $this->layoutIndexCache[$auditoriumId] = ['seats' => $seats, 'sectorPrices' => $sectorPrices];
     }
 }
