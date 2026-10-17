@@ -16,7 +16,11 @@
       </div>
 
       <div class="content-grid">
-        <div class="seat-map-section">
+        <div class="seat-map-section"
+             [style.--seat.px]="seatSize"
+             [style.--seat-gap.px]="seatGap"
+             [style.--seat-aisle.px]="seatAisle"
+             [style.--seat-font.px]="seatFont">
           <div class="screen">{{ showtime.seatMap.layout.screenLabel || 'VÁSZON' }}</div>
 
           <div class="section-group" *ngFor="let group of getSectionGroups()">

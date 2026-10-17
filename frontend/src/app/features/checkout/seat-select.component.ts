@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ElementRef, HostListener, OnInit } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -27,10 +27,18 @@ export class SeatSelectComponent implements OnInit {
   readonly rowLabelOf = rowLabelOf;
   readonly seatNumberOf = seatNumberOf;
   readonly seatLabel = seatLabel;
+
+  // a székek mérete a kijelzőhöz igazodik, hogy a legszélesebb sor is elférjen
+  seatSize = 28;
+  seatGap = 6;
+  seatAisle = 26;
+  seatFont = 10;
+
   constructor(
     private apiService: ApiService,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private host: ElementRef<HTMLElement>
   ) {}
 
   ngOnInit() {
@@ -48,6 +56,7 @@ export class SeatSelectComponent implements OnInit {
       next: (data) => {
         this.showtime = data;
         this.loading = false;
+        setTimeout(() => this.fitSeats());
       },
       error: (err) => {
         this.error = 'Előadás betöltése sikertelen. Próbálja később.';
@@ -55,6 +64,33 @@ export class SeatSelectComponent implements OnInit {
         this.loading = false;
       },
     });
+  }
+
+  @HostListener('window:resize')
+  fitSeats(): void {
+    const section = this.host.nativeElement.querySelector('.seat-map-section') as HTMLElement | null;
+    if (!section || !this.showtime?.seatMap.seats) return;
+
+    const available = section.clientWidth;
+    const pad = window.innerWidth <= 640 ? 26 : 34;
+    const aisles = this.showtime.seatMap.layout?.aisles ?? {};
+    const rows = this.getRowsArray().map(key => ({ count: this.getSeatsInRow(key).length, aisle: aisles[key] !== undefined }));
+
+    let size = 10;
+    for (let s = 28; s >= 10; s--) {
+      const gap = Math.max(2, Math.round(s * 0.22));
+      const aisle = Math.round(s * 0.9);
+      const widest = Math.max(0, ...rows.map(r => r.count * s + Math.max(0, r.count - 1) * gap + (r.aisle ? aisle : 0)));
+      if (widest + 2 * pad <= available) {
+        size = s;
+        break;
+      }
+    }
+
+    this.seatSize = size;
+    this.seatGap = Math.max(2, Math.round(size * 0.22));
+    this.seatAisle = Math.round(size * 0.9);
+    this.seatFont = Math.max(7, Math.round(size * 0.36));
   }
 
   getRowsArray(): string[] {

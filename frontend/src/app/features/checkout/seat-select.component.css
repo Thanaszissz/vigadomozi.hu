@@ -258,22 +258,23 @@
 
 .seats-line {
   display: flex;
-  gap: 6px;
+  gap: var(--seat-gap, 6px);
 }
 
 .seat.aisle-gap {
-  margin-left: 26px;
+  margin-left: var(--seat-aisle, 26px);
 }
 
 .seat {
-  width: 28px;
-  height: 28px;
+  width: var(--seat, 28px);
+  height: var(--seat, 28px);
+  flex-shrink: 0;
   border-radius: 6px 6px 2px 2px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  font-size: 10px;
+  font-size: var(--seat-font, 10px);
   font-weight: 700;
   border: 1px solid #5c3d2e;
 }
@@ -647,10 +648,8 @@
 @media (max-width: 640px) {
   .content-grid { padding: 12px; gap: 14px; }
   .seat-row { gap: 6px; }
+  .seats-container { padding: 0 26px; }
   .row-label { width: 20px; font-size: 12px; }
-  .seats-line { gap: 3px; }
-  .seat.aisle-gap { margin-left: 12px; }
-  .seat { width: 22px; height: 24px; font-size: 9px; flex-shrink: 0; }
   .section-title { margin: 0 auto; }
 }
 
