@@ -41,8 +41,8 @@ class PricingService
         }
 
         // 2. & 3. Auditorium layout
-        if ($showtime->auditorium && $showtime->auditorium->layout_json) {
-            $layout = $showtime->auditorium->layout_json;
+        $layout = $showtime->auditorium ? $this->layoutFor($showtime->auditorium) : null;
+        if ($layout) {
             $parts = SeatKey::parse($seatKey);
             $legacyKey = SeatKey::make(null, $parts['row'], (int) $parts['number']);
             
@@ -96,6 +96,19 @@ class PricingService
 
     /** @var array<int,array{seats: array<string,array>, sectorPrices: array<string,int>}> */
     private array $layoutIndexCache = [];
+
+    /** @var array<int,array|null> */
+    private array $layoutCache = [];
+
+    /** A terem elrendezése egyszer dekódolva (az Eloquent array cast minden elérésnél újra dekódolná a JSON-t). */
+    private function layoutFor(\App\Models\Auditorium $auditorium): ?array
+    {
+        if (!array_key_exists($auditorium->id, $this->layoutCache)) {
+            $this->layoutCache[$auditorium->id] = $auditorium->layout_json ?: null;
+        }
+
+        return $this->layoutCache[$auditorium->id];
+    }
 
     /** A terem elrendezése kulcs szerint indexelve (egy kérésen belül egyszer épül fel). */
     private function layoutIndex(int $auditoriumId, array $layout): array
