@@ -6,7 +6,7 @@ import { Subject, Subscription, of } from 'rxjs';
 import { catchError, debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import { ApiService, Seat, Showtime, ShowtimeDetail } from '../../../../core/api/api.service';
 import { AdminService, InvoiceBuyer, PaymentMethod, PosInvoice, Ticket, TicketCategory, categoryLabel } from '../../../../services/admin.service';
-import { TicketPrintComponent } from '../ticket-print/ticket-print.component';
+import { TicketPrintComponent, preloadTicketBackground, printTickets } from '../ticket-print/ticket-print.component';
 import { AuthService } from '../../../../services/auth.service';
 import { PosServicesComponent } from './pos-services.component';
 import { rowLabelOf, seatNumberOf, seatLabel } from '../../../../core/util/seat';
@@ -75,6 +75,8 @@ export class PosAdminComponent implements OnInit, OnDestroy {
 
   soldTickets: Ticket[] = [];
   printOpen = false;
+  // eladás után a jegyek azonnal, előnézet nélkül a nyomtatóra mennek (a beállítás a böngészőben megmarad)
+  autoPrint = localStorage.getItem('pos.autoPrint') !== '0';
 
   // ÁFÁS számla (Számlázz.hu)
   invoicingEnabled = false;
@@ -100,6 +102,7 @@ export class PosAdminComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    preloadTicketBackground();
     this.loadShowtimes();
     this.admin.posServices().subscribe({
       next: (s) => (this.staffPrice = s.staff_price),
@@ -722,7 +725,11 @@ export class PosAdminComponent implements OnInit, OnDestroy {
     request$.subscribe({
       next: (response) => {
         this.soldTickets = response.tickets;
-        this.printOpen = true;
+        if (this.autoPrint) {
+          this.printSold();
+        } else {
+          this.printOpen = true;
+        }
         this.processing = false;
         this.selectedSeats = [];
         this.selectedReservation = null;
@@ -751,6 +758,17 @@ export class PosAdminComponent implements OnInit, OnDestroy {
 
   closePrint(): void {
     this.printOpen = false;
+  }
+
+  /** Az eladott jegyek közvetlen nyomtatása (előnézet nélkül). */
+  printSold(): void {
+    void printTickets(this.soldTickets, numbers =>
+      this.admin.logClientEvent('ticket.print', `Jegynyomtatás: ${numbers.join(', ')}`, { tickets: numbers })
+    );
+  }
+
+  saveAutoPrint(): void {
+    localStorage.setItem('pos.autoPrint', this.autoPrint ? '1' : '0');
   }
 
   // ---- Foglalás fizetés nélkül ----

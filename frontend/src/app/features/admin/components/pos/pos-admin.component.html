@@ -309,6 +309,11 @@
         </ng-container>
       </ng-container>
 
+      <label class="auto-print">
+        <input type="checkbox" [(ngModel)]="autoPrint" (ngModelChange)="saveAutoPrint()">
+        Automatikus nyomtatás eladás után (előnézet nélkül)
+      </label>
+
       <div *ngIf="heldNotice" class="sold-box held-box">
         <div>{{ heldNotice }}</div>
       </div>
@@ -327,7 +332,8 @@
           <button type="button" class="btn-small" *ngIf="pendingInvoice" [disabled]="invoiceBusy" (click)="retryInvoice()">↻ Újrapróbálás</button>
         </div>
         <div class="sold-actions">
-          <button type="button" class="btn-small" (click)="printOpen = true">🖨️ Jegyek / nyomtatás</button>
+          <button type="button" class="btn-small" (click)="printSold()">🖨️ Újranyomtatás</button>
+          <button type="button" class="btn-small" (click)="printOpen = true">👁️ Előnézet</button>
           <button type="button" class="btn-small primary" (click)="newSale()">Új eladás</button>
         </div>
       </div>

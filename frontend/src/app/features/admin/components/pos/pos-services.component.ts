@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AdminService, PaymentMethod, Ticket } from '../../../../services/admin.service';
-import { TicketPrintComponent } from '../ticket-print/ticket-print.component';
+import { TicketPrintComponent, printTickets } from '../ticket-print/ticket-print.component';
 
 interface ServiceRow {
   id: number;
@@ -119,7 +119,12 @@ export class PosServicesComponent implements OnInit {
       next: (response) => {
         this.processing = false;
         this.soldTickets = response.tickets;
-        this.printOpen = true;
+        // a jegyeladás ablakának "Automatikus nyomtatás" beállítása itt is érvényes
+        if (localStorage.getItem('pos.autoPrint') !== '0') {
+          this.printSold();
+        } else {
+          this.printOpen = true;
+        }
         this.rows.forEach(r => (r.quantity = 0));
         this.paymentMethod = null;
         this.cashGiven = null;
@@ -142,6 +147,12 @@ export class PosServicesComponent implements OnInit {
 
   closePrint(): void {
     this.printOpen = false;
+  }
+
+  printSold(): void {
+    void printTickets(this.soldTickets, numbers =>
+      this.admin.logClientEvent('ticket.print', `Nyugtanyomtatás: ${numbers.join(', ')}`, { tickets: numbers })
+    );
   }
 
   // ---- Sztornó ----

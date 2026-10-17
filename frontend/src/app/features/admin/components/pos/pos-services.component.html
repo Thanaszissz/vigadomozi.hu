@@ -67,7 +67,8 @@
     <div *ngIf="soldTickets.length > 0 && !printOpen" class="sold-box">
       <div>✅ Sikeres eladás: <b>{{ soldTickets.length }}</b> nyugta ({{ soldTickets[0].ticket_number }}<span *ngIf="soldTickets.length > 1"> – {{ soldTickets[soldTickets.length - 1].ticket_number }}</span>)</div>
       <div class="sold-actions">
-        <button type="button" class="btn-small" (click)="printOpen = true">🖨️ Nyugták / nyomtatás</button>
+        <button type="button" class="btn-small" (click)="printSold()">🖨️ Újranyomtatás</button>
+        <button type="button" class="btn-small" (click)="printOpen = true">👁️ Előnézet</button>
         <button type="button" class="btn-small primary" (click)="newSale()">Új eladás</button>
       </div>
     </div>

@@ -367,6 +367,9 @@ h1 { margin: 0; color: #e8d5b7; }
 .btn-confirm:active:not(:disabled) { transform: translateY(0); }
 .btn-confirm:disabled { background: #43301f; color: #8f7556; cursor: not-allowed; box-shadow: none; }
 
+.auto-print { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 13px; color: #c9b79a; cursor: pointer; }
+.auto-print input { width: 16px; height: 16px; cursor: pointer; }
+
 .sold-box {
   margin-top: 12px;
   padding: 12px;

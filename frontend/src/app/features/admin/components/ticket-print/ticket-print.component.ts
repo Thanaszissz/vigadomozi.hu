@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, Output, ViewEncapsulation } from '@angu
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Ticket, AdminService } from '../../../../services/admin.service';
-import { TICKET_CSS, TICKET_PRINT_SCALE, ticketMarkup, waitForImages } from '../../../../core/ticket/ticket-template';
+import { TICKET_CSS, TICKET_PRINT_SCALE, ticketBaseUrl, ticketMarkup, waitForImages } from '../../../../core/ticket/ticket-template';
 
 export function paymentLabel(method: string): string {
   switch (method) {
@@ -26,6 +26,39 @@ const PRINT_PAGE_CSS = `
 
 // Az előnézet a 840 px-es jegy kicsinyített mása
 const PREVIEW_SCALE = 0.6;
+
+/** A jegy háttérképének előtöltése, hogy az eladás utáni nyomtatás ne a letöltésre várjon. */
+export function preloadTicketBackground(): void {
+  const img = new Image();
+  img.src = ticketBaseUrl();
+}
+
+/**
+ * A jegyeket azonnal, előnézet nélkül a böngésző nyomtatójára küldi (jegyenként egy 210 x 100 mm-es oldal).
+ * Párbeszédablak nélküli nyomtatáshoz a böngészőt --kiosk-printing kapcsolóval kell indítani; ilyenkor az
+ * alapértelmezett nyomtatóra megy a jegy.
+ */
+export async function printTickets(tickets: Ticket[], onPrint?: (numbers: string[]) => void): Promise<void> {
+  if (!tickets.length) return;
+
+  onPrint?.(tickets.map(t => t.ticket_number));
+
+  // A jegyeket külön, rejtett keretben nyomtatjuk, így az admin felület nem kerül rá a lapra
+  const frame = document.createElement('iframe');
+  frame.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;';
+  document.body.appendChild(frame);
+
+  const doc = frame.contentDocument!;
+  doc.open();
+  const pages = tickets.map(t => ticketMarkup(t, TICKET_PRINT_SCALE)).join('');
+  doc.write(`<!doctype html><html><head><meta charset="utf-8"><title>Jegyek</title><style>${PRINT_PAGE_CSS}</style></head><body>${pages}</body></html>`);
+  doc.close();
+
+  await waitForImages(doc);
+  frame.contentWindow?.focus();
+  frame.contentWindow?.print();
+  setTimeout(() => frame.remove(), 60000);
+}
 
 @Component({
   selector: 'app-ticket-print',
@@ -97,26 +130,8 @@ export class TicketPrintComponent {
 
   // A jegyeket külön, rejtett keretben nyomtatjuk, így az admin felület nem kerül rá a lapra
   async print(): Promise<void> {
-    if (!this.tickets.length) return;
-
-    const numbers = this.tickets.map(t => t.ticket_number);
-    this.admin.logClientEvent('ticket.print', `Jegynyomtatás: ${numbers.join(', ')}`, { tickets: numbers });
-
-    const frame = document.createElement('iframe');
-    frame.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;';
-    document.body.appendChild(frame);
-
-    const doc = frame.contentDocument!;
-    doc.open();
-    const pages = this.tickets.map(t => ticketMarkup(t, TICKET_PRINT_SCALE)).join('');
-    doc.write(`<!doctype html><html><head><meta charset="utf-8"><title>Jegyek</title><style>${PRINT_PAGE_CSS}</style></head><body>${pages}</body></html>`);
-    doc.close();
-
-    await waitForImages(doc);
-    setTimeout(() => {
-      frame.contentWindow?.focus();
-      frame.contentWindow?.print();
-      setTimeout(() => frame.remove(), 1000);
-    }, 100);
+    await printTickets(this.tickets, numbers =>
+      this.admin.logClientEvent('ticket.print', `Jegynyomtatás: ${numbers.join(', ')}`, { tickets: numbers })
+    );
   }
 }
