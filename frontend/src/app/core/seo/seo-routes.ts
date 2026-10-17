@@ -15,7 +15,7 @@ const PAGES: Record<string, SeoData> = {
   },
   '/prices': {
     title: 'Jegyárak',
-    description: 'A Vigadó Jegy jegyárai Kisújszálláson: teljes árú, kedvezményes és csoportos jegyek.'
+    description: 'A Vigadó Jegy jegyárai Kisújszálláson: emeleti, földszinti emelvényes és 3D jegyek.'
   },
   '/mediaajanlat': {
     title: 'Médiaajánlat',

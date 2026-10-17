@@ -32,7 +32,7 @@ function seo_static_pages(): array
         '/' => [null, SEO_DEFAULT_DESCRIPTION],
         '/movies' => ['Filmek', 'Aktuális filmek a kisújszállási Vigadó Jegyen: plakátok, leírások, előzetesek és vetítési időpontok egy helyen.'],
         '/schedule' => ['Műsor és vetítési időpontok', 'A Vigadó Jegy teljes műsora napokra bontva: mikor és mit játszunk Kisújszálláson. Jegyfoglalás online.'],
-        '/prices' => ['Jegyárak', 'A Vigadó Jegy jegyárai Kisújszálláson: teljes árú, kedvezményes és csoportos jegyek.'],
+        '/prices' => ['Jegyárak', 'A Vigadó Jegy jegyárai Kisújszálláson: emeleti, földszinti emelvényes és 3D jegyek.'],
         '/mediaajanlat' => ['Médiaajánlat', 'Hirdetési és médiaajánlat a Vigadó Jegy vásznán és felületein, Kisújszálláson.'],
         '/hazirend' => ['Házirend', 'A Vigadó Jegy házirendje: látogatási szabályok, korhatár-besorolások és tudnivalók a mozilátogatáshoz.'],
         '/fizetesi-tajekoztato' => ['Fizetési tájékoztató', 'Fizetési tájékoztató a Vigadó Jegy online jegyvásárlásához: elfogadott fizetési módok és a vásárlás menete.'],
