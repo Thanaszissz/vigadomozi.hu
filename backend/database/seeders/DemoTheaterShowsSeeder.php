@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\Auditorium;
 use App\Models\TheaterShow;
 use Carbon\Carbon;
+use Database\Seeders\Concerns\ChecksRoomAvailability;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -16,6 +17,8 @@ use Illuminate\Support\Str;
  */
 class DemoTheaterShowsSeeder extends Seeder
 {
+    use ChecksRoomAvailability;
+
     private const TZ = 'Europe/Budapest';
 
     public function run(): void
@@ -58,8 +61,9 @@ class DemoTheaterShowsSeeder extends Seeder
     /** @param TheaterShow[] $programs */
     private function scheduleShowtimes(array $programs): int
     {
+        // a terem neve a DEMO_AUDITORIUM környezeti változóval adható meg
         $auditorium = Auditorium::firstOrCreate(
-            ['name' => 'Nagyterem'],
+            ['name' => (string) env('DEMO_AUDITORIUM', 'Nagyterem')],
             ['rows' => 10, 'columns' => 12, 'total_seats' => 120]
         );
 
@@ -73,11 +77,8 @@ class DemoTheaterShowsSeeder extends Seeder
                 $startsAt = Carbon::parse($today->copy()->addDays($offset)->format('Y-m-d') . ' ' . $time, self::TZ)->utc();
                 $at = $startsAt->format('Y-m-d H:i:s');
 
-                $taken = DB::table('showtimes')
-                    ->where(fn ($q) => $q->where('theater_show_id', $program->id)->orWhere('auditorium_id', $auditorium->id))
-                    ->where('starts_at', $at)
-                    ->exists();
-                if ($taken) {
+                $alreadyScheduled = DB::table('showtimes')->where('theater_show_id', $program->id)->where('starts_at', $at)->exists();
+                if ($alreadyScheduled || !$this->roomIsFree($auditorium->id, $startsAt, (int) ($program->duration_min ?: 120))) {
                     continue;
                 }
 

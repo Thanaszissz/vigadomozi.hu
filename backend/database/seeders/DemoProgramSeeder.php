@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\Auditorium;
 use App\Models\Movie;
 use Carbon\Carbon;
+use Database\Seeders\Concerns\ChecksRoomAvailability;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -18,6 +19,8 @@ use Illuminate\Support\Str;
  */
 class DemoProgramSeeder extends Seeder
 {
+    use ChecksRoomAvailability;
+
     private const TZ = 'Europe/Budapest';
 
     // Helyi kezdési időpontok; a hosszú és a 16/18-as filmek a későbbi sávokba kerülnek
@@ -25,8 +28,9 @@ class DemoProgramSeeder extends Seeder
 
     public function run(): void
     {
+        // a terem neve a DEMO_AUDITORIUM környezeti változóval adható meg
         $auditorium = Auditorium::firstOrCreate(
-            ['name' => 'A terem'],
+            ['name' => (string) env('DEMO_AUDITORIUM', 'A terem')],
             ['rows' => 8, 'columns' => 10, 'total_seats' => 80]
         );
 
@@ -101,7 +105,7 @@ class DemoProgramSeeder extends Seeder
 
                 $usedToday[$movie->id] = true;
                 $shown[$movie->id]++;
-                $created += $this->ensureShowtime($movie->id, $auditoriumId, $startsAt->copy()->utc()) ? 1 : 0;
+                $created += $this->ensureShowtime($movie->id, $auditoriumId, $startsAt->copy()->utc(), (int) ($movie->duration_min ?: 120)) ? 1 : 0;
             }
         }
 
@@ -125,14 +129,13 @@ class DemoProgramSeeder extends Seeder
         return true;
     }
 
-    private function ensureShowtime(int $movieId, int $auditoriumId, Carbon $startsAt): bool
+    private function ensureShowtime(int $movieId, int $auditoriumId, Carbon $startsAt, int $durationMin): bool
     {
         $from = $startsAt->copy()->subHour()->format('Y-m-d H:i:s');
         $to = $startsAt->copy()->addHour()->format('Y-m-d H:i:s');
 
         $sameMovie = DB::table('showtimes')->where('movie_id', $movieId)->whereBetween('starts_at', [$from, $to])->exists();
-        $taken = DB::table('showtimes')->where('auditorium_id', $auditoriumId)->where('starts_at', $startsAt->format('Y-m-d H:i:s'))->exists();
-        if ($sameMovie || $taken) {
+        if ($sameMovie || !$this->roomIsFree($auditoriumId, $startsAt, $durationMin)) {
             return false;
         }
 
