@@ -18,11 +18,11 @@ class StorePublicListCache
             $request->isMethod('GET')
             && $response->getStatusCode() === 200
             && !$request->headers->has('Authorization')
-            && ResponseCache::eligible($request->getRequestUri())
+            && ($ttl = ResponseCache::ttlFor($request->getRequestUri())) !== null
         ) {
             $content = $response->getContent();
             if (is_string($content) && $content !== '') {
-                ResponseCache::store($request->getRequestUri(), $content);
+                ResponseCache::store($request->getRequestUri(), $content, $ttl);
             }
         }
 

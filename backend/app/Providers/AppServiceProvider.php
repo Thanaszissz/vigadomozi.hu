@@ -5,6 +5,8 @@ namespace App\Providers;
 use App\Models\Auditorium;
 use App\Models\EmailTemplate;
 use App\Models\Movie;
+use App\Models\Reservation;
+use App\Models\SeatLock;
 use App\Models\Showtime;
 use App\Models\TheaterShow;
 use App\Models\User;
@@ -52,5 +54,11 @@ class AppServiceProvider extends ServiceProvider
             $model::saved(fn () => ResponseCache::flush());
             $model::deleted(fn () => ResponseCache::flush());
         }
+
+        // egy előadás nézőterének gyorsítótára törlődik, ha zárolás vagy foglalás változik
+        SeatLock::saved(fn (SeatLock $lock) => ResponseCache::forgetShowtime($lock->showtime_id));
+        SeatLock::deleted(fn (SeatLock $lock) => ResponseCache::forgetShowtime($lock->showtime_id));
+        Reservation::saved(fn (Reservation $reservation) => ResponseCache::forgetShowtime($reservation->showtime_id));
+        Reservation::deleted(fn (Reservation $reservation) => ResponseCache::forgetShowtime($reservation->showtime_id));
     }
 }

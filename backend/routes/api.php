@@ -26,7 +26,7 @@ Route::get('/theater-shows', [TheaterShowController::class, 'index'])->middlewar
 Route::get('/theater-shows/{theater_show}', [TheaterShowController::class, 'show']);
 
 Route::get('/showtimes', [ShowtimeController::class, 'index'])->middleware(StorePublicListCache::class);
-Route::get('/showtimes/{showtime}', [ShowtimeController::class, 'show']);
+Route::get('/showtimes/{showtime}', [ShowtimeController::class, 'show'])->middleware(StorePublicListCache::class);
 
 // Seat locking and reservation (a hold e-mailt is küld, ezért korlátozzuk a gyakoriságát)
 Route::post('/showtimes/{showtime}/lock', [SeatLockController::class, 'lock'])->middleware([BlockDuringMaintenance::class, 'throttle:20,1']);
