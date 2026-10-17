@@ -646,7 +646,8 @@
 }
 
 @media (max-width: 640px) {
-  .content-grid { padding: 12px; gap: 14px; }
+  .page { padding: 10px; }
+  .content-grid { padding: 8px; gap: 14px; }
   .seat-row { gap: 6px; }
   .seats-container { padding: 0 26px; }
   .row-label { width: 20px; font-size: 12px; }
