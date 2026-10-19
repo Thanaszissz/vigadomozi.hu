@@ -16,6 +16,7 @@ import { escapeHtml } from '../../../../core/util/html';
 })
 export class ReportsAdminComponent implements OnInit {
   selectedDate = new Date().toISOString().split('T')[0];
+  activeTab: 'daily' | 'stats' = 'daily';
   loading = false;
   error = '';
   
@@ -64,7 +65,7 @@ export class ReportsAdminComponent implements OnInit {
       <html>
       <head>
         <meta charset="UTF-8">
-        <title>Napi zárás - ${this.selectedDate}</title>
+        <title>Napi riport - ${this.selectedDate}</title>
         <style>
           * { margin: 0; padding: 0; box-sizing: border-box; }
           body {
@@ -173,7 +174,7 @@ export class ReportsAdminComponent implements OnInit {
       <body>
         <div class="header">
           <img src="/assets/vigado-logo.png" alt="Vigadó" class="logo">
-          <h1>📊 Napi Zárás</h1>
+          <h1>📊 Napi riport</h1>
           <div class="date">${this.selectedDate}</div>
         </div>
 

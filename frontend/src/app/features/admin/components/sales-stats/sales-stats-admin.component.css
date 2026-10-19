@@ -1,6 +1,7 @@
 :host { display: block; }
+:host([hidden]) { display: none; }
 
-.stats-section { margin-top: 40px; padding-top: 30px; border-top: 1px solid #5c3d2e; }
+.stats-section { margin-top: 0; }
 
 .stats-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
 .stats-head h2 { margin: 0; color: #e8d5b7; }

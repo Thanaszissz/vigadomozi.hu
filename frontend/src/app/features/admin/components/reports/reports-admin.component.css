@@ -35,7 +35,7 @@ h1 {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 30px;
+  margin-bottom: 24px;
   padding: 16px;
   background: #2c1810;
   border: 1px solid #5c3d2e;
@@ -265,6 +265,59 @@ h1 {
   background: linear-gradient(135deg, #d4a574 0%, #a08060 100%);
   height: 100%;
   transition: width 0.3s ease;
+}
+
+.main-tabs {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #5c3d2e;
+  padding-bottom: 14px;
+}
+
+.main-tabs button {
+  padding: 10px 22px;
+  border-radius: 999px;
+  border: 1px solid #5c3d2e;
+  background: #4a3425;
+  color: #e8d5b7;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.main-tabs button:hover {
+  border-color: #d4a574;
+}
+
+.main-tabs button.active {
+  background: #d4a574;
+  color: #2c1810;
+  border-color: #d4a574;
+}
+
+.two-col {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+  gap: 30px;
+  align-items: start;
+}
+
+.two-col > .report-section {
+  min-width: 0;
+}
+
+.report-section.collapsible > summary {
+  cursor: pointer;
+  color: #e8d5b7;
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.report-section.collapsible[open] > summary {
+  margin-bottom: 16px;
 }
 
 .bar-value {
