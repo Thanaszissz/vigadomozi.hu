@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Exceptions\SeatUnavailableException;
 use App\Http\Controllers\Controller;
+use App\Models\Customer;
 use App\Models\Reservation;
 use App\Models\Showtime;
 use App\Services\ReservationMailer;
@@ -62,9 +63,10 @@ class SeatLockController extends Controller
             // Nincs HTML/vezérlőkarakter a nevekben: az adat később admin felületen és e-mailben is megjelenik
             'name' => ['required', 'string', 'max:255', 'regex:/^[^<>\x00-\x1F\x7F]+$/u'],
             'phone' => ['required', 'string', 'max:20', 'regex:/^[0-9+()\-\s\/.]{6,20}$/'],
+            'zip' => ['nullable', 'string', 'max:10', 'regex:/^[0-9A-Za-z\- ]+$/'],
             'seatKeys' => ['required', 'array', 'min:1', 'max:20'],
             'seatKeys.*' => ['string', 'max:120', 'distinct'],
-        ]);
+        ], ['zip.regex' => 'Az irányítószám csak betűket, számjegyeket és kötőjelet tartalmazhat.']);
     }
 
     /**
@@ -74,12 +76,15 @@ class SeatLockController extends Controller
      */
     private function createReservation(Showtime $showtime, array $data, ?\Illuminate\Support\Carbon $expiresAt): Reservation
     {
-        return DB::transaction(function () use ($showtime, $data, $expiresAt) {
+        $zip = filled($data['zip'] ?? null) ? trim($data['zip']) : null;
+
+        $reservation = DB::transaction(function () use ($showtime, $data, $expiresAt, $zip) {
             $reservation = Reservation::create([
                 'showtime_id' => $showtime->id,
                 'customer_email' => $data['email'],
                 'customer_name' => $data['name'],
                 'customer_phone' => $data['phone'],
+                'customer_zip' => $zip,
                 'status' => 'PENDING',
                 'currency' => 'HUF',
                 'total_amount' => 0,
@@ -90,6 +95,11 @@ class SeatLockController extends Controller
 
             return $reservation;
         });
+
+        // A vásárló adatai bekerülnek a Vásárlók közé (az admin felület név szerinti javaslataihoz); a hibája nem akaszthatja meg a foglalást
+        Customer::remember($data['name'], $data['phone'], $data['email'], $zip);
+
+        return $reservation;
     }
 
     private function unavailable(SeatUnavailableException $e): JsonResponse

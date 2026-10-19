@@ -18,6 +18,7 @@ export class SeatSelectComponent implements OnInit {
   email = '';
   name = '';
   phone = '';
+  zip = '';
   loading = false;
   isProcessing = false;
   error: string | null = null;
@@ -210,11 +211,16 @@ export class SeatSelectComponent implements OnInit {
     return this.selectedSeats.reduce((sum, seat) => sum + seat.price, 0);
   }
 
+  get zipValid(): boolean {
+    return !this.zip.trim() || /^[0-9A-Za-z\- ]{1,10}$/.test(this.zip.trim());
+  }
+
   canReserve(): boolean {
     return this.selectedSeats.length > 0 && 
            this.email.trim().length > 0 && 
            this.name.trim().length > 0 && 
            this.phone.trim().length > 0 && 
+           this.zipValid &&
            !this.isProcessing;
   }
 
@@ -226,7 +232,7 @@ export class SeatSelectComponent implements OnInit {
 
     const seatKeys = this.selectedSeats.map(s => s.key);
 
-    this.apiService.lockSeats(this.showtimeId, this.email, this.name, this.phone, seatKeys).subscribe({
+    this.apiService.lockSeats(this.showtimeId, this.email, this.name, this.phone, seatKeys, this.zip.trim()).subscribe({
       next: (response) => {
         this.router.navigate(['/checkout', response.reservation.id]);
       },
@@ -251,7 +257,7 @@ export class SeatSelectComponent implements OnInit {
 
     const seatKeys = this.selectedSeats.map(s => s.key);
 
-    this.apiService.holdSeats(this.showtimeId, this.email, this.name, this.phone, seatKeys).subscribe({
+    this.apiService.holdSeats(this.showtimeId, this.email, this.name, this.phone, seatKeys, this.zip.trim()).subscribe({
       next: (response) => {
         this.router.navigate(['/hold-summary', response.reservation.id]);
       },

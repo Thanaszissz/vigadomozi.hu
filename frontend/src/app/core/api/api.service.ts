@@ -143,17 +143,17 @@ export class ApiService {
   }
 
   // Seat locking and reservations
-  lockSeats(showtimeId: number, email: string, name: string, phone: string, seatKeys: string[]): Observable<{ reservation: Reservation }> {
+  lockSeats(showtimeId: number, email: string, name: string, phone: string, seatKeys: string[], zip?: string): Observable<{ reservation: Reservation }> {
     return this.http.post<{ reservation: Reservation }>(
       `${API_URL}/showtimes/${showtimeId}/lock`,
-      { email, name, phone, seatKeys }
+      { email, name, phone, seatKeys, ...(zip ? { zip } : {}) }
     );
   }
 
-  holdSeats(showtimeId: number, email: string, name: string, phone: string, seatKeys: string[]): Observable<{ reservation: Reservation }> {
+  holdSeats(showtimeId: number, email: string, name: string, phone: string, seatKeys: string[], zip?: string): Observable<{ reservation: Reservation }> {
     return this.http.post<{ reservation: Reservation }>(
       `${API_URL}/showtimes/${showtimeId}/hold`,
-      { email, name, phone, seatKeys }
+      { email, name, phone, seatKeys, ...(zip ? { zip } : {}) }
     );
   }
 

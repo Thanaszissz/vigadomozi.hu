@@ -123,9 +123,21 @@
                 class="form-control">
             </div>
 
+            <div class="email-input">
+              <label for="zip">Irányítószám (nem kötelező):</label>
+              <input
+                id="zip"
+                type="text"
+                maxlength="10"
+                [(ngModel)]="zip"
+                placeholder="pl. 5310"
+                class="form-control">
+              <small *ngIf="!zipValid" style="color:#ff9d8a">Az irányítószám csak betűt, számot és kötőjelet tartalmazhat.</small>
+            </div>
+
             <button
               (click)="reserve()"
-              [disabled]="selectedSeats.length === 0 || !email || !name || !phone || isProcessing"
+              [disabled]="selectedSeats.length === 0 || !email || !name || !phone || !zipValid || isProcessing"
               class="btn btn-primary">
               <span *ngIf="!isProcessing">Kifizetem kártyával (10 perc)</span>
               <span *ngIf="isProcessing">Feldolgozás...</span>
@@ -133,7 +145,7 @@
 
             <button
               (click)="hold()"
-              [disabled]="selectedSeats.length === 0 || !email || !name || !phone || isProcessing"
+              [disabled]="selectedSeats.length === 0 || !email || !name || !phone || !zipValid || isProcessing"
               class="btn btn-hold">
               <span *ngIf="!isProcessing">Lefoglalva</span>
               <span *ngIf="isProcessing">Feldolgozás...</span>
