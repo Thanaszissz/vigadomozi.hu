@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DateInputComponent } from '../../../../shared/date-time-inputs.component';
+import { SalesStatsAdminComponent } from '../sales-stats/sales-stats-admin.component';
 import { Router } from '@angular/router';
 import { AdminService } from '../../../../services/admin.service';
 import { escapeHtml } from '../../../../core/util/html';
@@ -9,7 +10,7 @@ import { escapeHtml } from '../../../../core/util/html';
 @Component({
   selector: 'app-reports-admin',
   standalone: true,
-  imports: [CommonModule, FormsModule, DateInputComponent],
+  imports: [CommonModule, FormsModule, DateInputComponent, SalesStatsAdminComponent],
   templateUrl: './reports-admin.component.html',
   styleUrls: ['./reports-admin.component.css']
 })
@@ -50,10 +51,6 @@ export class ReportsAdminComponent implements OnInit {
 
   goBack(): void {
     this.router.navigate(['/admin/dashboard']);
-  }
-
-  goTo(path: string): void {
-    this.router.navigate([path]);
   }
 
   exportPDF(): void {

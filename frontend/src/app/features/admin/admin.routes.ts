@@ -5,7 +5,6 @@ import { MoviesAdminComponent } from './components/movies/movies-admin.component
 import { TheaterShowsAdminComponent } from './components/theater-shows/theater-shows-admin.component';
 import { ReservationsAdminComponent } from './components/reservations/reservations-admin.component';
 import { ReportsAdminComponent } from './components/reports/reports-admin.component';
-import { SalesStatsAdminComponent } from './components/sales-stats/sales-stats-admin.component';
 import { ShowtimesAdminComponent } from './components/showtimes/showtimes-admin.component';
 import { AuditoriaAdminComponent } from './components/auditoria/auditoria-admin.component';
 import { UsersAdminComponent } from './components/users/users-admin.component';
@@ -104,12 +103,6 @@ export const ADMIN_ROUTES: Routes = [
   {
     path: 'reports',
     component: ReportsAdminComponent,
-    canActivate: [AuthGuard],
-    data: { permission: 'reports.view' }
-  },
-  {
-    path: 'reports/sales',
-    component: SalesStatsAdminComponent,
     canActivate: [AuthGuard],
     data: { permission: 'reports.view' }
   },

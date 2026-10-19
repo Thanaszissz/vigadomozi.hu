@@ -1,26 +1,36 @@
-<div class="admin-container">
-  <div class="header">
-    <h1>📈 Értékesítési statisztika</h1>
-    <button (click)="goBack()" class="btn-back">← Vissza a riportokhoz</button>
+<section class="stats-section">
+  <div class="stats-head">
+    <h2>📈 Értékesítési statisztika</h2>
+    <div class="export-actions" *ngIf="data">
+      <button type="button" class="btn-export" (click)="exportCsv()">📊 CSV export</button>
+      <button type="button" class="btn-export" (click)="exportPdf()">📄 PDF / nyomtatás</button>
+    </div>
   </div>
 
   <div class="filters">
-    <div class="presets">
-      <button type="button" (click)="preset('today')">Ma</button>
-      <button type="button" (click)="preset('week')">Ez a hét</button>
-      <button type="button" (click)="preset('month')">Ez a hónap</button>
-      <button type="button" (click)="preset('year')">Ez az év</button>
-      <button type="button" (click)="preset('30d')">Elmúlt 30 nap</button>
+    <div class="period-tabs" role="tablist" aria-label="Időszak">
+      <button *ngFor="let p of periods" type="button" [class.active]="period === p.value" (click)="setPeriod(p.value)">{{ p.label }}</button>
     </div>
-    <div class="range">
+
+    <div class="period-nav" *ngIf="period !== 'custom'">
+      <button type="button" class="nav-btn" (click)="shift(-1)" aria-label="Előző">‹</button>
+      <div class="period-label">{{ periodLabel }}</div>
+      <button type="button" class="nav-btn" (click)="shift(1)" aria-label="Következő">›</button>
+      <button type="button" class="today-btn" (click)="goToToday()">Ma</button>
+      <label class="jump">Ugrás dátumra
+        <app-date-input [ngModel]="anchor" (ngModelChange)="onAnchorChange($event)"></app-date-input>
+      </label>
+    </div>
+
+    <div class="range" *ngIf="period === 'custom'">
       <label>Tól
-        <app-date-input [(ngModel)]="from" (ngModelChange)="load()"></app-date-input>
+        <app-date-input [(ngModel)]="customFrom" (ngModelChange)="load()"></app-date-input>
       </label>
       <label>Ig
-        <app-date-input [(ngModel)]="to" (ngModelChange)="load()"></app-date-input>
+        <app-date-input [(ngModel)]="customTo" (ngModelChange)="load()"></app-date-input>
       </label>
-      <div class="group-tabs" role="tablist" aria-label="Bontás">
-        <button *ngFor="let g of groups" type="button" [class.active]="group === g.value" (click)="group = g.value; load()">{{ g.label }}</button>
+      <div class="bucket-tabs" role="tablist" aria-label="Bontás">
+        <button *ngFor="let b of buckets" type="button" [class.active]="customBucket === b.value" (click)="customBucket = b.value; load()">{{ b.label }}</button>
       </div>
     </div>
   </div>
@@ -52,17 +62,15 @@
       </div>
     </div>
 
-    <div *ngIf="data.summary.tickets === 0 && data.summary.services === 0" class="empty-state">
-      📭 A kiválasztott időszakban nem volt értékesítés.
-    </div>
+    <div *ngIf="!hasSales" class="empty-state">📭 A kiválasztott időszakban nem volt értékesítés.</div>
 
-    <ng-container *ngIf="data.summary.tickets > 0 || data.summary.services > 0">
-      <section class="panel">
-        <h2>📅 Jegyeladás időszakonként</h2>
+    <ng-container *ngIf="hasSales">
+      <div class="panel">
+        <h3>📅 Jegyeladás időszakonként</h3>
         <div class="columns" [class.dense]="data.series.length > 45">
           <div *ngFor="let p of data.series" class="col"
                [title]="p.label + ': ' + p.tickets + ' jegy, ' + (p.amount | number:'1.0-0') + ' Ft'">
-            <div class="col-value" *ngIf="data.series.length <= 20 && p.tickets > 0">{{ p.tickets }}</div>
+            <div class="col-value" *ngIf="data.series.length <= 31 && p.tickets > 0">{{ p.tickets }}</div>
             <div class="col-bar" [style.height.%]="barWidth(p.tickets, data.series)"></div>
           </div>
         </div>
@@ -84,25 +92,25 @@
             </tbody>
           </table>
         </details>
-      </section>
+      </div>
 
       <div class="two-col">
-        <section class="panel">
-          <h2>💳 Fizetési mód</h2>
+        <div class="panel">
+          <h3>💳 Fizetési mód</h3>
           <div class="bar-row" *ngFor="let r of data.by_payment">
             <div class="bar-head">
-              <span>{{ paymentLabel(r) }}</span>
+              <span>{{ paymentIcon(r) }} {{ paymentName(r) }}</span>
               <span>{{ r.tickets }} db • {{ share(r.tickets, paymentTotal) }}% • {{ r.amount | number:'1.0-0' }} Ft</span>
             </div>
             <div class="bar-track"><div class="bar-fill" [style.width.%]="barWidth(r.tickets, data.by_payment)"></div></div>
           </div>
           <p class="note" *ngIf="data.by_payment.length > 1">
-            Legtöbbször: <b>{{ paymentLabel(data.by_payment[0]) }}</b>
+            Legtöbbször: <b>{{ paymentIcon(data.by_payment[0]) }} {{ paymentName(data.by_payment[0]) }}</b>
           </p>
-        </section>
+        </div>
 
-        <section class="panel">
-          <h2>🏷️ Jegykategória</h2>
+        <div class="panel">
+          <h3>🏷️ Jegykategória</h3>
           <div class="bar-row" *ngFor="let r of data.by_category">
             <div class="bar-head">
               <span>{{ r.label }}</span>
@@ -110,11 +118,11 @@
             </div>
             <div class="bar-track"><div class="bar-fill alt" [style.width.%]="barWidth(r.tickets, data.by_category)"></div></div>
           </div>
-        </section>
+        </div>
       </div>
 
-      <section class="panel" *ngIf="data.by_program.length">
-        <h2>🎬 Miből mennyi fogyott</h2>
+      <div class="panel" *ngIf="data.by_program.length">
+        <h3>🎬 Miből mennyi fogyott</h3>
         <div class="bar-row" *ngFor="let r of data.by_program">
           <div class="bar-head">
             <span>{{ r.label }}</span>
@@ -122,10 +130,10 @@
           </div>
           <div class="bar-track"><div class="bar-fill" [style.width.%]="barWidth(r.tickets, data.by_program)"></div></div>
         </div>
-      </section>
+      </div>
 
-      <section class="panel" *ngIf="data.by_zip.length">
-        <h2>📮 Irányítószámok szerint</h2>
+      <div class="panel" *ngIf="data.by_zip.length">
+        <h3>📮 Irányítószámok szerint</h3>
         <div class="bar-row" *ngFor="let r of data.by_zip">
           <div class="bar-head">
             <span [class.muted]="r.key === ''">{{ r.label }}</span>
@@ -134,10 +142,10 @@
           <div class="bar-track"><div class="bar-fill" [class.alt]="r.key === ''" [style.width.%]="barWidth(r.tickets, data.by_zip)"></div></div>
         </div>
         <p class="note">Irányítószám csak a helyszínen felvett foglalásoknál van megadva, a többi jegy a „Nincs megadva" sorba kerül.</p>
-      </section>
+      </div>
 
-      <section class="panel" *ngIf="data.services.length">
-        <h2>🛍️ Egyéb szolgáltatások</h2>
+      <div class="panel" *ngIf="data.services.length">
+        <h3>🛍️ Egyéb szolgáltatások</h3>
         <div class="bar-row" *ngFor="let r of data.services">
           <div class="bar-head">
             <span>{{ r.label }}</span>
@@ -145,7 +153,7 @@
           </div>
           <div class="bar-track"><div class="bar-fill alt" [style.width.%]="barWidth(r.tickets, data.services)"></div></div>
         </div>
-      </section>
+      </div>
     </ng-container>
   </div>
-</div>
+</section>

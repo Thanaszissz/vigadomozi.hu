@@ -1,10 +1,7 @@
 <div class="admin-container">
   <div class="header">
     <h1>📊 Napi Zárás</h1>
-    <div class="header-actions">
-      <button (click)="goTo('/admin/reports/sales')" class="btn-back">📈 Értékesítési statisztika</button>
-      <button (click)="goBack()" class="btn-back">← Vissza a dashboardra</button>
-    </div>
+    <button (click)="goBack()" class="btn-back">← Vissza a dashboardra</button>
   </div>
 
   <div class="date-selector">
@@ -181,4 +178,6 @@
       📭 Ezen a napon nem történt foglalás.
     </div>
   </div>
+
+  <app-sales-stats-admin></app-sales-stats-admin>
 </div>

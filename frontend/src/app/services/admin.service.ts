@@ -542,7 +542,7 @@ export class AdminService {
     return this.http.get<any>(`${this.apiUrl}/reports/daily?date=${date}`);
   }
 
-  getSalesStats(from: string, to: string, group: 'day' | 'week' | 'month' | 'year'): Observable<any> {
+  getSalesStats(from: string, to: string, group: 'hour' | 'day' | 'week' | 'month' | 'year'): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/reports/sales`, { params: { from, to, group } });
   }
 

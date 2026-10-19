@@ -27,7 +27,7 @@ class SalesStatsController extends Controller
         $data = $request->validate([
             'from' => ['required', 'date_format:Y-m-d'],
             'to' => ['required', 'date_format:Y-m-d', 'after_or_equal:from'],
-            'group' => ['sometimes', 'in:day,week,month,year'],
+            'group' => ['sometimes', 'in:hour,day,week,month,year'],
         ]);
         $group = $data['group'] ?? 'day';
 
@@ -112,6 +112,7 @@ class SalesStatsController extends Controller
                 'week' => $cursor->copy()->addWeek(),
                 'month' => $cursor->copy()->addMonthNoOverflow(),
                 'year' => $cursor->copy()->addYear(),
+                'hour' => $cursor->copy()->addHour(),
                 default => $cursor->copy()->addDay(),
             };
             if (count($buckets) > self::MAX_BUCKETS) {
@@ -128,6 +129,7 @@ class SalesStatsController extends Controller
             'week' => $date->copy()->startOfWeek(CarbonInterface::MONDAY),
             'month' => $date->copy()->startOfMonth(),
             'year' => $date->copy()->startOfYear(),
+            'hour' => $date->copy()->startOfHour(),
             default => $date->copy()->startOfDay(),
         };
     }
@@ -138,6 +140,7 @@ class SalesStatsController extends Controller
             'week' => $date->copy()->startOfWeek(CarbonInterface::MONDAY)->format('Y-m-d'),
             'month' => $date->format('Y-m'),
             'year' => $date->format('Y'),
+            'hour' => $date->format('Y-m-d H'),
             default => $date->format('Y-m-d'),
         };
     }
@@ -148,6 +151,7 @@ class SalesStatsController extends Controller
             'week' => $start->format('Y.m.d.') . ' – ' . $start->copy()->endOfWeek(CarbonInterface::SUNDAY)->format('m.d.'),
             'month' => $start->format('Y.m'),
             'year' => $start->format('Y'),
+            'hour' => $start->format('H:00'),
             default => $start->format('Y.m.d.'),
         };
     }
