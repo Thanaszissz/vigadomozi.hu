@@ -343,8 +343,10 @@ export class ShowtimesAdminComponent implements OnInit {
   }
 
   combineDateAndTime(dateStr: string, timeStr: string): string {
-    // dateStr format: YYYY-MM-DD
-    // timeStr format: HH:mm
-    return `${dateStr} ${timeStr}:00`;
+    // dateStr: YYYY-MM-DD, timeStr: HH:mm (helyi idő). A szerver UTC-ben tárol, ezért időzónás (UTC) értéket küldünk,
+    // különben a helyi idő UTC-nek értelmeződne és mentés után 2 órával későbbi időpont jelenne meg.
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    return new Date(year, month - 1, day, hours, minutes, 0).toISOString();
   }
 }
