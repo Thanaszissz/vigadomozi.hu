@@ -59,10 +59,10 @@ export class PosAdminComponent implements OnInit, OnDestroy {
   holdName = '';
   holdPhone = '';
   holdEmail = '';
-  heldNotice: string | null = null;
+  holdZip = '';  heldNotice: string | null = null;
 
   // Név szerinti vásárló-javaslatok a foglalási űrlapon
-  customerSuggestions: Array<{ id: number; name: string; email: string | null; phone: string | null }> = [];
+  customerSuggestions: Array<{ id: number; name: string; email: string | null; phone: string | null; zip: string | null }> = [];
   private nameSearch$ = new Subject<string>();
   private nameSearchSub?: Subscription;
 
@@ -123,11 +123,12 @@ export class PosAdminComponent implements OnInit, OnDestroy {
     this.nameSearch$.next((value ?? '').trim());
   }
 
-  pickCustomer(c: { name: string; email: string | null; phone: string | null }, event: Event): void {
+  pickCustomer(c: { name: string; email: string | null; phone: string | null; zip: string | null }, event: Event): void {
     event.preventDefault();
     this.holdName = c.name;
     this.holdPhone = c.phone ?? '';
     this.holdEmail = c.email ?? '';
+    this.holdZip = c.zip ?? '';
     this.customerSuggestions = [];
     this.nameSearch$.next('');
   }
@@ -832,6 +833,7 @@ export class PosAdminComponent implements OnInit, OnDestroy {
       customer_name: this.holdName.trim(),
       customer_phone: this.holdPhone.trim(),
       customer_email: this.holdEmail.trim() || undefined,
+      customer_zip: this.holdZip.trim() || undefined,
       seat_categories: this.seatCategoriesPayload()
     }).subscribe({
       next: (response) => {
@@ -845,6 +847,7 @@ export class PosAdminComponent implements OnInit, OnDestroy {
         this.holdName = '';
         this.holdPhone = '';
         this.holdEmail = '';
+        this.holdZip = '';
         this.resetPayment();
         this.refresh();
       },

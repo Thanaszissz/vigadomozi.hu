@@ -306,6 +306,10 @@
               <span>E-mail (nem kötelező)</span>
               <input type="email" [(ngModel)]="holdEmail" maxlength="255" placeholder="vasarlo@example.com" />
             </label>
+            <label class="field">
+              <span>Irányítószám (nem kötelező)</span>
+              <input type="text" [(ngModel)]="holdZip" maxlength="10" placeholder="pl. 3300" />
+            </label>
             <div *ngIf="error" class="alert">{{ error }}</div>
             <div class="hold-actions">
               <button type="button" class="btn-small primary" [disabled]="!canHold" (click)="confirmHold()">

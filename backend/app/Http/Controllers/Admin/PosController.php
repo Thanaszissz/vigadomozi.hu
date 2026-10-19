@@ -95,9 +95,10 @@ class PosController extends Controller
             'customer_name' => ['required', 'string', 'max:255', 'regex:/^[^<>\x00-\x1F\x7F]+$/u'],
             'customer_phone' => ['required', 'string', 'max:20'],
             'customer_email' => ['nullable', 'email', 'max:255'],
+            'customer_zip' => ['nullable', 'string', 'max:10', 'regex:/^[0-9A-Za-z\- ]+$/'],
             'seat_categories' => ['nullable', 'array'],
             'seat_categories.*' => ['string', Rule::in(TicketCategory::SEAT)],
-        ]);
+        ], ['customer_zip.regex' => 'Az irányítószám csak betűket, számjegyeket és kötőjelet tartalmazhat.']);
         $this->assertCategoriesMatchSeats($data);
 
         $showtime = Showtime::with(['movie', 'auditorium'])->findOrFail($data['showtime_id']);
@@ -142,7 +143,7 @@ class PosController extends Controller
             app(ReservationMailer::class)->reservationReceived($reservation);
         }
 
-        Customer::remember($data['customer_name'], $data['customer_phone'], $email);
+        Customer::remember($data['customer_name'], $data['customer_phone'], $email, $data['customer_zip'] ?? null);
 
         return response()->json($this->payload($reservation), 201);
     }
@@ -227,7 +228,7 @@ class PosController extends Controller
             Customer::where(fn($q) => $q->where('name', 'like', $like)->orWhere('phone', 'like', $like)->orWhere('email', 'like', $like))
                 ->orderBy('name')
                 ->limit(8)
-                ->get(['id', 'name', 'email', 'phone'])
+                ->get(['id', 'name', 'email', 'phone', 'zip'])
         );
     }
 

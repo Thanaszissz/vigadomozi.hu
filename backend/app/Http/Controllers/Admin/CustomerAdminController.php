@@ -75,14 +75,17 @@ class CustomerAdminController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['nullable', 'email', 'max:255'],
             'phone' => ['nullable', 'string', 'max:50', 'regex:/^[0-9+\-\s()\/.]+$/'],
+            'zip' => ['nullable', 'string', 'max:10', 'regex:/^[0-9A-Za-z\- ]+$/'],
         ], [
             'phone.regex' => 'A telefonszám csak számjegyeket és a + - ( ) / . jeleket tartalmazhatja.',
+            'zip.regex' => 'Az irányítószám csak betűket, számjegyeket és kötőjelet tartalmazhat.',
         ]);
 
         return [
             'name' => trim($data['name']),
             'email' => filled($data['email'] ?? null) ? trim($data['email']) : null,
             'phone' => filled($data['phone'] ?? null) ? trim($data['phone']) : null,
+            'zip' => filled($data['zip'] ?? null) ? trim($data['zip']) : null,
         ];
     }
 }

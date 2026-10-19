@@ -573,8 +573,8 @@ export class AdminService {
     return this.http.get<Ticket[]>(`${this.apiUrl}/pos/services/tickets`);
   }
 
-  posSearchCustomers(q: string): Observable<Array<{ id: number; name: string; email: string | null; phone: string | null }>> {
-    return this.http.get<Array<{ id: number; name: string; email: string | null; phone: string | null }>>(`${this.apiUrl}/pos/customers`, { params: { q } });
+  posSearchCustomers(q: string): Observable<Array<{ id: number; name: string; email: string | null; phone: string | null; zip: string | null }>> {
+    return this.http.get<Array<{ id: number; name: string; email: string | null; phone: string | null; zip: string | null }>>(`${this.apiUrl}/pos/customers`, { params: { q } });
   }
 
   posHold(payload: {
@@ -583,6 +583,7 @@ export class AdminService {
     customer_name: string;
     customer_phone: string;
     customer_email?: string;
+    customer_zip?: string;
     seat_categories?: Record<string, TicketCategory>;
   }): Observable<{ reservation: any; tickets: Ticket[] }> {
     return this.http.post<{ reservation: any; tickets: Ticket[] }>(`${this.apiUrl}/pos/hold`, payload);

@@ -9,6 +9,7 @@ interface Customer {
   name: string;
   email: string | null;
   phone: string | null;
+  zip?: string | null;
   created_at?: string;
 }
 
@@ -28,7 +29,7 @@ export class CustomersAdminComponent implements OnInit {
 
   showForm = false;
   editingId: number | null = null;
-  formData: Customer = { name: '', email: '', phone: '' };
+  formData: Customer = { name: '', email: '', phone: '', zip: '' };
 
   constructor(
     private adminService: AdminService,
@@ -63,7 +64,7 @@ export class CustomersAdminComponent implements OnInit {
   }
 
   resetForm() {
-    this.formData = { name: '', email: '', phone: '' };
+    this.formData = { name: '', email: '', phone: '', zip: '' };
     this.editingId = null;
     this.error = null;
     this.showForm = false;
@@ -71,7 +72,7 @@ export class CustomersAdminComponent implements OnInit {
 
   editCustomer(customer: Customer) {
     this.editingId = customer.id ?? null;
-    this.formData = { name: customer.name, email: customer.email ?? '', phone: customer.phone ?? '' };
+    this.formData = { name: customer.name, email: customer.email ?? '', phone: customer.phone ?? '', zip: customer.zip ?? '' };
     this.showForm = true;
     this.error = null;
   }

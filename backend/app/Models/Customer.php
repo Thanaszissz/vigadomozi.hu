@@ -6,18 +6,19 @@ use Illuminate\Database\Eloquent\Model;
 
 class Customer extends Model
 {
-    protected $fillable = ['name', 'email', 'phone'];
+    protected $fillable = ['name', 'email', 'phone', 'zip'];
 
     /**
      * Foglaláskor megadott adatok mentése: ha a vásárló (név + telefonszám vagy e-mail alapján) már megvan, csak a hiányzó
-     * adatait egészíti ki, különben új vásárlót vesz fel. A hibája soha nem akaszthatja meg a foglalást.
+     * adatait egészíti ki (az újonnan megadott irányítószám felülírja a régit), különben új vásárlót vesz fel. A hibája soha nem akaszthatja meg a foglalást.
      */
-    public static function remember(string $name, ?string $phone, ?string $email): ?self
+    public static function remember(string $name, ?string $phone, ?string $email, ?string $zip = null): ?self
     {
         try {
             $name = trim($name);
             $phone = filled($phone) ? trim($phone) : null;
             $email = filled($email) ? mb_strtolower(trim($email)) : null;
+            $zip = filled($zip) ? trim($zip) : null;
             if ($name === '') {
                 return null;
             }
@@ -33,6 +34,7 @@ class Customer extends Model
                 $existing->fill(array_filter([
                     'email' => $existing->email ?: $email,
                     'phone' => $existing->phone ?: $phone,
+                    'zip' => $zip,
                 ]));
                 if ($existing->isDirty()) {
                     $existing->save();
@@ -41,7 +43,7 @@ class Customer extends Model
                 return $existing;
             }
 
-            return static::create(['name' => $name, 'email' => $email, 'phone' => $phone]);
+            return static::create(['name' => $name, 'email' => $email, 'phone' => $phone, 'zip' => $zip]);
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::error('Vásárló mentése sikertelen: ' . $e->getMessage());
 
