@@ -302,9 +302,15 @@ h1 { margin: 0; color: #e8d5b7; }
 .pay-count { margin: 0 0 10px; padding: 8px 10px; border: 1px solid #5c3d2e; border-radius: 8px; background: #3d2817; display: grid; gap: 6px; }
 .pay-count > span { font-weight: 700; font-size: 14px; }
 .pay-count-ctl { display: flex; align-items: center; gap: 8px; }
-.pay-count-ctl button { width: 36px; height: 36px; border-radius: 8px; border: 1px solid #5c3d2e; background: #4a3425; color: #e8d5b7; font-size: 20px; font-weight: 700; cursor: pointer; }
+.pay-count-ctl button { position: relative; width: 36px; height: 36px; padding: 0; border-radius: 8px; border: 1px solid #5c3d2e; background: #4a3425; cursor: pointer; }
+.pay-count-ctl button::before,
+.pay-count-ctl button::after { content: ''; position: absolute; left: 50%; top: 50%; background: #e8d5b7; border-radius: 1px; transform: translate(-50%, -50%); }
+.pay-count-ctl button::before { width: 14px; height: 2px; }
+.pay-count-ctl button.plus::after { width: 2px; height: 14px; }
 .pay-count-ctl button:disabled { opacity: 0.4; cursor: default; }
-.pay-count-ctl input { width: 64px; height: 36px; text-align: center; font-size: 18px; font-weight: 700; border-radius: 8px; border: 1px solid #5c3d2e; background: #2c1810; color: #e8d5b7; }
+.pay-count-ctl input { width: 64px; height: 36px; text-align: center; font-size: 18px; font-weight: 700; border-radius: 8px; border: 1px solid #5c3d2e; background: #2c1810; color: #e8d5b7; appearance: textfield; -moz-appearance: textfield; }
+.pay-count-ctl input::-webkit-outer-spin-button,
+.pay-count-ctl input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .total { display: flex; justify-content: space-between; font-size: 22px; margin: 12px 0; }
 .total b { color: #d4a574; }
 

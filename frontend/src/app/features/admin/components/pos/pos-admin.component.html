@@ -160,10 +160,10 @@
         <div class="pay-count" *ngIf="mode === 'reservations' && selectedReservation && !editing && reservationItems.length > 1">
           <span>Most kifizetett jegyek száma</span>
           <div class="pay-count-ctl">
-            <button type="button" [disabled]="processing || payCountValue <= 1" (click)="adjustPayCount(-1)">−</button>
+            <button type="button" class="step-btn minus" aria-label="Kevesebb" [disabled]="processing || payCountValue <= 1" (click)="adjustPayCount(-1)"></button>
             <input type="number" min="1" [max]="reservationItems.length" step="1" [disabled]="processing"
                    [ngModel]="payCountValue" (ngModelChange)="setPayCount($event)" />
-            <button type="button" [disabled]="processing || payCountValue >= reservationItems.length" (click)="adjustPayCount(1)">+</button>
+            <button type="button" class="step-btn plus" aria-label="Több" [disabled]="processing || payCountValue >= reservationItems.length" (click)="adjustPayCount(1)"></button>
             <small>/ {{ reservationItems.length }}</small>
           </div>
           <div class="muted" *ngIf="isPartialPayment">A többi {{ reservationItems.length - payCountValue }} szék a foglalásban marad.</div>
