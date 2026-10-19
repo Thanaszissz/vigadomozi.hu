@@ -9,7 +9,7 @@ class TheaterShowController extends Controller
 {
     public function index()
     {
-        return response()->json(TheaterShow::all(), 200);
+        return response()->json(TheaterShow::listed()->get(), 200);
     }
 
     public function show(TheaterShow $theater_show)

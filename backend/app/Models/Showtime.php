@@ -4,10 +4,23 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 
 class Showtime extends Model
 {
     use HasFactory;
+
+    /** A lejárt előadások ennyi nap után kikerülnek a listákból (az eladott jegyek és a statisztikák nem érintettek). */
+    public const EXPIRED_GRACE_DAYS = 1;
+
+    /** Az előadás nélküli film / program ennyi nap után kikerül a listákból. */
+    public const PROGRAM_GRACE_DAYS = 3;
+
+    /** Csak azok az előadások, amelyek nem jártak le egy napnál régebben. */
+    public function scopeListed(Builder $query): Builder
+    {
+        return $query->where($query->getModel()->getTable() . '.starts_at', '>=', now()->subDays(self::EXPIRED_GRACE_DAYS));
+    }
 
     protected $fillable = [
         'movie_id',

@@ -12,7 +12,7 @@ class MovieAdminController extends Controller
 {
     public function index()
     {
-        return response()->json(Movie::all());
+        return response()->json(Movie::listed()->get());
     }
 
     public function show(Movie $movie)

@@ -11,7 +11,7 @@ class ShowtimeAdminController extends Controller
     public function index()
     {
         return response()->json(
-            Showtime::with(['movie', 'auditorium'])->get()
+            Showtime::listed()->with(['movie', 'auditorium'])->get()
         );
     }
 

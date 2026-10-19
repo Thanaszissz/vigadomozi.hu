@@ -13,7 +13,7 @@ class TheaterShowAdminController extends Controller
 {
     public function index()
     {
-        return response()->json(TheaterShow::all());
+        return response()->json(TheaterShow::listed()->get());
     }
 
     public function show(TheaterShow $theater_show)

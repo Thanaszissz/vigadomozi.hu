@@ -31,7 +31,7 @@ class ReservationAdminController extends Controller
 
     public function grouped()
     {
-        $showtimes = Showtime::query()
+        $showtimes = Showtime::listed()
             ->with([
                 'movie',
                 'auditorium',

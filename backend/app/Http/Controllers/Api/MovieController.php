@@ -11,7 +11,7 @@ class MovieController extends Controller
     public function index()
     {
         return response()->json(
-            Movie::all(),
+            Movie::listed()->get(),
             200
         )->header('Cache-Control', 'public, max-age=30');
     }
