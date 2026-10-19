@@ -23,20 +23,14 @@
 
     <div *ngIf="loadingShowtimes" class="muted">Előadások betöltése...</div>
     <div *ngIf="showtimesError" class="alert">{{ showtimesError }}</div>
-    <div *ngIf="!loadingShowtimes && !showtimesError && days.length === 0" class="muted">
+    <div *ngIf="!loadingShowtimes && !showtimesError && showtimes.length === 0" class="muted">
       Nincs értékesíthető előadás.
     </div>
 
-    <div class="day-tabs" *ngIf="days.length > 0">
-      <button *ngFor="let day of days" type="button" class="day-tab"
-              [class.active]="day.key === selectedDayKey" (click)="selectDay(day.key)">
-        {{ day.label }}
-      </button>
-    </div>
-
-    <div class="showtime-list" *ngIf="selectedDay">
-      <button *ngFor="let s of selectedDay.showtimes" type="button" class="showtime-card"
+    <div class="showtime-list" *ngIf="showtimes.length > 0">
+      <button *ngFor="let s of showtimes" type="button" class="showtime-card"
               [class.active]="showtime?.id === s.id" (click)="selectShowtime(s)">
+        <span class="st-date">{{ showtimeDayLabel(s) }}</span>
         <span class="st-time">{{ s.starts_at | date:'HH:mm' }}</span>
         <span class="st-title">{{ s.movie.title }}</span>
         <span class="st-meta">{{ s.auditorium.name }}</span>

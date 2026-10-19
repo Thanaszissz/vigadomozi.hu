@@ -11,12 +11,6 @@ import { AuthService } from '../../../../services/auth.service';
 import { PosServicesComponent } from './pos-services.component';
 import { rowLabelOf, seatNumberOf, seatLabel, sectionBlocks } from '../../../../core/util/seat';
 
-interface DayTab {
-  key: string;
-  label: string;
-  showtimes: Showtime[];
-}
-
 type SaleMode = 'seats' | 'reservations' | 'void';
 
 @Component({
@@ -30,8 +24,7 @@ export class PosAdminComponent implements OnInit, OnDestroy {
   // A kezdés után ennyi percig még lehet jegyet adni (a szerver is ezt érvényesíti)
   private readonly graceMinutes = 30;
 
-  days: DayTab[] = [];
-  selectedDayKey = '';
+  showtimes: Showtime[] = [];
   loadingShowtimes = false;
   showtimesError: string | null = null;
 
@@ -164,21 +157,7 @@ export class PosAdminComponent implements OnInit, OnDestroy {
           .filter(s => s.status === 'active' && new Date(s.starts_at).getTime() >= limit)
           .sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime());
 
-        const byDay = new Map<string, Showtime[]>();
-        for (const s of open) {
-          const key = this.dayKey(new Date(s.starts_at));
-          byDay.set(key, [...(byDay.get(key) ?? []), s]);
-        }
-
-        this.days = Array.from(byDay.entries()).map(([key, list]) => ({
-          key,
-          label: this.dayLabel(key),
-          showtimes: list
-        }));
-
-        if (!this.days.some(d => d.key === this.selectedDayKey)) {
-          this.selectedDayKey = this.days[0]?.key ?? '';
-        }
+        this.showtimes = open;
         this.loadingShowtimes = false;
       },
       error: () => {
@@ -188,12 +167,9 @@ export class PosAdminComponent implements OnInit, OnDestroy {
     });
   }
 
-  get selectedDay(): DayTab | undefined {
-    return this.days.find(d => d.key === this.selectedDayKey);
-  }
-
-  selectDay(key: string): void {
-    this.selectedDayKey = key;
+  /** Az előadás napja rövid címkével, pl. „Ma 10.19.” */
+  showtimeDayLabel(s: Showtime): string {
+    return this.dayLabel(this.dayKey(new Date(s.starts_at)));
   }
 
   selectShowtime(showtime: Showtime): void {

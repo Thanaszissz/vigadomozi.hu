@@ -117,14 +117,22 @@ h1 { margin: 0; color: #e8d5b7; }
 
 .showtime-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
+}
+
+@media (max-width: 900px) {
+  .showtime-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 560px) {
+  .showtime-list { grid-template-columns: 1fr; }
 }
 
 .showtime-card {
   display: grid;
   grid-template-columns: auto 1fr;
-  grid-template-areas: "time title" "time meta";
+  grid-template-areas: "date date" "time title" "time meta";
   column-gap: 12px;
   text-align: left;
   padding: 10px 12px;
@@ -137,6 +145,7 @@ h1 { margin: 0; color: #e8d5b7; }
 
 .showtime-card:hover { border-color: #d4a574; }
 .showtime-card.active { border-color: #d4a574; background: #5c3d2e; }
+.st-date { grid-area: date; font-size: 12px; font-weight: 700; color: #a08060; margin-bottom: 2px; }
 .st-time { grid-area: time; font-size: 22px; font-weight: 800; color: #d4a574; align-self: center; }
 .st-title { grid-area: title; font-weight: 700; }
 .st-meta { grid-area: meta; font-size: 12px; color: #a08060; }
