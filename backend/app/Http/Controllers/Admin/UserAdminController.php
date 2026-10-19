@@ -9,7 +9,6 @@ use App\Support\Roles;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules\Password;
 use Illuminate\Support\Facades\Hash;
 
 class UserAdminController extends Controller
@@ -34,10 +33,33 @@ class UserAdminController extends Controller
         );
     }
 
-    /** Erős jelszó: legalább 12 karakter, kis- és nagybetű, szám. */
-    private function passwordRule(): Password
+    /**
+     * Komplex jelszó: legalább 12 karakter, kis- és nagybetű, szám és speciális karakter, és nem tartalmazza az e-mail-cím elejét.
+     * A hibaüzenet felsorolja, mi hiányzik.
+     */
+    private function passwordRules(Request $request): array
     {
-        return Password::min(12)->mixedCase()->numbers();
+        return [function (string $attribute, mixed $value, \Closure $fail) use ($request) {
+            $password = (string) $value;
+            $missing = [];
+
+            if (mb_strlen($password) < 12) $missing[] = 'legalább 12 karakter';
+            if (!preg_match('/\p{Ll}/u', $password)) $missing[] = 'kisbetű';
+            if (!preg_match('/\p{Lu}/u', $password)) $missing[] = 'nagybetű';
+            if (!preg_match('/\d/', $password)) $missing[] = 'szám';
+            if (!preg_match('/[^\p{L}\p{N}]/u', $password)) $missing[] = 'speciális karakter (pl. ! ? # $ % & *)';
+
+            if ($missing) {
+                $fail('A jelszónak tartalmaznia kell: ' . implode(', ', $missing) . '.');
+
+                return;
+            }
+
+            $local = mb_strtolower(explode('@', (string) $request->input('email'))[0]);
+            if (mb_strlen($local) >= 4 && str_contains(mb_strtolower($password), $local)) {
+                $fail('A jelszó nem tartalmazhatja az e-mail-cím elejét.');
+            }
+        }];
     }
 
     public function store(Request $request)
@@ -45,7 +67,7 @@ class UserAdminController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
-            'password' => ['required', $this->passwordRule()],
+            'password' => ['required', 'string', 'max:255', ...$this->passwordRules($request)],
             'role' => ['required', Rule::in(Roles::all())],
         ]);
 
@@ -77,7 +99,7 @@ class UserAdminController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email,' . $user->id],
-            'password' => ['nullable', $this->passwordRule()],
+            'password' => ['nullable', 'string', 'max:255', ...$this->passwordRules($request)],
             'role' => ['sometimes', Rule::in(Roles::all())],
         ]);
 

@@ -45,8 +45,12 @@
         id="password"
         type="password"
         [(ngModel)]="formData.password"
-        placeholder="Jelszó (min. 12 karakter, kis- és nagybetű, szám)"
+        placeholder="Komplex jelszó (min. 12 karakter)"
+        autocomplete="new-password"
         class="form-control">
+      <ul class="pw-rules" *ngIf="formData.password">
+        <li *ngFor="let c of passwordChecks" [class.ok]="c.ok">{{ c.ok ? '✓' : '✗' }} {{ c.label }}</li>
+      </ul>
     </div>
 
     <div class="form-group">
@@ -65,7 +69,7 @@
     </div>
 
     <div class="form-actions">
-      <button (click)="saveUser()" [disabled]="loading" class="btn-save">
+      <button (click)="saveUser()" [disabled]="loading || (!!formData.password && !passwordStrong)" class="btn-save">
         {{ loading ? 'Mentés...' : 'Mentés' }}
       </button>
       <button (click)="resetForm()" [disabled]="loading" class="btn-cancel">

@@ -98,6 +98,22 @@ export class UsersAdminComponent implements OnInit {
     this.showForm = true;
   }
 
+  /** A komplex jelszó követelményei (a szerver is ugyanezeket ellenőrzi). */
+  get passwordChecks(): Array<{ label: string; ok: boolean }> {
+    const p = this.formData.password ?? '';
+    return [
+      { label: 'legalább 12 karakter', ok: p.length >= 12 },
+      { label: 'kisbetű', ok: /\p{Ll}/u.test(p) },
+      { label: 'nagybetű', ok: /\p{Lu}/u.test(p) },
+      { label: 'szám', ok: /\d/.test(p) },
+      { label: 'speciális karakter (pl. ! ? # $ % & *)', ok: /[^\p{L}\p{N}]/u.test(p) }
+    ];
+  }
+
+  get passwordStrong(): boolean {
+    return this.passwordChecks.every(c => c.ok);
+  }
+
   saveUser() {
     if (!this.formData.name || !this.formData.email) {
       this.error = 'Név és email megadása kötelező.';
@@ -106,6 +122,11 @@ export class UsersAdminComponent implements OnInit {
 
     if (!this.editingId && !this.formData.password) {
       this.error = 'Új felhasználóhoz jelszó megadása kötelező.';
+      return;
+    }
+
+    if (this.formData.password && !this.passwordStrong) {
+      this.error = 'A jelszó nem elég komplex: teljesítse a felsorolt követelményeket.';
       return;
     }
 
