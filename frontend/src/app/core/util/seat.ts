@@ -65,3 +65,63 @@ export function sectionBlocks<T extends { name: string }>(
   }
   return blocks;
 }
+
+interface GapSeat {
+  key: string;
+  type: string;
+  bookable: boolean;
+  status: string;
+}
+
+/**
+ * Azok a szabad székek, amelyek a soron belül egyedül maradnának üresen: mindkét oldalukon foglalt / nem foglalható /
+ * kijelölt szék, a folyosó vagy a sor széle van. A kijelölt székek (selected) foglaltnak számítanak.
+ * A sorokat a folyosó-székek és a sor közepén lévő folyosók (aisles: sorkulcs => a folyosó utáni első szék indexe) szakaszokra bontják.
+ */
+export function isolatedFreeSeats(
+  rows: Record<string, Record<string, GapSeat>> | null | undefined,
+  aisles: Record<string, number> | null | undefined,
+  selected: ReadonlySet<string>
+): string[] {
+  const result: string[] = [];
+
+  for (const [rowKeyValue, rowSeats] of Object.entries(rows ?? {})) {
+    const seats = Object.values(rowSeats ?? {});
+    const aisleBefore = aisles?.[rowKeyValue];
+    let segment: GapSeat[] = [];
+
+    const flush = () => {
+      const occupied = segment.map(s => s.status !== 'available' || !s.bookable || selected.has(s.key));
+      segment.forEach((seat, i) => {
+        if (!occupied[i] && (i === 0 || occupied[i - 1]) && (i === segment.length - 1 || occupied[i + 1])) {
+          result.push(seat.key);
+        }
+      });
+      segment = [];
+    };
+
+    seats.forEach((seat, index) => {
+      if (aisleBefore !== undefined && index === aisleBefore) flush();
+      if (seat.type === 'aisle') {
+        flush();
+      } else {
+        segment.push(seat);
+      }
+    });
+    flush();
+  }
+
+  return result;
+}
+
+/** A kijelölés által újonnan egyedül hagyott üres székek (a már előtte is magányos székekre nem figyelmeztet). */
+export function newlyIsolatedSeats(
+  rows: Record<string, Record<string, GapSeat>> | null | undefined,
+  aisles: Record<string, number> | null | undefined,
+  selectedKeys: string[]
+): string[] {
+  if (selectedKeys.length === 0) return [];
+
+  const before = new Set(isolatedFreeSeats(rows, aisles, new Set()));
+  return isolatedFreeSeats(rows, aisles, new Set(selectedKeys)).filter(key => !before.has(key));
+}

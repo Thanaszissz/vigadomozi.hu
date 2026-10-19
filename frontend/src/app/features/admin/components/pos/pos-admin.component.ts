@@ -9,7 +9,7 @@ import { AdminService, InvoiceBuyer, PaymentMethod, PosInvoice, Ticket, TicketCa
 import { TicketPrintComponent, preloadTicketBackground, printTickets } from '../ticket-print/ticket-print.component';
 import { AuthService } from '../../../../services/auth.service';
 import { PosServicesComponent } from './pos-services.component';
-import { rowLabelOf, seatNumberOf, seatLabel, sectionBlocks } from '../../../../core/util/seat';
+import { rowLabelOf, seatNumberOf, seatLabel, sectionBlocks, newlyIsolatedSeats } from '../../../../core/util/seat';
 
 type SaleMode = 'seats' | 'reservations' | 'void';
 
@@ -39,6 +39,27 @@ export class PosAdminComponent implements OnInit, OnDestroy {
   readonly rowLabelOf = rowLabelOf;
   readonly seatNumberOf = seatNumberOf;
   readonly seatLabel = seatLabel;
+
+  private gapCacheKey = '';
+  private gapMapRef: unknown = null;
+  private gapCache: string[] = [];
+
+  /** Új eladás / foglalás esetén a kijelölés miatt egyedül maradó üres székek (figyelmeztetés, nem tiltás). */
+  get isolatedSeatKeys(): string[] {
+    const seatMap = this.showtime?.seatMap;
+    const keys = this.mode === 'seats' ? this.selectedSeats.map(s => s.key) : [];
+    const cacheKey = keys.join(',');
+    if (cacheKey !== this.gapCacheKey || seatMap !== this.gapMapRef) {
+      this.gapCacheKey = cacheKey;
+      this.gapMapRef = seatMap;
+      this.gapCache = seatMap ? newlyIsolatedSeats(seatMap.seats, seatMap.layout?.aisles, keys) : [];
+    }
+    return this.gapCache;
+  }
+
+  get isolatedSeatLabels(): string {
+    return this.isolatedSeatKeys.map(key => seatLabel(key)).join(', ');
+  }
 
   // Székenkénti jegykategória (normál / Dolgozó jegy / Élménykártya) és a Dolgozó jegy beállított ára
   seatCategories: Record<string, TicketCategory> = {};

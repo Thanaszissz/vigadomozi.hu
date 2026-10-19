@@ -16,6 +16,11 @@
 
   <app-pos-services *ngIf="area === 'services'"></app-pos-services>
 
+  <div *ngIf="isolatedSeatKeys.length > 0" class="gap-toast" role="alert">
+    <span>⚠️ Úgy válasszon helyet, hogy ne maradjon egyedül üres hely.</span>
+    <small>Egyedül üresen maradna: {{ isolatedSeatLabels }}</small>
+  </div>
+
   <ng-container *ngIf="area === 'cinema'">
   <!-- 1. lépés: előadás -->
   <section class="panel">

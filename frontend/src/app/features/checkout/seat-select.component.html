@@ -1,4 +1,9 @@
 <div class="page">
+  <div *ngIf="isolatedSeatKeys.length > 0" class="gap-toast" role="alert">
+    <span>⚠️ Kérjük, úgy válasszon helyet, hogy ne maradjon egyedül üres hely.</span>
+    <small>Egyedül üresen maradna: {{ isolatedSeatLabels }}</small>
+  </div>
+
   <section class="content">
     <div *ngIf="loading" class="state loading">
       <p>Adatok betöltése...</p>
@@ -137,7 +142,7 @@
 
             <button
               (click)="reserve()"
-              [disabled]="selectedSeats.length === 0 || !email || !name || !phone || !zipValid || isProcessing"
+              [disabled]="selectedSeats.length === 0 || !email || !name || !phone || !zipValid || isolatedSeatKeys.length > 0 || isProcessing"
               class="btn btn-primary">
               <span *ngIf="!isProcessing">Kifizetem kártyával (10 perc)</span>
               <span *ngIf="isProcessing">Feldolgozás...</span>
@@ -145,7 +150,7 @@
 
             <button
               (click)="hold()"
-              [disabled]="selectedSeats.length === 0 || !email || !name || !phone || !zipValid || isProcessing"
+              [disabled]="selectedSeats.length === 0 || !email || !name || !phone || !zipValid || isolatedSeatKeys.length > 0 || isProcessing"
               class="btn btn-hold">
               <span *ngIf="!isProcessing">Lefoglalva</span>
               <span *ngIf="isProcessing">Feldolgozás...</span>

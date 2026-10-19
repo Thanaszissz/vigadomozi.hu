@@ -3,7 +3,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService, ShowtimeDetail, Seat } from '../../core/api/api.service';
-import { rowLabelOf, seatNumberOf, seatLabel, sectionBlocks } from '../../core/util/seat';
+import { rowLabelOf, seatNumberOf, seatLabel, sectionBlocks, newlyIsolatedSeats } from '../../core/util/seat';
 
 @Component({
   selector: 'app-seat-select',
@@ -215,12 +215,34 @@ export class SeatSelectComponent implements OnInit {
     return !this.zip.trim() || /^[0-9A-Za-z\- ]{1,10}$/.test(this.zip.trim());
   }
 
+  private gapCacheKey = '';
+  private gapMapRef: unknown = null;
+  private gapCache: string[] = [];
+
+  /** A kijelölés miatt egyedül maradó üres székek (a kijelölés vagy a nézőtér változásáig gyorsítótárazva). */
+  get isolatedSeatKeys(): string[] {
+    const seatMap = this.showtime?.seatMap;
+    const keys = this.selectedSeats.map(s => s.key);
+    const cacheKey = keys.join(',');
+    if (cacheKey !== this.gapCacheKey || seatMap !== this.gapMapRef) {
+      this.gapCacheKey = cacheKey;
+      this.gapMapRef = seatMap;
+      this.gapCache = seatMap ? newlyIsolatedSeats(seatMap.seats, seatMap.layout?.aisles, keys) : [];
+    }
+    return this.gapCache;
+  }
+
+  get isolatedSeatLabels(): string {
+    return this.isolatedSeatKeys.map(key => seatLabel(key)).join(', ');
+  }
+
   canReserve(): boolean {
     return this.selectedSeats.length > 0 && 
            this.email.trim().length > 0 && 
            this.name.trim().length > 0 && 
            this.phone.trim().length > 0 && 
            this.zipValid &&
+           this.isolatedSeatKeys.length === 0 &&
            !this.isProcessing;
   }
 
