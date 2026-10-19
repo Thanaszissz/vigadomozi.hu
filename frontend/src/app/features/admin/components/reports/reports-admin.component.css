@@ -31,6 +31,12 @@ h1 {
   background: #a08060;
 }
 
+.header-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 .date-selector {
   display: flex;
   align-items: center;

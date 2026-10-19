@@ -1,0 +1,58 @@
+.admin-container { padding: 20px; max-width: 1400px; margin: 0 auto; }
+
+.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+h1 { margin: 0; color: #e8d5b7; }
+.btn-back { padding: 10px 20px; background: #d4a574; color: #2c1810; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
+.btn-back:hover { background: #a08060; }
+
+.filters { background: #2c1810; border: 1px solid #5c3d2e; border-radius: 8px; padding: 16px; margin-bottom: 24px; display: grid; gap: 14px; }
+.presets { display: flex; flex-wrap: wrap; gap: 8px; }
+.presets button, .group-tabs button {
+  padding: 8px 14px; border-radius: 999px; border: 1px solid #5c3d2e; background: #4a3425; color: #e8d5b7; cursor: pointer; font-weight: 600;
+}
+.presets button:hover, .group-tabs button:hover { border-color: #d4a574; }
+.group-tabs button.active { background: #d4a574; color: #2c1810; border-color: #d4a574; }
+.range { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; }
+.range label { color: #e8d5b7; font-weight: 600; display: grid; gap: 6px; width: 170px; }
+.group-tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.loading, .empty-state { text-align: center; padding: 40px 20px; color: #d4a574; font-size: 18px; }
+.error-message { background: #ffebee; color: #c62828; padding: 12px 15px; border-radius: 6px; margin-bottom: 16px; }
+
+.stats { display: flex; flex-direction: column; gap: 24px; }
+.summary-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+.summary-card { background: #2c1810; border: 1px solid #5c3d2e; border-radius: 12px; padding: 20px; text-align: center; }
+.summary-card.highlight { background: linear-gradient(135deg, #d4a574 0%, #a08060 100%); border: none; }
+.summary-card.highlight .card-icon, .summary-card.highlight .card-value, .summary-card.highlight .card-label { color: #2c1810; }
+.card-icon { font-size: 30px; margin-bottom: 8px; }
+.card-value { font-size: 26px; font-weight: 700; color: #e8d5b7; margin-bottom: 6px; }
+.card-label { font-size: 13px; color: #d4a574; text-transform: uppercase; letter-spacing: 0.5px; }
+
+.panel { background: #2c1810; border: 1px solid #5c3d2e; border-radius: 12px; padding: 20px; }
+.panel h2 { margin: 0 0 16px; color: #e8d5b7; font-size: 18px; }
+.two-col { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 24px; }
+
+.columns { display: flex; align-items: flex-end; gap: 4px; height: 200px; padding-bottom: 2px; border-bottom: 1px solid #5c3d2e; }
+.columns.dense { gap: 1px; }
+.col { flex: 1; min-width: 0; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; }
+.col-value { font-size: 12px; color: #e8d5b7; margin-bottom: 2px; }
+.col-bar { width: 100%; background: linear-gradient(180deg, #d4a574 0%, #a08060 100%); border-radius: 3px 3px 0 0; min-height: 0; }
+.col:hover .col-bar { background: #f0c590; }
+.columns-axis { display: flex; justify-content: space-between; color: #a08060; font-size: 12px; margin-top: 6px; }
+
+.period-table { margin-top: 16px; color: #e8d5b7; }
+.period-table summary { cursor: pointer; font-weight: 600; margin-bottom: 10px; }
+.report-table { width: 100%; background: white; border-radius: 8px; overflow: hidden; border-collapse: collapse; }
+.report-table th { padding: 10px 12px; text-align: left; font-size: 13px; text-transform: uppercase; background: linear-gradient(135deg, #d4a574 0%, #a08060 100%); color: #2c1810; }
+.report-table td { padding: 8px 12px; font-size: 14px; color: #333; border-bottom: 1px solid #e0e0e0; }
+.report-table td.amount { font-weight: 600; color: #2e7d32; }
+
+.bar-row { margin-bottom: 12px; }
+.bar-head { display: flex; justify-content: space-between; gap: 12px; color: #e8d5b7; font-size: 14px; margin-bottom: 4px; }
+.bar-head span:last-child { color: #d4a574; white-space: nowrap; }
+.bar-head .muted { color: #a08060; }
+.bar-track { background: #3d2817; border-radius: 4px; height: 14px; overflow: hidden; }
+.bar-fill { height: 100%; background: linear-gradient(135deg, #d4a574 0%, #a08060 100%); }
+.bar-fill.alt { background: #6b4a35; }
+.note { color: #a08060; font-size: 13px; margin: 12px 0 0; }
+.note b { color: #e8d5b7; }

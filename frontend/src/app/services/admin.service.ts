@@ -542,6 +542,10 @@ export class AdminService {
     return this.http.get<any>(`${this.apiUrl}/reports/daily?date=${date}`);
   }
 
+  getSalesStats(from: string, to: string, group: 'day' | 'week' | 'month' | 'year'): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/reports/sales`, { params: { from, to, group } });
+  }
+
   // Helyszíni jegyeladás
   getShowtimeReservations(showtimeId: number): Observable<any[]> {
     return this.http.get<any[]>(`${this.apiUrl}/showtimes/${showtimeId}/reservations`);

@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\MovieAdminController;
 use App\Http\Controllers\Admin\ShowtimeAdminController;
 use App\Http\Controllers\Admin\ReservationAdminController;
 use App\Http\Controllers\Admin\ReportController;
+use App\Http\Controllers\Admin\SalesStatsController;
 use App\Http\Controllers\Admin\UserAdminController;
 use App\Http\Controllers\Admin\TheaterShowAdminController;
 use App\Http\Controllers\Admin\PosController;
@@ -68,6 +69,7 @@ Route::middleware('permission:reservations.manage')->group(function () {
 Route::middleware('permission:reports.view')->group(function () {
     Route::get('showtimes/{showtime}/reservations/export', [ReservationAdminController::class, 'export']);
     Route::get('reports/daily', [ReportController::class, 'dailyReport']);
+    Route::get('reports/sales', [SalesStatsController::class, 'sales']);
 });
 
 // Helyszíni jegyeladás (pénztáros, vezető, adminisztrátor)

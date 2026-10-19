@@ -16,6 +16,7 @@ class Reservation extends Model
         'customer_email',
         'customer_name',
         'customer_phone',
+        'customer_zip',
         'status',
         'total_amount',
         'currency',

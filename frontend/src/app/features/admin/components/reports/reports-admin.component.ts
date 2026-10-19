@@ -52,6 +52,10 @@ export class ReportsAdminComponent implements OnInit {
     this.router.navigate(['/admin/dashboard']);
   }
 
+  goTo(path: string): void {
+    this.router.navigate([path]);
+  }
+
   exportPDF(): void {
     if (!this.summary) return;
 

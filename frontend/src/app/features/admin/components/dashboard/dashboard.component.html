@@ -83,6 +83,12 @@
         <button (click)="navigateTo('/admin/reports')" class="btn-card">Riportok</button>
       </div>
 
+      <div class="dashboard-card" *ngIf="can('reports.view')">
+        <h3>📈 Értékesítési statisztika</h3>
+        <p>Eladott jegyek időszakonként, irányítószám, fizetési mód és előadás szerint</p>
+        <button (click)="navigateTo('/admin/reports/sales')" class="btn-card">Statisztika</button>
+      </div>
+
       <div class="dashboard-card" *ngIf="can('catalog.manage')">
         <h3>🪑 Termek</h3>
         <p>Auditorium beállítások és ülések</p>
