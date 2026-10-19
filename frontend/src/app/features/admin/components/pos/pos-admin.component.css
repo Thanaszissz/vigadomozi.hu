@@ -298,6 +298,13 @@ h1 { margin: 0; color: #e8d5b7; }
 .item-list { list-style: none; margin: 0 0 10px; padding: 0; max-height: 220px; overflow-y: auto; }
 .item-list li { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #4a3425; }
 .item-list li.who { color: #a08060; font-size: 13px; }
+.item-list li.stays { opacity: 0.55; }
+.pay-count { margin: 0 0 10px; padding: 8px 10px; border: 1px solid #5c3d2e; border-radius: 8px; background: #3d2817; display: grid; gap: 6px; }
+.pay-count > span { font-weight: 700; font-size: 14px; }
+.pay-count-ctl { display: flex; align-items: center; gap: 8px; }
+.pay-count-ctl button { width: 36px; height: 36px; border-radius: 8px; border: 1px solid #5c3d2e; background: #4a3425; color: #e8d5b7; font-size: 20px; font-weight: 700; cursor: pointer; }
+.pay-count-ctl button:disabled { opacity: 0.4; cursor: default; }
+.pay-count-ctl input { width: 64px; height: 36px; text-align: center; font-size: 18px; font-weight: 700; border-radius: 8px; border: 1px solid #5c3d2e; background: #2c1810; color: #e8d5b7; }
 .total { display: flex; justify-content: space-between; font-size: 22px; margin: 12px 0; }
 .total b { color: #d4a574; }
 

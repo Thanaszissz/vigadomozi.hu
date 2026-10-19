@@ -313,6 +313,9 @@ class PosController extends Controller
     {
         $data = $request->validate([
             'payment_method' => ['required', 'string', 'in:cash,card'],
+            // Részfizetés: csak ezeket a székeket fizeti ki, a többi a foglalásban marad
+            'seat_keys' => ['sometimes', 'array', 'min:1', 'max:20'],
+            'seat_keys.*' => ['string', 'max:120', 'distinct'],
         ]);
 
         $reservation->load('showtime.movie', 'showtime.auditorium');
@@ -330,14 +333,66 @@ class PosController extends Controller
         }
 
         try {
-            $reservation = DB::transaction(
-                fn() => $this->markPaid($reservation, $data['payment_method'], $request)
-            );
+            $paid = DB::transaction(function () use ($reservation, $data, $request) {
+                $locked = Reservation::whereKey($reservation->id)->lockForUpdate()->first();
+                if (!$locked || $locked->status !== 'PENDING') {
+                    return ['message' => 'A foglalás nem függő állapotú.', 'status' => 422];
+                }
+
+                $locked->load('items', 'showtime.movie', 'showtime.auditorium');
+                $paySeats = array_values($data['seat_keys'] ?? []);
+                $allSeats = $locked->items->pluck('seat_key')->all();
+
+                if (!$paySeats || count($paySeats) >= count($allSeats)) {
+                    return ['reservation' => $this->markPaid($locked, $data['payment_method'], $request)];
+                }
+                if (array_diff($paySeats, $allSeats)) {
+                    return ['message' => 'A kiválasztott szék nem tartozik a foglaláshoz.', 'status' => 422];
+                }
+                if ($locked->payment_provider === SimplePayService::PROVIDER) {
+                    return ['message' => 'Az online fizetés alatt álló foglalás nem osztható.', 'status' => 409];
+                }
+
+                // A kifizetett székek külön (fizetett) foglalásba kerülnek, a többi az eredeti foglalásban marad
+                $paidReservation = Reservation::create([
+                    'showtime_id' => $locked->showtime_id,
+                    'customer_email' => $locked->customer_email,
+                    'customer_name' => $locked->customer_name,
+                    'customer_phone' => $locked->customer_phone,
+                    'status' => 'PENDING',
+                    'currency' => $locked->currency,
+                    'total_amount' => 0,
+                    'expires_at' => null,
+                ]);
+
+                $locked->items()->whereIn('seat_key', $paySeats)->update(['reservation_id' => $paidReservation->id]);
+                SeatLock::where('reservation_id', $locked->id)->whereIn('seat_key', $paySeats)->update(['reservation_id' => $paidReservation->id]);
+
+                $paidReservation->update(['total_amount' => (int) $paidReservation->items()->sum('price_amount')]);
+                $locked->update(['total_amount' => (int) $locked->items()->sum('price_amount')]);
+
+                ActivityLogger::log(
+                    'reservation.updated',
+                    sprintf('Részfizetés: #%d foglalásból %d szék kifizetve (új foglalás: #%d), %d szék foglalt marad', $locked->id, count($paySeats), $paidReservation->id, count($allSeats) - count($paySeats)),
+                    $locked,
+                    ['paid_seats' => $paySeats, 'paid_reservation_id' => $paidReservation->id, 'showtime_id' => $locked->showtime_id],
+                    $request->user(),
+                    "Foglalás #{$locked->id}"
+                );
+
+                $paidReservation->load('showtime.movie', 'showtime.auditorium');
+
+                return ['reservation' => $this->markPaid($paidReservation, $data['payment_method'], $request)];
+            });
         } catch (SeatUnavailableException $e) {
             return response()->json(['message' => $e->getMessage()], $e->status);
         }
 
-        return response()->json($this->payload($reservation));
+        if (isset($paid['message'])) {
+            return response()->json(['message' => $paid['message']], $paid['status']);
+        }
+
+        return response()->json($this->payload($paid['reservation']));
     }
 
     public function reservationTickets(Reservation $reservation): JsonResponse

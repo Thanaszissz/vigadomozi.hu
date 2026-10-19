@@ -46,7 +46,7 @@ export class PosAdminComponent implements OnInit, OnDestroy {
   categoryLabel = categoryLabel;
   pendingReservations: any[] = [];
   selectedReservation: any | null = null;
-
+  payCount: number | null = null;
   paymentMethod: PaymentMethod | null = null;
   cashGiven: number | null = null;
   customerName = '';
@@ -357,11 +357,13 @@ export class PosAdminComponent implements OnInit, OnDestroy {
     this.cancelEdit();
     this.selectedSeats = [];
     this.selectedReservation = null;
+    this.payCount = null;
     this.resetPayment();
   }
 
   selectReservation(reservation: any): void {
     this.selectedReservation = this.selectedReservation?.id === reservation.id ? null : reservation;
+    this.payCount = null;
     this.soldTickets = [];
     this.cancelEdit();
     this.resetPayment();
@@ -532,11 +534,44 @@ export class PosAdminComponent implements OnInit, OnDestroy {
     );
   }
 
+  get reservationItems(): any[] {
+    return this.selectedReservation?.items ?? [];
+  }
+
+  /** Hány jegyet fizet most a vásárló (alapból a foglalás összes jegye). */
+  get payCountValue(): number {
+    const n = this.reservationItems.length;
+    return Math.min(Math.max(this.payCount ?? n, 1), Math.max(n, 1));
+  }
+
+  setPayCount(value: number | null): void {
+    const n = Math.floor(Number(value));
+    this.payCount = Number.isFinite(n) ? n : null;
+    this.error = null;
+  }
+
+  adjustPayCount(delta: number): void {
+    this.setPayCount(this.payCountValue + delta);
+  }
+
+  /** A most kifizetendő tételek: a foglalás első N széke (a többi foglalt marad). */
+  get payItems(): any[] {
+    return this.reservationItems.slice(0, this.payCountValue);
+  }
+
+  get isPartialPayment(): boolean {
+    return this.mode === 'reservations' && this.payCountValue < this.reservationItems.length;
+  }
+
+  isPayItem(item: any): boolean {
+    return this.payItems.includes(item);
+  }
+
   // ---- Fizetés ----
 
   get total(): number {
     if (this.mode === 'reservations') {
-      return this.selectedReservation ? Number(this.selectedReservation.total_amount) : 0;
+      return this.payItems.reduce((sum: number, i: any) => sum + Number(i.price_amount), 0);
     }
     return this.selectedSeats.reduce((sum, seat) => sum + this.effectivePrice(seat), 0);
   }
@@ -544,7 +579,7 @@ export class PosAdminComponent implements OnInit, OnDestroy {
   /** A fizetendő összeg: az élménykártyás jegyek értéke nem készpénzzel/kártyával fizetendő (a kártya fedezi). */
   get payable(): number {
     if (this.mode === 'reservations') {
-      return (this.selectedReservation?.items ?? [])
+      return this.payItems
         .filter((i: any) => i.category !== 'experience_card')
         .reduce((sum: number, i: any) => sum + Number(i.price_amount), 0);
     }
@@ -610,7 +645,7 @@ export class PosAdminComponent implements OnInit, OnDestroy {
   get invoiceLineAmounts(): number[] {
     // A 0 Ft-os (Dolgozó jegy) és az élménykártyás jegyek nem kerülnek a számlára
     const amounts = this.mode === 'reservations'
-      ? (this.selectedReservation?.items ?? [])
+      ? this.payItems
           .filter((i: any) => i.category !== 'experience_card')
           .map((i: any) => Math.round(Number(i.price_amount)))
       : this.selectedSeats.filter(s => this.categoryOf(s) !== 'experience_card').map(s => Math.round(this.effectivePrice(s)));
@@ -703,9 +738,11 @@ export class PosAdminComponent implements OnInit, OnDestroy {
     this.processing = true;
     this.error = null;
     const buyer = this.invoiceActive ? this.buyerPayload() : null;
-
+    const partial = this.isPartialPayment;
+    const remaining = this.reservationItems.length - this.payCountValue;
+    const reservationId = this.selectedReservation?.id;
     const request$ = this.mode === 'reservations' && this.selectedReservation
-      ? this.admin.posPayReservation(this.selectedReservation.id, method)
+      ? this.admin.posPayReservation(this.selectedReservation.id, method, partial ? this.payItems.map((i: any) => i.seat_key) : undefined)
       : this.admin.posSell({
           showtime_id: this.showtime.id,
           seatKeys: this.selectedSeats.map(s => s.key),
@@ -725,6 +762,7 @@ export class PosAdminComponent implements OnInit, OnDestroy {
         this.processing = false;
         this.selectedSeats = [];
         this.selectedReservation = null;
+        this.payCount = null;
         this.customerName = '';
         this.invoiceRequested = false;
         this.invoiceBuyer = { name: '', zip: '', city: '', address: '', tax_number: '', email: '' };
@@ -732,6 +770,7 @@ export class PosAdminComponent implements OnInit, OnDestroy {
         this.invoiceError = null;
         this.pendingInvoice = null;
         this.resetPayment();
+        this.heldNotice = partial ? `📌 A(z) #${reservationId} foglalásban még ${remaining} szék foglalt marad (kifizetetlen).` : null;
         this.refresh();
         if (buyer) {
           this.issueInvoice(response.reservation.id, buyer);
@@ -839,6 +878,7 @@ export class PosAdminComponent implements OnInit, OnDestroy {
     this.deleteConfirmOpen = false;
     this.selectedSeats = [];
     this.selectedReservation = null;
+    this.payCount = null;
     this.customerName = '';
     this.reserveOpen = false;
     this.heldNotice = null;

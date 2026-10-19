@@ -609,10 +609,10 @@ export class AdminService {
     return this.http.delete<any>(`${this.apiUrl}/pos/reservations/${reservationId}`);
   }
 
-  posPayReservation(reservationId: number, paymentMethod: PaymentMethod): Observable<{ reservation: any; tickets: Ticket[] }> {
+  posPayReservation(reservationId: number, paymentMethod: PaymentMethod, seatKeys?: string[]): Observable<{ reservation: any; tickets: Ticket[] }> {
     return this.http.post<{ reservation: any; tickets: Ticket[] }>(
       `${this.apiUrl}/pos/reservations/${reservationId}/pay`,
-      { payment_method: paymentMethod }
+      seatKeys ? { payment_method: paymentMethod, seat_keys: seatKeys } : { payment_method: paymentMethod }
     );
   }
 
