@@ -226,7 +226,7 @@ h1 {
 
 .sector-item {
   display: grid;
-  grid-template-columns: 1fr auto auto;
+  grid-template-columns: auto 1fr auto auto;
   gap: 10px;
   align-items: center;
   background: #fff;
@@ -404,6 +404,46 @@ h1 {
 .section-item.active {
   border-color: #6b4e3d;
   box-shadow: 0 0 0 2px rgba(107, 78, 61, 0.15);
+}
+
+.move-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.drag-handle {
+  cursor: grab;
+  color: #8a6d4b;
+  font-size: 18px;
+  line-height: 1;
+  user-select: none;
+}
+
+.btn-move {
+  background: #f3e6cf;
+  color: #3d2817;
+  border: 1px solid #e2c79f;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.btn-move:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.sector-item.dragging,
+.section-item.dragging {
+  opacity: 0.45;
+}
+
+.sector-item.drag-over,
+.section-item.drag-over {
+  border-color: #3d2817;
+  box-shadow: 0 -3px 0 #3d2817;
 }
 
 .section-select {

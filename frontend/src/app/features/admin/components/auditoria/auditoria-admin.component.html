@@ -67,8 +67,20 @@
         <div class="sector-list" *ngIf="sectors.length > 0">
           <div
             class="sector-item"
-            *ngFor="let sector of sectors"
-            [class.active]="selectedSectorName === sector.name">
+            *ngFor="let sector of sectors; let i = index"
+            draggable="true"
+            [class.active]="selectedSectorName === sector.name"
+            [class.dragging]="dragKind === 'sector' && dragIndex === i"
+            [class.drag-over]="dragKind === 'sector' && dragOverIndex === i && dragIndex !== i"
+            (dragstart)="onDragStart('sector', i, $event)"
+            (dragover)="onDragOver('sector', i, $event)"
+            (drop)="onDrop('sector', i, $event)"
+            (dragend)="onDragEnd()">
+            <div class="move-controls">
+              <span class="drag-handle" title="Húzd az áthelyezéshez">⠿</span>
+              <button type="button" class="btn-move" title="Feljebb" [disabled]="i === 0" (click)="moveItem('sector', i, i - 1)">▲</button>
+              <button type="button" class="btn-move" title="Lejjebb" [disabled]="i === sectors.length - 1" (click)="moveItem('sector', i, i + 1)">▼</button>
+            </div>
             <button type="button" class="sector-select" (click)="selectSector(sector)">{{ sector.name }}</button>
             <div class="sector-price">
               <input
@@ -110,8 +122,19 @@
         <div class="section-list" *ngIf="sections.length > 0">
           <div
             class="section-item"
-            *ngFor="let section of sections"
-            [class.active]="false">
+            *ngFor="let section of sections; let i = index"
+            draggable="true"
+            [class.dragging]="dragKind === 'section' && dragIndex === i"
+            [class.drag-over]="dragKind === 'section' && dragOverIndex === i && dragIndex !== i"
+            (dragstart)="onDragStart('section', i, $event)"
+            (dragover)="onDragOver('section', i, $event)"
+            (drop)="onDrop('section', i, $event)"
+            (dragend)="onDragEnd()">
+            <div class="move-controls">
+              <span class="drag-handle" title="Húzd az áthelyezéshez">⠿</span>
+              <button type="button" class="btn-move" title="Feljebb" [disabled]="i === 0" (click)="moveItem('section', i, i - 1)">▲</button>
+              <button type="button" class="btn-move" title="Lejjebb" [disabled]="i === sections.length - 1" (click)="moveItem('section', i, i + 1)">▼</button>
+            </div>
             <button type="button" class="section-select" (click)="selectSection(section)" disabled>
               <span class="section-dot" [style.background]="getSectionColor(section.name)"></span>
               {{ section.name }}

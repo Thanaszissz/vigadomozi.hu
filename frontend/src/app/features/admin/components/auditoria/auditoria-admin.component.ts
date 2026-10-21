@@ -55,6 +55,9 @@ export class AuditoriaAdminComponent implements OnInit {
   newRowLabel = '';
   newRowColumns = 10;
   newRowSection: string | null = null;
+  dragKind: 'sector' | 'section' | null = null;
+  dragIndex: number | null = null;
+  dragOverIndex: number | null = null;
   loading = true;
   error = '';
   showEditModal = false;
@@ -271,6 +274,47 @@ export class AuditoriaAdminComponent implements OnInit {
     }
     this.sections.push({ name });
     this.newSectionName = '';
+  }
+
+  /** Szektor / szint áthelyezése a listában (nyilak vagy húzás). A sorrend a mentéssel együtt tárolódik. */
+  moveItem(kind: 'sector' | 'section', from: number, to: number): void {
+    const list: unknown[] = kind === 'sector' ? this.sectors : this.sections;
+    if (from === to || from < 0 || to < 0 || from >= list.length || to >= list.length) {
+      return;
+    }
+    const [item] = list.splice(from, 1);
+    list.splice(to, 0, item);
+  }
+
+  onDragStart(kind: 'sector' | 'section', index: number, event: DragEvent): void {
+    this.dragKind = kind;
+    this.dragIndex = index;
+    event.dataTransfer?.setData('text/plain', String(index));
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = 'move';
+    }
+  }
+
+  onDragOver(kind: 'sector' | 'section', index: number, event: DragEvent): void {
+    if (this.dragKind !== kind) {
+      return;
+    }
+    event.preventDefault();
+    this.dragOverIndex = index;
+  }
+
+  onDrop(kind: 'sector' | 'section', index: number, event: DragEvent): void {
+    event.preventDefault();
+    if (this.dragKind === kind && this.dragIndex !== null) {
+      this.moveItem(kind, this.dragIndex, index);
+    }
+    this.onDragEnd();
+  }
+
+  onDragEnd(): void {
+    this.dragKind = null;
+    this.dragIndex = null;
+    this.dragOverIndex = null;
   }
 
   private sameSection(a?: string | null, b?: string | null): boolean {

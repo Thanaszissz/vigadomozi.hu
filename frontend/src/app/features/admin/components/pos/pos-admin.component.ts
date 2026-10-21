@@ -929,6 +929,6 @@ export class PosAdminComponent implements OnInit, OnDestroy {
     const date = new Date(y, m - 1, d);
     const today = this.dayKey(new Date());
     const dayName = key === today ? 'Ma' : names[date.getDay()];
-    return `${dayName} ${String(m).padStart(2, '0')}.${String(d).padStart(2, '0')}.`;
+    return `${String(m).padStart(2, '0')}.${String(d).padStart(2, '0')}. ${dayName}`;
   }
 }
