@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { AdminLoginComponent } from './components/login/login.component';
 import { AdminDashboardComponent } from './components/dashboard/dashboard.component';
 import { MoviesAdminComponent } from './components/movies/movies-admin.component';
+import { CatalogImportComponent } from './components/catalog-import/catalog-import.component';
 import { TheaterShowsAdminComponent } from './components/theater-shows/theater-shows-admin.component';
 import { ReservationsAdminComponent } from './components/reservations/reservations-admin.component';
 import { ReportsAdminComponent } from './components/reports/reports-admin.component';
@@ -73,6 +74,12 @@ export const ADMIN_ROUTES: Routes = [
   {
     path: 'movies',
     component: MoviesAdminComponent,
+    canActivate: [AuthGuard],
+    data: { permission: 'catalog.manage' }
+  },
+  {
+    path: 'catalog-import',
+    component: CatalogImportComponent,
     canActivate: [AuthGuard],
     data: { permission: 'catalog.manage' }
   },

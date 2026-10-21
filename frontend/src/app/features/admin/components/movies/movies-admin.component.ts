@@ -182,6 +182,10 @@ export class MoviesAdminComponent implements OnInit {
     });
   }
 
+  goToImport(): void {
+    this.router.navigate(['/admin/catalog-import']);
+  }
+
   goBack(): void {
     this.router.navigate(['/admin/dashboard']);
   }

@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\AuditoriumController;
 use App\Http\Controllers\Admin\MovieAdminController;
 use App\Http\Controllers\Admin\ShowtimeAdminController;
+use App\Http\Controllers\Admin\CatalogImportController;
 use App\Http\Controllers\Admin\ReservationAdminController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\SalesStatsController;
@@ -54,6 +55,10 @@ Route::middleware('permission:catalog.manage')->group(function () {
 
     Route::apiResource('showtimes-admin', ShowtimeAdminController::class)
         ->parameters(['showtimes-admin' => 'showtime']);
+
+    // Filmek és előadások tömeges feltöltése JSON-ból
+    Route::get('catalog-import/sample', [CatalogImportController::class, 'sample']);
+    Route::post('catalog-import', [CatalogImportController::class, 'import']);
 });
 
 // Foglalások kezelése és kifizetése (pénztáros, vezető, adminisztrátor)

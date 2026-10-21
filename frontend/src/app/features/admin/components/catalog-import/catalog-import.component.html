@@ -1,0 +1,83 @@
+<div class="admin-container">
+  <div class="header">
+    <h1>📥 Filmek és előadások feltöltése JSON-ból</h1>
+    <div class="header-actions">
+      <button (click)="goBack()" class="btn-back">← Vissza a filmekhez</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <p class="hint">
+      A feltöltés először a filmeket veszi fel (a plakátok WebP formátumra alakulnak), utána a hozzájuk tartozó előadásokat.
+      Egy film több előadást is tartalmazhat, az <code>starts_at</code> pedig időpontok tömbje is lehet.
+      A plakát lehet kép URL, base64 data URI vagy ezek tömbje.
+    </p>
+
+    <div class="toolbar">
+      <button type="button" class="btn secondary" (click)="loadSample()">📄 Minta betöltése</button>
+      <button type="button" class="btn secondary" (click)="downloadSample()">⬇️ Minta JSON letöltése</button>
+      <label class="btn secondary file-btn">
+        📂 JSON fájl megnyitása
+        <input type="file" accept=".json,application/json" (change)="onFile($event)" hidden>
+      </label>
+      <span class="file-name" *ngIf="fileName">{{ fileName }}</span>
+    </div>
+
+    <textarea
+      class="json-input"
+      [(ngModel)]="jsonText"
+      spellcheck="false"
+      placeholder='[ { "title": "Film címe", "poster": "https://...", "showtimes": [ { "auditorium": "Nagyterem", "starts_at": ["2026-11-05 18:00"] } ] } ]'></textarea>
+
+    <label class="option">
+      <input type="checkbox" [(ngModel)]="updateExisting">
+      Meglévő filmek frissítése (azonos című film esetén; kikapcsolva a meglévő film változatlan marad, csak az előadások kerülnek hozzá)
+    </label>
+
+    <div class="actions">
+      <button type="button" class="btn secondary" [disabled]="busy || !jsonText.trim()" (click)="run(true)">🔍 Ellenőrzés (nem ment)</button>
+      <button type="button" class="btn primary" [disabled]="busy || !jsonText.trim()" (click)="run(false)">⬆️ Feltöltés</button>
+      <span *ngIf="busy" class="busy">⏳ Feldolgozás (a képek letöltése eltarthat egy ideig)...</span>
+    </div>
+
+    <div *ngIf="error" class="alert">❌ {{ error }}</div>
+  </div>
+
+  <div class="panel" *ngIf="result">
+    <h2>{{ result.dry_run ? 'Ellenőrzés eredménye (nem történt mentés)' : 'Feltöltés eredménye' }}</h2>
+    <div class="summary">
+      <span class="chip ok">Filmek: {{ result.summary.movies_created }} új, {{ result.summary.movies_updated }} frissítve</span>
+      <span class="chip err" *ngIf="result.summary.movies_failed">{{ result.summary.movies_failed }} hibás film</span>
+      <span class="chip ok" *ngIf="!result.dry_run">Plakát: {{ result.summary.posters_converted }} WebP-re alakítva</span>
+      <span class="chip warn" *ngIf="result.summary.poster_warnings">{{ result.summary.poster_warnings }} plakát hibás</span>
+      <span class="chip ok">Előadások: {{ result.summary.showtimes_created }} új</span>
+      <span class="chip" *ngIf="result.summary.showtimes_skipped">{{ result.summary.showtimes_skipped }} kihagyva</span>
+      <span class="chip err" *ngIf="result.summary.showtimes_failed">{{ result.summary.showtimes_failed }} hibás előadás</span>
+    </div>
+
+    <div class="movie-result" *ngFor="let m of result.movies" [class.failed]="m.status === 'failed'">
+      <div class="movie-line">
+        <strong>#{{ m.index + 1 }} {{ m.title || '(cím nélkül)' }}</strong>
+        <span class="status" [ngClass]="'st-' + m.status">
+          {{ m.status === 'created' ? 'új' : m.status === 'updated' ? 'frissítve' : m.status === 'skipped' ? 'meglévő' : 'hiba' }}
+        </span>
+      </div>
+      <div class="msg" *ngIf="m.message">{{ m.message }}</div>
+      <div class="msg error" *ngFor="let e of m.errors">{{ e }}</div>
+      <div class="msg" *ngIf="m.poster" [class.error]="m.poster.status === 'failed'">
+        🖼️
+        <ng-container *ngIf="m.poster.status === 'converted'">plakát WebP-re alakítva ({{ m.poster.width }}×{{ m.poster.height }}, {{ formatBytes(m.poster.bytes) }})</ng-container>
+        <ng-container *ngIf="m.poster.status === 'ok'">{{ m.poster.message }}</ng-container>
+        <ng-container *ngIf="m.poster.status === 'failed'">plakát nem dolgozható fel: {{ m.poster.message }}</ng-container>
+      </div>
+      <ul class="showtimes" *ngIf="m.showtimes.length">
+        <li *ngFor="let s of m.showtimes" [ngClass]="'st-' + s.status">
+          <span>{{ s.starts_at || '—' }}</span>
+          <span *ngIf="s.auditorium"> • {{ s.auditorium }}</span>
+          <span class="status" [ngClass]="'st-' + s.status">{{ s.status === 'created' ? 'új' : s.status === 'skipped' ? 'kihagyva' : 'hiba' }}</span>
+          <span class="msg-inline" *ngIf="s.message">{{ s.message }}</span>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>

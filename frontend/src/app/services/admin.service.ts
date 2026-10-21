@@ -18,6 +18,36 @@ export interface Movie {
   trailer_youtube_url?: string;
 }
 
+export interface CatalogImportShowtimeRow {
+  index: number | null;
+  id?: number | null;
+  starts_at?: string;
+  auditorium?: string;
+  status: 'created' | 'skipped' | 'failed';
+  message?: string;
+}
+
+export interface CatalogImportMovieRow {
+  index: number;
+  title: string;
+  status: 'created' | 'updated' | 'skipped' | 'failed';
+  id: number | null;
+  message?: string;
+  errors: string[];
+  poster: { status: 'ok' | 'converted' | 'failed'; message?: string; url?: string; width?: number; height?: number; bytes?: number } | null;
+  showtimes: CatalogImportShowtimeRow[];
+}
+
+export interface CatalogImportResult {
+  dry_run: boolean;
+  summary: {
+    movies_created: number; movies_updated: number; movies_failed: number;
+    posters_converted: number; poster_warnings: number;
+    showtimes_created: number; showtimes_skipped: number; showtimes_failed: number;
+  };
+  movies: CatalogImportMovieRow[];
+}
+
 export interface TheaterShow {
   id: number;
   title: string;
@@ -450,6 +480,14 @@ export class AdminService {
   constructor(private http: HttpClient) {}
 
   // Movies
+  importCatalog(data: unknown, dryRun: boolean, updateExisting: boolean): Observable<CatalogImportResult> {
+    return this.http.post<CatalogImportResult>(`${this.apiUrl}/catalog-import`, { data, dry_run: dryRun, update_existing: updateExisting });
+  }
+
+  getCatalogImportSample(): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/catalog-import/sample`);
+  }
+
   getMovies(): Observable<Movie[]> {
     return this.http.get<Movie[]>(`${this.apiUrl}/movies-admin`);
   }
