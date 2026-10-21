@@ -16,16 +16,18 @@
   background: #4a3425; border: 1.5px solid #5c3d2e; border-radius: 10px;
 }
 .svc-card.active { border-color: #d4a574; background: #5c3d2e; }
-.svc-info { display: flex; flex-direction: column; gap: 2px; }
-.svc-name { font-weight: 700; font-size: 15px; }
+.svc-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1 1 auto; }
+.svc-name { font-weight: 700; font-size: 15px; overflow-wrap: anywhere; }
 .svc-price { color: #d4a574; font-size: 14px; }
-.stepper { display: flex; align-items: center; gap: 8px; }
+.stepper { display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex: 0 0 auto; }
 .step-btn {
-  width: 36px; height: 36px; border-radius: 8px; border: 1px solid #5c3d2e; background: #3d2817; color: #e8d5b7;
-  font-size: 20px; font-weight: 700; cursor: pointer;
+  box-sizing: border-box; flex: 0 0 36px; width: 36px; height: 36px; padding: 0; margin: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 8px; border: 1px solid #5c3d2e; background: #3d2817; color: #e8d5b7;
+  font-family: inherit; font-size: 20px; font-weight: 700; line-height: 1; cursor: pointer;
 }
 .step-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-.qty { min-width: 24px; text-align: center; font-size: 18px; font-weight: 700; }
+.qty { flex: 0 0 28px; min-width: 28px; text-align: center; font-size: 18px; font-weight: 700; }
 
 .item-list { list-style: none; margin: 8px 0; padding: 0; }
 .item-list li { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; border-bottom: 1px solid #5c3d2e; font-size: 14px; }
