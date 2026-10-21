@@ -193,6 +193,10 @@ export class TheaterShowsAdminComponent implements OnInit {
     });
   }
 
+  goToImport(): void {
+    this.router.navigate(['/admin/show-import']);
+  }
+
   goBack(): void {
     this.router.navigate(['/admin/dashboard']);
   }

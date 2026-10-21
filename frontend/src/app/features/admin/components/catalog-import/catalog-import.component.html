@@ -1,15 +1,15 @@
 <div class="admin-container">
   <div class="header">
-    <h1>📥 Filmek és előadások feltöltése JSON-ból</h1>
+    <h1>📥 {{ isShow ? 'Előadások / programok és időpontjaik' : 'Filmek és előadások' }} feltöltése JSON-ból</h1>
     <div class="header-actions">
-      <button (click)="goBack()" class="btn-back">← Vissza a filmekhez</button>
+      <button (click)="goBack()" class="btn-back">← Vissza {{ isShow ? 'az előadásokhoz' : 'a filmekhez' }}</button>
     </div>
   </div>
 
   <div class="panel">
     <p class="hint">
-      A feltöltés először a filmeket veszi fel (a plakátok WebP formátumra alakulnak), utána a hozzájuk tartozó előadásokat.
-      Egy film több előadást is tartalmazhat, az <code>starts_at</code> pedig időpontok tömbje is lehet.
+      A feltöltés először a {{ isShow ? 'előadásokat / programokat' : 'filmeket' }} veszi fel (a plakátok WebP formátumra alakulnak), utána a hozzájuk tartozó időpontokat.
+      Egy tételhez több időpont is tartozhat, az <code>starts_at</code> pedig időpontok tömbje is lehet (magyar helyi idő).
       A plakát lehet kép URL, base64 data URI vagy ezek tömbje.
     </p>
 
@@ -27,11 +27,11 @@
       class="json-input"
       [(ngModel)]="jsonText"
       spellcheck="false"
-      placeholder='[ { "title": "Film címe", "poster": "https://...", "showtimes": [ { "auditorium": "Nagyterem", "starts_at": ["2026-11-05 18:00"] } ] } ]'></textarea>
+      placeholder="{{ placeholder }}"></textarea>
 
     <label class="option">
       <input type="checkbox" [(ngModel)]="updateExisting">
-      Meglévő filmek frissítése (azonos című film esetén; kikapcsolva a meglévő film változatlan marad, csak az előadások kerülnek hozzá)
+      Meglévők frissítése (azonos című {{ noun }} esetén; kikapcsolva a meglévő változatlan marad, csak az időpontok kerülnek hozzá)
     </label>
 
     <div class="actions">
@@ -46,16 +46,16 @@
   <div class="panel" *ngIf="result">
     <h2>{{ result.dry_run ? 'Ellenőrzés eredménye (nem történt mentés)' : 'Feltöltés eredménye' }}</h2>
     <div class="summary">
-      <span class="chip ok">Filmek: {{ result.summary.movies_created }} új, {{ result.summary.movies_updated }} frissítve</span>
-      <span class="chip err" *ngIf="result.summary.movies_failed">{{ result.summary.movies_failed }} hibás film</span>
+      <span class="chip ok">{{ isShow ? 'Előadások / programok' : 'Filmek' }}: {{ result.summary.items_created }} új, {{ result.summary.items_updated }} frissítve</span>
+      <span class="chip err" *ngIf="result.summary.items_failed">{{ result.summary.items_failed }} hibás tétel</span>
       <span class="chip ok" *ngIf="!result.dry_run">Plakát: {{ result.summary.posters_converted }} WebP-re alakítva</span>
       <span class="chip warn" *ngIf="result.summary.poster_warnings">{{ result.summary.poster_warnings }} plakát hibás</span>
-      <span class="chip ok">Előadások: {{ result.summary.showtimes_created }} új</span>
+      <span class="chip ok">Időpontok: {{ result.summary.showtimes_created }} új</span>
       <span class="chip" *ngIf="result.summary.showtimes_skipped">{{ result.summary.showtimes_skipped }} kihagyva</span>
-      <span class="chip err" *ngIf="result.summary.showtimes_failed">{{ result.summary.showtimes_failed }} hibás előadás</span>
+      <span class="chip err" *ngIf="result.summary.showtimes_failed">{{ result.summary.showtimes_failed }} hibás időpont</span>
     </div>
 
-    <div class="movie-result" *ngFor="let m of result.movies" [class.failed]="m.status === 'failed'">
+    <div class="movie-result" *ngFor="let m of result.items" [class.failed]="m.status === 'failed'">
       <div class="movie-line">
         <strong>#{{ m.index + 1 }} {{ m.title || '(cím nélkül)' }}</strong>
         <span class="status" [ngClass]="'st-' + m.status">

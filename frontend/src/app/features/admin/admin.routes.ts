@@ -78,10 +78,16 @@ export const ADMIN_ROUTES: Routes = [
     data: { permission: 'catalog.manage' }
   },
   {
+    path: 'show-import',
+    component: CatalogImportComponent,
+    canActivate: [AuthGuard],
+    data: { permission: 'catalog.manage', kind: 'show' }
+  },
+  {
     path: 'catalog-import',
     component: CatalogImportComponent,
     canActivate: [AuthGuard],
-    data: { permission: 'catalog.manage' }
+    data: { permission: 'catalog.manage', kind: 'movie' }
   },
   {
     path: 'theater-shows',

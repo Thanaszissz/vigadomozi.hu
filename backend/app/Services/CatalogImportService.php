@@ -5,7 +5,9 @@ namespace App\Services;
 use App\Models\Auditorium;
 use App\Models\Movie;
 use App\Models\Showtime;
+use App\Models\TheaterShow;
 use App\Support\MovieBadges;
+use App\Support\ShowOptions;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
@@ -13,30 +15,56 @@ use InvalidArgumentException;
 use Throwable;
 
 /**
- * JSON-ból történő tömeges feltöltés: először a filmek (plakáttal, WebP-re alakítva), utána a hozzájuk tartozó előadás-időpontok.
+ * JSON-ból történő tömeges feltöltés: először a filmek vagy előadások / programok (plakáttal, WebP-re alakítva),
+ * utána a hozzájuk tartozó előadás-időpontok.
  */
 class CatalogImportService
 {
-    public const MAX_MOVIES = 200;
+    public const MAX_ITEMS = 200;
     public const MAX_SHOWTIMES = 2000;
     public const LOCAL_TIMEZONE = 'Europe/Budapest';
+
+    public const TYPE_MOVIE = 'movie';
+    public const TYPE_SHOW = 'show';
 
     /** @var array<string, Auditorium> */
     private array $auditoriaByName = [];
     /** @var array<int, Auditorium> */
     private array $auditoriaById = [];
 
+    private string $type = self::TYPE_MOVIE;
+
     public function __construct(private WebpImageService $images)
     {
     }
 
+    /** @return class-string<Movie|TheaterShow> */
+    private function modelClass(): string
+    {
+        return $this->type === self::TYPE_SHOW ? TheaterShow::class : Movie::class;
+    }
+
+    /** A showtimes tábla külső kulcsa. */
+    private function foreignKey(): string
+    {
+        return $this->type === self::TYPE_SHOW ? 'theater_show_id' : 'movie_id';
+    }
+
+    /** Hogyan hívjuk a tételt a hibaüzenetekben. */
+    private function noun(): string
+    {
+        return $this->type === self::TYPE_SHOW ? 'előadás / program' : 'film';
+    }
+
     /**
-     * @param  mixed  $payload  film-tömb, {"movies": [...]} objektum vagy egyetlen film
+     * @param  mixed  $payload  tétel-tömb, {"movies": [...]} / {"shows": [...]} objektum vagy egyetlen tétel
+     * @param  string  $type  'movie' (film) vagy 'show' (előadás / program)
      * @return array<string, mixed>
      */
-    public function run(mixed $payload, bool $dryRun, bool $updateExisting): array
+    public function run(mixed $payload, bool $dryRun, bool $updateExisting, string $type = self::TYPE_MOVIE): array
     {
-        $movies = $this->normalize($payload);
+        $this->type = $type === self::TYPE_SHOW ? self::TYPE_SHOW : self::TYPE_MOVIE;
+        $items = $this->normalize($payload);
 
         foreach (Auditorium::all() as $auditorium) {
             $this->auditoriaById[$auditorium->id] = $auditorium;
@@ -44,38 +72,38 @@ class CatalogImportService
         }
 
         $summary = [
-            'movies_created' => 0, 'movies_updated' => 0, 'movies_failed' => 0,
+            'items_created' => 0, 'items_updated' => 0, 'items_failed' => 0,
             'posters_converted' => 0, 'poster_warnings' => 0,
             'showtimes_created' => 0, 'showtimes_skipped' => 0, 'showtimes_failed' => 0,
         ];
         $results = [];
         $saved = [];
 
-        // 1. lépés: a filmek
-        foreach ($movies as $index => $raw) {
+        // 1. lépés: a filmek / előadások
+        foreach ($items as $index => $raw) {
             $result = ['index' => $index, 'title' => is_array($raw) ? (string) ($raw['title'] ?? '') : '', 'status' => 'failed', 'id' => null, 'errors' => [], 'poster' => null, 'showtimes' => []];
 
             try {
                 if (!is_array($raw)) {
-                    throw new InvalidArgumentException('A filmnek objektumnak kell lennie.');
+                    throw new InvalidArgumentException('A tételnek objektumnak kell lennie.');
                 }
-                [$movie, $result] = $this->importMovie($raw, $result, $dryRun, $updateExisting, $summary);
-                $saved[$index] = $movie;
+                [$item, $result] = $this->importItem($raw, $result, $dryRun, $updateExisting, $summary);
+                $saved[$index] = $item;
             } catch (InvalidArgumentException $e) {
                 $result['errors'][] = $e->getMessage();
-                $summary['movies_failed']++;
+                $summary['items_failed']++;
             } catch (Throwable $e) {
                 report($e);
                 $result['errors'][] = 'Váratlan hiba: ' . $e->getMessage();
-                $summary['movies_failed']++;
+                $summary['items_failed']++;
             }
 
             $results[$index] = $result;
         }
 
-        // 2. lépés: a filmekhez tartozó előadások (csak a sikeresen felvett filmeké)
+        // 2. lépés: a hozzájuk tartozó előadás-időpontok (csak a sikeresen felvett tételekéi)
         $showtimeCount = 0;
-        foreach ($movies as $index => $raw) {
+        foreach ($items as $index => $raw) {
             $showtimes = is_array($raw) ? ($raw['showtimes'] ?? []) : [];
             if (!is_array($showtimes) || $showtimes === []) {
                 continue;
@@ -85,7 +113,7 @@ class CatalogImportService
             }
 
             if (!array_key_exists($index, $saved)) {
-                $results[$index]['showtimes'][] = ['index' => null, 'status' => 'skipped', 'message' => 'A film hibás, ezért az előadásai kimaradtak.'];
+                $results[$index]['showtimes'][] = ['index' => null, 'status' => 'skipped', 'message' => 'A tétel hibás, ezért az időpontjai kimaradtak.'];
                 $summary['showtimes_skipped'] += count($showtimes);
                 continue;
             }
@@ -98,54 +126,79 @@ class CatalogImportService
             }
         }
 
-        return ['dry_run' => $dryRun, 'summary' => $summary, 'movies' => array_values($results)];
+        return ['dry_run' => $dryRun, 'type' => $this->type, 'summary' => $summary, 'items' => array_values($results)];
     }
 
     /** @return array<int, mixed> */
     private function normalize(mixed $payload): array
     {
+        $rootKey = $this->type === self::TYPE_SHOW ? 'shows' : 'movies';
+        $hint = "tömböt vagy {\"{$rootKey}\": [...]} objektumot várunk";
+
         if (is_string($payload)) {
             $payload = json_decode($payload, true);
         }
         if (!is_array($payload)) {
-            throw new InvalidArgumentException('A JSON tartalma érvénytelen: film-tömböt vagy {"movies": [...]} objektumot várunk.');
+            throw new InvalidArgumentException("A JSON tartalma érvénytelen: {$hint}.");
         }
 
-        if (array_key_exists('movies', $payload)) {
-            $payload = $payload['movies'];
+        if (array_key_exists($rootKey, $payload)) {
+            $payload = $payload[$rootKey];
         } elseif (!array_is_list($payload) && isset($payload['title'])) {
             $payload = [$payload];
         }
 
         if (!is_array($payload) || !array_is_list($payload) || $payload === []) {
-            throw new InvalidArgumentException('A JSON nem tartalmaz filmeket (film-tömböt vagy {"movies": [...]} objektumot várunk).');
+            throw new InvalidArgumentException("A JSON nem tartalmaz tételeket ({$hint}).");
         }
-        if (count($payload) > self::MAX_MOVIES) {
-            throw new InvalidArgumentException('Egyszerre legfeljebb ' . self::MAX_MOVIES . ' film tölthető fel.');
+        if (count($payload) > self::MAX_ITEMS) {
+            throw new InvalidArgumentException('Egyszerre legfeljebb ' . self::MAX_ITEMS . ' tétel tölthető fel.');
         }
 
         return $payload;
     }
 
-    /** @return array{0: Movie|null, 1: array<string, mixed>} */
-    private function importMovie(array $raw, array $result, bool $dryRun, bool $updateExisting, array &$summary): array
+    /** @return array<string, array<int, mixed>> */
+    private function itemRules(): array
     {
-        if (isset($raw['rating']) && is_scalar($raw['rating'])) {
-            $raw['rating'] = (string) $raw['rating'];
-        }
-
-        $validator = Validator::make($raw, [
+        $common = [
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'trailer_youtube_url' => ['nullable', 'url', 'max:255'],
             'duration_min' => ['nullable', 'integer', 'min:1', 'max:1000'],
             'rating' => ['nullable', Rule::in(['general', '6', '12', '16', '18'])],
-            'film_info' => ['nullable', 'string', 'max:255'],
             'badges' => ['nullable', 'array'],
+        ];
+
+        if ($this->type === self::TYPE_SHOW) {
+            return $common + [
+                'badges.*' => ['string', Rule::in(ShowOptions::badgeKeys())],
+                'category' => ['nullable', Rule::in(ShowOptions::categoryKeys())],
+                'performer' => ['nullable', 'string', 'max:255'],
+                'venue' => ['nullable', 'string', 'max:255'],
+                'show_info' => ['nullable', 'string', 'max:255'],
+                'ticket_price' => ['nullable', 'integer', 'min:0', 'max:1000000'],
+            ];
+        }
+
+        return $common + [
             'badges.*' => ['string', Rule::in(MovieBadges::keys())],
-        ], [], [
+            'film_info' => ['nullable', 'string', 'max:255'],
+        ];
+    }
+
+    /** @return array{0: Movie|TheaterShow|null, 1: array<string, mixed>} */
+    private function importItem(array $raw, array $result, bool $dryRun, bool $updateExisting, array &$summary): array
+    {
+        $model = $this->modelClass();
+        if (isset($raw['rating']) && is_scalar($raw['rating'])) {
+            $raw['rating'] = (string) $raw['rating'];
+        }
+
+        $validator = Validator::make($raw, $this->itemRules(), [], [
             'title' => 'cím', 'description' => 'leírás', 'trailer_youtube_url' => 'előzetes URL', 'duration_min' => 'hossz (perc)',
-            'rating' => 'korhatár', 'film_info' => 'film infó', 'badges' => 'jelvények',
+            'rating' => 'korhatár', 'film_info' => 'film infó', 'badges' => 'jelvények', 'category' => 'típus',
+            'performer' => 'fellépő', 'venue' => 'helyszín', 'show_info' => 'rövid infó', 'ticket_price' => 'jegyár',
         ]);
         if ($validator->fails()) {
             throw new InvalidArgumentException(implode(' ', $validator->errors()->all()));
@@ -155,11 +208,11 @@ class CatalogImportService
         $data['title'] = trim($data['title']);
         $result['title'] = $data['title'];
 
-        $existing = Movie::whereRaw('LOWER(title) = ?', [mb_strtolower($data['title'])])->first();
+        $existing = $model::whereRaw('LOWER(title) = ?', [mb_strtolower($data['title'])])->first();
         if ($existing && !$updateExisting) {
             $result['status'] = 'skipped';
             $result['id'] = $existing->id;
-            $result['message'] = 'Már létezik ilyen című film (nem módosítottuk), a meglévő filmhez kerülnek az előadások.';
+            $result['message'] = 'Már létezik ilyen című ' . $this->noun() . ' (nem módosítottuk), a meglévőhöz kerülnek az időpontok.';
             return [$existing, $result];
         }
 
@@ -190,8 +243,8 @@ class CatalogImportService
         if ($dryRun) {
             $result['status'] = $existing ? 'updated' : 'created';
             $result['id'] = $existing?->id;
-            $summary[$existing ? 'movies_updated' : 'movies_created']++;
-            return [$existing ?? new Movie($data), $result];
+            $summary[$existing ? 'items_updated' : 'items_created']++;
+            return [$existing ?? new $model($data), $result];
         }
 
         if ($posterUrl) {
@@ -204,17 +257,17 @@ class CatalogImportService
             if ($posterUrl && $oldPoster && $oldPoster !== $posterUrl) {
                 $this->images->deleteStored($oldPoster);
             }
-            $movie = $existing;
+            $item = $existing;
             $result['status'] = 'updated';
-            $summary['movies_updated']++;
+            $summary['items_updated']++;
         } else {
-            $movie = Movie::create($data);
+            $item = $model::create($data);
             $result['status'] = 'created';
-            $summary['movies_created']++;
+            $summary['items_created']++;
         }
-        $result['id'] = $movie->id;
+        $result['id'] = $item->id;
 
-        return [$movie, $result];
+        return [$item, $result];
     }
 
     /** @return array<int, string> */
@@ -231,7 +284,7 @@ class CatalogImportService
      *
      * @return array<int, array<string, mixed>>
      */
-    private function importShowtime(Movie $movie, mixed $raw, array $movieDefaults, int $index, bool $dryRun, array &$summary, int &$count): array
+    private function importShowtime(Movie|TheaterShow $item, mixed $raw, array $movieDefaults, int $index, bool $dryRun, array &$summary, int &$count): array
     {
         if (!is_array($raw)) {
             $summary['showtimes_failed']++;
@@ -298,7 +351,7 @@ class CatalogImportService
             }
 
             $label = $startsAt->copy()->setTimezone(self::LOCAL_TIMEZONE)->format('Y-m-d H:i');
-            $duplicate = $movie->exists && Showtime::where('movie_id', $movie->id)
+            $duplicate = $item->exists && Showtime::where($this->foreignKey(), $item->id)
                 ->where('auditorium_id', $auditorium->id)
                 ->where('starts_at', $startsAt)
                 ->exists();
@@ -311,7 +364,7 @@ class CatalogImportService
             $id = null;
             if (!$dryRun) {
                 $id = Showtime::create([
-                    'movie_id' => $movie->id,
+                    $this->foreignKey() => $item->id,
                     'auditorium_id' => $auditorium->id,
                     'starts_at' => $startsAt,
                     'sales_open_at' => $open,

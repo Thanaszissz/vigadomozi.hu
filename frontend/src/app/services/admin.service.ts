@@ -38,14 +38,17 @@ export interface CatalogImportMovieRow {
   showtimes: CatalogImportShowtimeRow[];
 }
 
+export type CatalogImportType = 'movie' | 'show';
+
 export interface CatalogImportResult {
   dry_run: boolean;
+  type: CatalogImportType;
   summary: {
-    movies_created: number; movies_updated: number; movies_failed: number;
+    items_created: number; items_updated: number; items_failed: number;
     posters_converted: number; poster_warnings: number;
     showtimes_created: number; showtimes_skipped: number; showtimes_failed: number;
   };
-  movies: CatalogImportMovieRow[];
+  items: CatalogImportMovieRow[];
 }
 
 export interface TheaterShow {
@@ -480,12 +483,12 @@ export class AdminService {
   constructor(private http: HttpClient) {}
 
   // Movies
-  importCatalog(data: unknown, dryRun: boolean, updateExisting: boolean): Observable<CatalogImportResult> {
-    return this.http.post<CatalogImportResult>(`${this.apiUrl}/catalog-import`, { data, dry_run: dryRun, update_existing: updateExisting });
+  importCatalog(data: unknown, dryRun: boolean, updateExisting: boolean, type: CatalogImportType = 'movie'): Observable<CatalogImportResult> {
+    return this.http.post<CatalogImportResult>(`${this.apiUrl}/catalog-import`, { data, type, dry_run: dryRun, update_existing: updateExisting });
   }
 
-  getCatalogImportSample(): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/catalog-import/sample`);
+  getCatalogImportSample(type: CatalogImportType = 'movie'): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/catalog-import/sample`, { params: { type } });
   }
 
   getMovies(): Observable<Movie[]> {

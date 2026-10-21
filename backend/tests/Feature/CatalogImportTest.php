@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Auditorium;
 use App\Models\Movie;
 use App\Models\Showtime;
+use App\Models\TheaterShow;
 use App\Models\User;
 use App\Support\Roles;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -52,16 +53,16 @@ class CatalogImportTest extends TestCase
 
         $response = $this->postJson(self::URL, ['data' => $payload])->assertOk();
 
-        $response->assertJsonPath('summary.movies_created', 1)->assertJsonPath('summary.showtimes_created', 3);
+        $response->assertJsonPath('summary.items_created', 1)->assertJsonPath('summary.showtimes_created', 3);
         $this->assertSame(1, Movie::count());
         $this->assertSame(3, Showtime::where('movie_id', Movie::first()->id)->count());
         // a magyar helyi idő (téli: UTC+1) UTC-ben tárolódik, ahogy a felület is küldi
         $this->assertSame('2030-01-01 16:00:00', Showtime::orderBy('starts_at')->first()->starts_at->utc()->format('Y-m-d H:i:s'));
-        $this->assertSame('2030-01-01 17:00', $response->json('movies.0.showtimes.0.starts_at'));
+        $this->assertSame('2030-01-01 17:00', $response->json('items.0.showtimes.0.starts_at'));
 
         // ismételt feltöltés nem duplikál
         $again = $this->postJson(self::URL, ['data' => $payload])->assertOk();
-        $again->assertJsonPath('summary.movies_updated', 1)->assertJsonPath('summary.showtimes_skipped', 3);
+        $again->assertJsonPath('summary.items_updated', 1)->assertJsonPath('summary.showtimes_skipped', 3);
         $this->assertSame(1, Movie::count());
         $this->assertSame(3, Showtime::count());
     }
@@ -77,8 +78,8 @@ class CatalogImportTest extends TestCase
             ],
         ])->assertOk();
 
-        $response->assertJsonPath('summary.movies_created', 2)
-            ->assertJsonPath('summary.movies_failed', 1)
+        $response->assertJsonPath('summary.items_created', 2)
+            ->assertJsonPath('summary.items_failed', 1)
             ->assertJsonPath('summary.showtimes_created', 1)
             ->assertJsonPath('summary.showtimes_failed', 1);
         $this->assertSame(0, Movie::count());
@@ -98,7 +99,7 @@ class CatalogImportTest extends TestCase
 
         $response = $this->postJson(self::URL, ['data' => [['title' => 'Plakátos', 'poster' => $this->pngDataUri()]]])->assertOk();
 
-        $response->assertJsonPath('movies.0.poster.status', 'converted')->assertJsonPath('movies.0.poster.width', 1600);
+        $response->assertJsonPath('items.0.poster.status', 'converted')->assertJsonPath('items.0.poster.width', 1600);
         $files = Storage::disk('public')->files('posters');
         $this->assertCount(1, $files);
         $this->assertStringEndsWith('.webp', $files[0]);
@@ -110,7 +111,7 @@ class CatalogImportTest extends TestCase
     {
         $response = $this->postJson(self::URL, ['data' => [['title' => 'SSRF', 'poster' => 'http://127.0.0.1/x.png']]])->assertOk();
 
-        $response->assertJsonPath('movies.0.poster.status', 'failed')->assertJsonPath('summary.movies_created', 1);
+        $response->assertJsonPath('items.0.poster.status', 'failed')->assertJsonPath('summary.items_created', 1);
         $this->assertNull(Movie::first()->poster_path);
     }
 
@@ -120,8 +121,55 @@ class CatalogImportTest extends TestCase
 
         $this->postJson(self::URL, ['data' => $sample, 'dry_run' => true])
             ->assertOk()
-            ->assertJsonPath('summary.movies_failed', 0)
+            ->assertJsonPath('summary.items_failed', 0)
             ->assertJsonPath('summary.showtimes_failed', 0)
             ->assertJsonPath('summary.showtimes_created', 6);
+    }
+
+    public function test_imports_theater_shows_with_their_showtimes(): void
+    {
+        $payload = ['shows' => [[
+            'title' => 'Színházi est',
+            'category' => 'szinhaz',
+            'performer' => 'Társulat',
+            'ticket_price' => 3500,
+            'badges' => ['premier'],
+            'auditorium' => 'Nagyterem',
+            'showtimes' => [['starts_at' => ['2030-07-01 19:00', '2030-07-02 19:00']]],
+        ]]];
+
+        $this->postJson(self::URL, ['type' => 'show', 'data' => $payload])
+            ->assertOk()
+            ->assertJsonPath('summary.items_created', 1)
+            ->assertJsonPath('summary.showtimes_created', 2);
+
+        $show = TheaterShow::firstOrFail();
+        $this->assertSame(3500, $show->ticket_price);
+        $this->assertSame(0, Movie::count());
+        $this->assertSame(2, Showtime::where('theater_show_id', $show->id)->whereNull('movie_id')->count());
+        // nyári időszámítás (UTC+2): 19:00 helyi idő = 17:00 UTC
+        $this->assertSame('2030-07-01 17:00:00', Showtime::orderBy('starts_at')->first()->starts_at->utc()->format('Y-m-d H:i:s'));
+
+        $this->postJson(self::URL, ['type' => 'show', 'data' => $payload])
+            ->assertOk()
+            ->assertJsonPath('summary.items_updated', 1)
+            ->assertJsonPath('summary.showtimes_skipped', 2);
+        $this->assertSame(1, TheaterShow::count());
+    }
+
+    public function test_show_import_validates_show_fields_and_sample(): void
+    {
+        $this->postJson(self::URL, ['type' => 'show', 'dry_run' => true, 'data' => [['title' => 'X', 'category' => 'nincs-ilyen']]])
+            ->assertOk()
+            ->assertJsonPath('summary.items_failed', 1);
+
+        $sample = $this->getJson(self::URL . '/sample?type=show')->assertOk()->json();
+        $this->assertArrayHasKey('shows', $sample);
+        $this->postJson(self::URL, ['type' => 'show', 'data' => $sample, 'dry_run' => true])
+            ->assertOk()
+            ->assertJsonPath('summary.items_failed', 0)
+            ->assertJsonPath('summary.showtimes_failed', 0)
+            ->assertJsonPath('summary.showtimes_created', 5);
+        $this->assertSame(0, TheaterShow::count());
     }
 }
