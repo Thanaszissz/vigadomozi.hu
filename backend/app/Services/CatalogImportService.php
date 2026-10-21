@@ -19,6 +19,7 @@ class CatalogImportService
 {
     public const MAX_MOVIES = 200;
     public const MAX_SHOWTIMES = 2000;
+    public const LOCAL_TIMEZONE = 'Europe/Budapest';
 
     /** @var array<string, Auditorium> */
     private array $auditoriaByName = [];
@@ -296,7 +297,7 @@ class CatalogImportService
                 continue;
             }
 
-            $label = $startsAt->format('Y-m-d H:i');
+            $label = $startsAt->copy()->setTimezone(self::LOCAL_TIMEZONE)->format('Y-m-d H:i');
             $duplicate = $movie->exists && Showtime::where('movie_id', $movie->id)
                 ->where('auditorium_id', $auditorium->id)
                 ->where('starts_at', $startsAt)
@@ -326,6 +327,7 @@ class CatalogImportService
         return $rows;
     }
 
+    /** A megadott idő (időzóna nélkül) magyar helyi időnek számít; tárolásra az alkalmazás időzónájába (UTC) alakítjuk, mint a felület is. */
     private function parseDate(mixed $value, bool $required = false): ?Carbon
     {
         if ($value === null || $value === '') {
@@ -338,7 +340,7 @@ class CatalogImportService
             throw new InvalidArgumentException('Érvénytelen dátum: ' . json_encode($value));
         }
         try {
-            return Carbon::parse($value, config('app.timezone'));
+            return Carbon::parse($value, self::LOCAL_TIMEZONE)->setTimezone(config('app.timezone'));
         } catch (Throwable) {
             throw new InvalidArgumentException("Érvénytelen dátum: {$value} (formátum: 2026-11-05 18:00).");
         }

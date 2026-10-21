@@ -78,7 +78,7 @@ class CatalogImportController extends Controller
                 'badges' => 'Jelvények: ' . implode(', ', MovieBadges::keys()),
                 'poster' => 'http(s) URL vagy base64 data URI, esetleg ezek tömbje. Minden kép WebP-re alakul (max. 1600 px, 82-es minőség). Belső hálózati címek nem engedélyezettek.',
                 'showtimes' => 'A filmhez tartozó előadások tömbje. Kötelező: auditorium (terem neve vagy azonosítója, a filmnél is megadható alapértelmezésként) és starts_at.',
-                'starts_at' => 'Egy időpont vagy időpontok tömbje ("2026-11-05 18:00"); időpontonként egy-egy előadás jön létre. Már létező előadást nem hoz létre újra.',
+                'starts_at' => 'Egy időpont vagy időpontok tömbje ("2026-11-05 18:00", magyar helyi idő; időzóna megadható, pl. "2026-11-05T18:00:00+01:00"); időpontonként egy-egy előadás jön létre. Már létező előadást nem hoz létre újra.',
                 'optional_showtime_fields' => 'sales_open_at, sales_close_at, status (active, inactive, cancelled, completed), pricing_override_json',
             ],
         ]);

@@ -55,6 +55,9 @@ class CatalogImportTest extends TestCase
         $response->assertJsonPath('summary.movies_created', 1)->assertJsonPath('summary.showtimes_created', 3);
         $this->assertSame(1, Movie::count());
         $this->assertSame(3, Showtime::where('movie_id', Movie::first()->id)->count());
+        // a magyar helyi idő (téli: UTC+1) UTC-ben tárolódik, ahogy a felület is küldi
+        $this->assertSame('2030-01-01 16:00:00', Showtime::orderBy('starts_at')->first()->starts_at->utc()->format('Y-m-d H:i:s'));
+        $this->assertSame('2030-01-01 17:00', $response->json('movies.0.showtimes.0.starts_at'));
 
         // ismételt feltöltés nem duplikál
         $again = $this->postJson(self::URL, ['data' => $payload])->assertOk();
