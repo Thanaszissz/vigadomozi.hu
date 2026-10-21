@@ -28,7 +28,7 @@ final class Roles
         'reports.view' => 'Riportok és foglalás-exportok',
         'email.manage' => 'E-mail sablonok szerkesztése',
         'customers.manage' => 'Vásárlók (név, e-mail, telefonszám) kezelése',
-        'settings.manage' => 'Beállítások (jegyszámozás, biztonsági mentés és visszatöltés)',
+        'settings.manage' => 'Beállítások (jegyszámozás, programadatok törlése, biztonsági mentés és visszatöltés)',
         'users.manage' => 'Felhasználók és szerepkörök kezelése',
         'activity.view' => 'Tevékenységnapló megtekintése',
     ];

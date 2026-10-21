@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { AdminService, TicketNumberingPlan, TicketNumberingState } from '../../../../services/admin.service';
+import { AdminService, CatalogResetPlan, TicketNumberingPlan, TicketNumberingState } from '../../../../services/admin.service';
 import { BackupsPanelComponent } from './backups-panel.component';
 import { SimplePayPanelComponent } from './simplepay-panel.component';
 import { NavPanelComponent } from './nav-panel.component';
@@ -11,7 +11,7 @@ import { ExtraServicesPanelComponent } from './extra-services-panel.component';
 import { TestModePanelComponent } from './test-mode-panel.component';
 import { MaintenancePanelComponent } from './maintenance-panel.component';
 
-type Section = 'testmode' | 'maintenance' | 'numbering' | 'services' | 'simplepay' | 'szamlazz' | 'nav' | 'backups';
+type Section = 'testmode' | 'maintenance' | 'numbering' | 'catalog-reset' | 'services' | 'simplepay' | 'szamlazz' | 'nav' | 'backups';
 
 @Component({
   selector: 'app-settings-admin',
@@ -49,6 +49,15 @@ export class SettingsAdminComponent implements OnInit, OnDestroy {
   confirmBusy = false;
   secondsLeft = 0;
   private timer?: number;
+
+  catalogResetPassword = '';
+  catalogResetConfirmPassword = '';
+  catalogResetEmailCode = '';
+  catalogResetPhrase = '';
+  catalogResetPlan: CatalogResetPlan | null = null;
+  catalogResetError: string | null = null;
+  catalogResetNotice: string | null = null;
+  catalogResetBusy = false;
 
   constructor(private admin: AdminService, private router: Router) {}
 
@@ -107,6 +116,22 @@ export class SettingsAdminComponent implements OnInit, OnDestroy {
     return this.phraseMatches && !!this.confirmPassword && !this.confirmBusy && this.secondsLeft > 0;
   }
 
+  get catalogResetPhraseMatches(): boolean {
+    return !!this.catalogResetPlan && this.catalogResetPhrase.trim() === this.catalogResetPlan.phrase;
+  }
+
+  get canPrepareCatalogReset(): boolean {
+    return !!this.catalogResetPassword && !this.catalogResetBusy;
+  }
+
+  get canApplyCatalogReset(): boolean {
+    return !!this.catalogResetPlan
+      && this.catalogResetPhraseMatches
+      && /^\d{6}$/.test(this.catalogResetEmailCode)
+      && !!this.catalogResetConfirmPassword
+      && !this.catalogResetBusy;
+  }
+
   useSuggestion(): void {
     const suggestion = this.state?.previous_prefix_last;
     if (suggestion) {
@@ -157,6 +182,55 @@ export class SettingsAdminComponent implements OnInit, OnDestroy {
         this.counterError = err?.error?.message || 'A kérés nem teljesíthető.';
       }
     });
+  }
+
+  prepareCatalogReset(): void {
+    this.catalogResetError = null;
+    this.catalogResetNotice = null;
+    this.catalogResetBusy = true;
+    this.admin.prepareCatalogReset(this.catalogResetPassword).subscribe({
+      next: (plan) => {
+        this.catalogResetPlan = plan;
+        this.catalogResetEmailCode = '';
+        this.catalogResetPhrase = '';
+        this.catalogResetPassword = '';
+        this.catalogResetConfirmPassword = '';
+        this.catalogResetBusy = false;
+      },
+      error: (err) => {
+        this.catalogResetError = err?.error?.message || 'A törlés előkészítése sikertelen.';
+        this.catalogResetBusy = false;
+      }
+    });
+  }
+
+  applyCatalogReset(): void {
+    if (!this.catalogResetPlan || !this.canApplyCatalogReset) return;
+
+    this.catalogResetError = null;
+    this.catalogResetBusy = true;
+    this.admin.applyCatalogReset({
+      token: this.catalogResetPlan.token,
+      phrase: this.catalogResetPhrase.trim(),
+      email_code: this.catalogResetEmailCode,
+      password: this.catalogResetConfirmPassword
+    }).subscribe({
+      next: (result) => {
+        this.catalogResetNotice = result.message;
+        this.catalogResetError = null;
+        this.clearCatalogReset();
+        this.catalogResetBusy = false;
+      },
+      error: (err) => {
+        this.catalogResetError = err?.error?.message || 'A programadatok törlése sikertelen.';
+        this.catalogResetBusy = false;
+      }
+    });
+  }
+
+  cancelCatalogReset(): void {
+    this.clearCatalogReset();
+    this.catalogResetError = null;
   }
 
   // 2. lépés: végrehajtás a megerősítő szöveggel
@@ -234,6 +308,14 @@ export class SettingsAdminComponent implements OnInit, OnDestroy {
     this.counterPassword = '';
     this.counterError = null;
     this.error = null;
+  }
+
+  private clearCatalogReset(): void {
+    this.catalogResetPlan = null;
+    this.catalogResetPassword = '';
+    this.catalogResetConfirmPassword = '';
+    this.catalogResetEmailCode = '';
+    this.catalogResetPhrase = '';
   }
 
   private stopTimer(): void {

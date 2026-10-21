@@ -15,6 +15,9 @@
       <button type="button" class="menu-item" [class.active]="section === 'numbering'" (click)="section = 'numbering'">
         🎟️ Jegyszámozás
       </button>
+      <button type="button" class="menu-item" [class.active]="section === 'catalog-reset'" (click)="section = 'catalog-reset'">
+        🗑️ Programadatok törlése
+      </button>
       <button type="button" class="menu-item" [class.active]="section === 'services'" (click)="section = 'services'">
         🎫 Egyéb szolgáltatások
       </button>
@@ -146,6 +149,63 @@
           </button>
         </section>
       </ng-container>
+    </main>
+
+    <main class="content" *ngIf="section === 'catalog-reset'">
+      <section class="card">
+        <h2>Programadatok törlése</h2>
+        <p class="muted">
+          Ezzel az összes film, színházi előadás és időpont törlődik. A termek, beállítások, eladott jegyek és értékesítési naplók megmaradnak.
+        </p>
+        <div class="warn">
+          A kapcsolódó foglalások, a foglalási tételek és a fizetési tranzakciók is véglegesen törlődnek.
+          Az eladott jegyek megmaradnak, de az előadáshoz és foglaláshoz tartozó kapcsolatuk megszűnik.
+          A művelet nem vonható vissza.
+        </div>
+
+        <div *ngIf="catalogResetNotice" class="ok">{{ catalogResetNotice }}</div>
+        <div *ngIf="catalogResetError" class="alert">{{ catalogResetError }}</div>
+
+        <ng-container *ngIf="catalogResetPlan as resetPlan; else catalogResetPreparation">
+          <div class="warnings">
+            <div>• Törlendő filmek: <b>{{ resetPlan.summary.movies }}</b></div>
+            <div>• Törlendő színházi előadások: <b>{{ resetPlan.summary.theater_shows }}</b></div>
+            <div>• Törlendő időpontok: <b>{{ resetPlan.summary.showtimes }}</b></div>
+            <div>• Törlendő kapcsolódó foglalások: <b>{{ resetPlan.summary.reservations }}</b></div>
+            <div>• A megerősítő kódot elküldtük ide: <b>{{ resetPlan.email_hint }}</b></div>
+            <div>• A megerősítés {{ resetPlan.expires_in / 60 }} percig érvényes.</div>
+          </div>
+
+          <label class="field">
+            <span>Emailben kapott 6 jegyű kód</span>
+            <input type="text" inputmode="numeric" maxlength="6" [(ngModel)]="catalogResetEmailCode" autocomplete="one-time-code" />
+          </label>
+          <label class="field">
+            <span>A törlés jóváhagyásához írd be pontosan: <b class="phrase">{{ resetPlan.phrase }}</b></span>
+            <input type="text" [(ngModel)]="catalogResetPhrase" autocomplete="off" spellcheck="false" [class.match]="catalogResetPhraseMatches" />
+          </label>
+          <label class="field">
+            <span>Jelszavad a végrehajtáshoz</span>
+            <input type="password" [(ngModel)]="catalogResetConfirmPassword" autocomplete="current-password" />
+          </label>
+          <div class="actions">
+            <button type="button" class="btn" [disabled]="catalogResetBusy" (click)="cancelCatalogReset()">Mégsem</button>
+            <button type="button" class="btn danger" [disabled]="!canApplyCatalogReset" (click)="applyCatalogReset()">
+              {{ catalogResetBusy ? 'Törlés folyamatban...' : 'Végleges törlés' }}
+            </button>
+          </div>
+        </ng-container>
+
+        <ng-template #catalogResetPreparation>
+          <label class="field">
+            <span>Jelszavad a törlés előkészítéséhez</span>
+            <input type="password" [(ngModel)]="catalogResetPassword" autocomplete="current-password" />
+          </label>
+          <button type="button" class="btn danger" [disabled]="!canPrepareCatalogReset" (click)="prepareCatalogReset()">
+            {{ catalogResetBusy ? 'Email küldése...' : 'Törlés előkészítése és email-kód küldése' }}
+          </button>
+        </ng-template>
+      </section>
     </main>
 
     <main class="content" *ngIf="section === 'testmode'">

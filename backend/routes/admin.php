@@ -25,6 +25,7 @@ use App\Http\Controllers\Admin\InvoiceController;
 use App\Http\Controllers\Admin\ExtraServiceController;
 use App\Http\Controllers\Admin\TestModeController;
 use App\Http\Controllers\Admin\MaintenanceController;
+use App\Http\Controllers\Admin\CatalogResetController;
 
 // A jogosultságokat a szerepkörök adják (App\Support\Roles); minden csoport a megfelelő jogot követeli meg.
 
@@ -118,6 +119,8 @@ Route::middleware('permission:settings.manage')->group(function () {
     Route::get('settings/ticket-numbering', [SettingsController::class, 'ticketNumbering']);
     Route::post('settings/ticket-numbering/prepare', [SettingsController::class, 'prepareTicketNumbering'])->middleware('throttle:10,1');
     Route::post('settings/ticket-numbering/apply', [SettingsController::class, 'applyTicketNumbering'])->middleware('throttle:10,1');
+    Route::post('settings/catalog-reset/prepare', [CatalogResetController::class, 'prepare'])->middleware('throttle:5,1');
+    Route::post('settings/catalog-reset/apply', [CatalogResetController::class, 'apply'])->middleware('throttle:10,1');
 
     // NAV nyugtaadat-szolgáltatás (KOBAK): kapcsolati adatok, napi automatikus és kézi beküldés
     Route::get('settings/nav', [NavController::class, 'show']);

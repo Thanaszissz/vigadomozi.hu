@@ -260,6 +260,19 @@ export interface TicketNumberingPlan {
   warnings: string[];
 }
 
+export interface CatalogResetPlan {
+  token: string;
+  expires_in: number;
+  phrase: string;
+  email_hint: string;
+  summary: {
+    movies: number;
+    theater_shows: number;
+    showtimes: number;
+    reservations: number;
+  };
+}
+
 export interface NavSubmissionItem {
   id: number;
   applicable_date: string;
@@ -712,6 +725,21 @@ export class AdminService {
 
   applyTicketNumbering(payload: { token: string; phrase: string; password: string }): Observable<{ status: string; message: string; state: TicketNumberingState }> {
     return this.http.post<{ status: string; message: string; state: TicketNumberingState }>(`${this.apiUrl}/settings/ticket-numbering/apply`, payload);
+  }
+
+  prepareCatalogReset(password: string): Observable<CatalogResetPlan> {
+    return this.http.post<CatalogResetPlan>(`${this.apiUrl}/settings/catalog-reset/prepare`, { password });
+  }
+
+  applyCatalogReset(payload: { token: string; phrase: string; email_code: string; password: string }): Observable<{
+    status: string;
+    message: string;
+    summary: CatalogResetPlan['summary'];
+  }> {
+    return this.http.post<{ status: string; message: string; summary: CatalogResetPlan['summary'] }>(
+      `${this.apiUrl}/settings/catalog-reset/apply`,
+      payload
+    );
   }
 
   // Beállítások: NAV kapcsolat (nyugtaadat-szolgáltatás)
