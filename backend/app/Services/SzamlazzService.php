@@ -162,7 +162,7 @@ class SzamlazzService
             }
 
             $lines = $this->lines($reservation);
-            $method = in_array($reservation->payment_provider, ['cash', 'szep_card'], true) ? $reservation->payment_provider : 'card';
+            $method = in_array($reservation->payment_provider, ['cash', 'szep_card', 'mixed', 'voucher', 'experience_card'], true) ? $reservation->payment_provider : 'card';
             $response = $this->send($this->buildXml($c, $buyer, $lines, $method, 'vigado-res-' . $reservation->id, false, $reservation->id));
 
             if (!$response['ok']) {
@@ -280,7 +280,7 @@ class SzamlazzService
             . '<keltDatum>' . $today . '</keltDatum>'
             . '<teljesitesDatum>' . $today . '</teljesitesDatum>'
             . '<fizetesiHataridoDatum>' . $today . '</fizetesiHataridoDatum>'
-            . '<fizmod>' . (['cash' => 'Készpénz', 'szep_card' => 'SZÉP kártya'][$method] ?? 'Bankkártya') . '</fizmod>'
+            . '<fizmod>' . (['cash' => 'Készpénz', 'szep_card' => 'SZÉP kártya', 'mixed' => 'Vegyes fizetés', 'voucher' => 'Utalvány', 'experience_card' => 'Élménykártya'][$method] ?? 'Bankkártya') . '</fizmod>'
             . '<penznem>HUF</penznem>'
             . '<szamlaNyelve>hu</szamlaNyelve>'
             . ($orderNo ? '<rendelesSzam>' . $orderNo . '</rendelesSzam>' : '')

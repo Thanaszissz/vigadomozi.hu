@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\SalesLog;
 use App\Models\Ticket;
 use App\Services\ActivityLogger;
+use App\Support\PaymentSplit;
 use App\Support\TicketCategory;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -35,7 +36,7 @@ class TicketAdminController extends Controller
     {
         $request->validate([
             'year' => ['nullable', 'integer', 'min:2000', 'max:2100'],
-            'payment_method' => ['nullable', 'in:cash,card,szep_card,stripe,simplepay,experience_card'],
+            'payment_method' => ['nullable', 'in:cash,card,szep_card,voucher,mixed,stripe,simplepay,experience_card'],
             'date' => ['nullable', 'date'],
             'q' => ['nullable', 'string', 'max:100'],
         ]);
@@ -55,16 +56,26 @@ class TicketAdminController extends Controller
 
         $page = $query->orderByDesc('id')->paginate(50);
 
+        // A vegyes (részfizetéses) jegyek összege a módonkénti bontásban szerepel; a jegyek és az összeg összesítése nem változik
+        $methods = [];
+        foreach ($summary as $s) {
+            if ($s->payment_method !== PaymentSplit::MIXED) {
+                $methods[$s->payment_method] = ['payment_method' => $s->payment_method, 'tickets' => (int) $s->tickets, 'amount' => (int) $s->amount];
+            }
+        }
+        $mixed = (clone $query)->where('payment_method', PaymentSplit::MIXED)->get(['payment_method', 'payment_split', 'price_amount']);
+        foreach (PaymentSplit::summary($mixed) as $method => $row) {
+            $methods[$method] ??= ['payment_method' => $method, 'tickets' => 0, 'amount' => 0];
+            $methods[$method]['tickets'] += $row['tickets'];
+            $methods[$method]['amount'] += $row['amount'];
+        }
+
         return response()->json([
             'year' => $year,
             'summary' => [
                 'tickets' => (int) $summary->sum('tickets'),
                 'amount' => (int) $summary->sum('amount'),
-                'by_method' => $summary->map(fn($s) => [
-                    'payment_method' => $s->payment_method,
-                    'tickets' => (int) $s->tickets,
-                    'amount' => (int) $s->amount,
-                ])->values(),
+                'by_method' => array_values($methods),
                 'by_category' => $byCategory->map(fn($s) => [
                     'category' => $s->category,
                     'tickets' => (int) $s->tickets,
@@ -102,11 +113,7 @@ class TicketAdminController extends Controller
             ->get();
 
         $summarize = function ($rows) {
-            $byMethod = $rows->groupBy('payment_method')->map(fn($g, $method) => [
-                'payment_method' => $method,
-                'tickets' => $g->count(),
-                'amount' => (int) $g->sum('price_amount'),
-            ])->values();
+            $byMethod = collect(PaymentSplit::summary($rows))->values();
 
             return [
                 'tickets' => $rows->count(),
@@ -189,14 +196,17 @@ class TicketAdminController extends Controller
     /** Összesítés egy jegycsoportról: darabszám, bevétel és a fizetési módok / kategóriák szerinti bontás. */
     private function showtimeSums($rows): array
     {
+        $paid = PaymentSplit::amounts($rows);
+
         return [
             'tickets' => $rows->count(),
             'amount' => (int) $rows->sum('price_amount'),
-            'cash' => (int) $rows->where('payment_method', 'cash')->sum('price_amount'),
-            'card' => (int) $rows->where('payment_method', 'card')->sum('price_amount'),
-            'szep_card' => (int) $rows->where('payment_method', 'szep_card')->sum('price_amount'),
-            'experience_card' => (int) $rows->where('payment_method', 'experience_card')->sum('price_amount'),
-            'online' => (int) $rows->whereIn('payment_method', ['stripe', 'simplepay'])->sum('price_amount'),
+            'cash' => $paid['cash'] ?? 0,
+            'card' => $paid['card'] ?? 0,
+            'szep_card' => $paid['szep_card'] ?? 0,
+            'voucher' => $paid['voucher'] ?? 0,
+            'experience_card' => $paid['experience_card'] ?? 0,
+            'online' => ($paid['stripe'] ?? 0) + ($paid['simplepay'] ?? 0),
             'staff' => $rows->where('category', TicketCategory::STAFF)->count(),
             'experience_tickets' => $rows->where('category', TicketCategory::EXPERIENCE_CARD)->count(),
         ];
@@ -247,7 +257,7 @@ class TicketAdminController extends Controller
             return response()->stream(function () use ($shows) {
                 $out = fopen('php://output', 'w');
                 fwrite($out, "\xEF\xBB\xBF");
-                fputcsv($out, ['Előadás kezdete', 'Film', 'Terem', 'Eladott jegyek (db)', 'Bevétel (Ft)', 'Készpénz (Ft)', 'Bankkártya (Ft)', 'SZÉP kártya (Ft)', 'Online (Ft)', 'Élménykártya (Ft)', 'Élménykártyás jegyek (db)', 'Dolgozó jegyek (db)'], ';');
+                fputcsv($out, ['Előadás kezdete', 'Film', 'Terem', 'Eladott jegyek (db)', 'Bevétel (Ft)', 'Készpénz (Ft)', 'Bankkártya (Ft)', 'SZÉP kártya (Ft)', 'Utalvány (Ft)', 'Online (Ft)', 'Élménykártya (Ft)', 'Élménykártyás jegyek (db)', 'Dolgozó jegyek (db)'], ';');
                 foreach ($shows as $s) {
                     fputcsv($out, [
                         $s['starts_at']->copy()->timezone('Europe/Budapest')->format('Y-m-d H:i'),
@@ -258,6 +268,7 @@ class TicketAdminController extends Controller
                         $s['cash'],
                         $s['card'],
                         $s['szep_card'],
+                        $s['voucher'],
                         $s['online'],
                         $s['experience_card'],
                         $s['experience_tickets'],
@@ -268,16 +279,15 @@ class TicketAdminController extends Controller
             }, 200, $headers);
         }
 
-        $methods = ['cash' => 'Készpénz', 'card' => 'Bankkártya', 'szep_card' => 'SZÉP kártya', 'stripe' => 'Online', 'simplepay' => 'Online (SimplePay)', 'experience_card' => 'Élménykártya'];
         $channels = ['pos' => 'Pénztár', 'admin' => 'Admin', 'online' => 'Online'];
         $query = $this->showtimeDayTickets($date);
 
-        return response()->stream(function () use ($query, $methods, $channels) {
+        return response()->stream(function () use ($query, $channels) {
             $out = fopen('php://output', 'w');
             fwrite($out, "\xEF\xBB\xBF");
             fputcsv($out, ['Előadás kezdete', 'Film', 'Terem', 'Jegyszám', 'Sor', 'Szék', 'Ár (Ft)', 'Kategória', 'Fizetés', 'Csatorna', 'Eladva', 'Értékesítő'], ';');
 
-            $query->chunk(500, function ($tickets) use ($out, $methods, $channels) {
+            $query->chunk(500, function ($tickets) use ($out, $channels) {
                 foreach ($tickets as $t) {
                     fputcsv($out, [
                         $t->starts_at->copy()->timezone('Europe/Budapest')->format('Y-m-d H:i'),
@@ -288,7 +298,7 @@ class TicketAdminController extends Controller
                         $t->seat_number,
                         $t->price_amount,
                         TicketCategory::label($t->category),
-                        $methods[$t->payment_method] ?? $t->payment_method,
+                        PaymentSplit::describe($t),
                         $channels[$t->channel] ?? $t->channel,
                         $t->sold_at->copy()->timezone('Europe/Budapest')->format('Y-m-d H:i'),
                         $t->sold_by_name,
@@ -325,7 +335,7 @@ class TicketAdminController extends Controller
     {
         $request->validate([
             'year' => ['required', 'integer', 'min:2000', 'max:2100'],
-            'payment_method' => ['nullable', 'in:cash,card,szep_card,stripe,simplepay,experience_card'],
+            'payment_method' => ['nullable', 'in:cash,card,szep_card,voucher,mixed,stripe,simplepay,experience_card'],
             'date' => ['nullable', 'date'],
             'q' => ['nullable', 'string', 'max:100'],
         ]);
@@ -351,14 +361,12 @@ class TicketAdminController extends Controller
             'Content-Disposition' => 'attachment; filename="jegyek_' . $year . '.csv"',
         ];
 
-        $methods = ['cash' => 'Készpénz', 'card' => 'Bankkártya', 'szep_card' => 'SZÉP kártya', 'stripe' => 'Online', 'simplepay' => 'Online (SimplePay)', 'experience_card' => 'Élménykártya'];
-
-        return response()->stream(function () use ($query, $methods) {
+        return response()->stream(function () use ($query) {
             $out = fopen('php://output', 'w');
             fwrite($out, "\xEF\xBB\xBF");
             fputcsv($out, ['Jegyszám', 'Eladva', 'Film / szolgáltatás', 'Előadás kezdete', 'Terem', 'Sor', 'Szék', 'Ár (Ft)', 'Fizetés', 'Értékesítő', 'Kategória'], ';');
 
-            $query->orderBy('id')->chunk(500, function ($tickets) use ($out, $methods) {
+            $query->orderBy('id')->chunk(500, function ($tickets) use ($out) {
                 foreach ($tickets as $t) {
                     $service = $t->category === TicketCategory::SERVICE;
                     fputcsv($out, [
@@ -370,7 +378,7 @@ class TicketAdminController extends Controller
                         $service ? '' : $t->row_label,
                         $service ? '' : $t->seat_number,
                         $t->price_amount,
-                        $methods[$t->payment_method] ?? $t->payment_method,
+                        PaymentSplit::describe($t),
                         $t->sold_by_name,
                         TicketCategory::label($t->category),
                     ], ';');

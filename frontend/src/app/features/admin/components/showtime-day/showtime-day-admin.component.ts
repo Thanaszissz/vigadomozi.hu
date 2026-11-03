@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { DateInputComponent } from '../../../../shared/date-time-inputs.component';
 import { Router } from '@angular/router';
 import { AdminService, ShowtimeDay, Ticket, categoryLabel } from '../../../../services/admin.service';
-import { paymentLabel } from '../ticket-print/ticket-print.component';
+import { paymentLabel, ticketPaymentLabel } from '../ticket-print/ticket-print.component';
 
 /** Egy nap előadásainak teljes jegyeladása (eladás időpontjától és eladójától függetlenül), listában és CSV exporttal. */
 @Component({
@@ -24,6 +24,7 @@ export class ShowtimeDayAdminComponent implements OnInit {
   showDetails = false;
 
   paymentLabel = paymentLabel;
+  ticketPaymentLabel = ticketPaymentLabel;
   categoryLabel = categoryLabel;
 
   constructor(private admin: AdminService, private router: Router) {}

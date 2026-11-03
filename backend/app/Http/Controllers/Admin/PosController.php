@@ -15,6 +15,7 @@ use App\Services\ReservationMailer;
 use App\Services\SeatClaimService;
 use App\Services\SimplePayService;
 use App\Services\TicketService;
+use App\Support\PaymentSplit;
 use App\Support\TicketCategory;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -43,7 +44,10 @@ class PosController extends Controller
             'showtime_id' => ['required', 'integer', 'exists:showtimes,id'],
             'seatKeys' => ['required', 'array', 'min:1', 'max:20'],
             'seatKeys.*' => ['string', 'max:120', 'distinct'],
-            'payment_method' => ['required', 'string', 'in:cash,card,szep_card'],
+            'payment_method' => ['required_without:payments', 'nullable', 'string', 'in:cash,card,szep_card'],
+            'payments' => ['sometimes', 'array', 'min:1', 'max:5'],
+            'payments.*.method' => ['required', 'string', Rule::in(PaymentSplit::METHODS)],
+            'payments.*.amount' => ['required', 'integer', 'min:1', 'max:10000000'],
             'customer_name' => ['nullable', 'string', 'max:255', 'regex:/^[^<>\x00-\x1F\x7F]+$/u'],
             'customer_phone' => ['nullable', 'string', 'max:20'],
             'seat_categories' => ['nullable', 'array'],
@@ -73,7 +77,7 @@ class PosController extends Controller
 
                 $this->claims->claimSeats($showtime, $reservation, $data['seatKeys'], null, $data['seat_categories'] ?? []);
 
-                return $this->markPaid($reservation, $data['payment_method'], $request);
+                return $this->markPaid($reservation, $data['payment_method'] ?? null, $request, $data['payments'] ?? null);
             });
         } catch (SeatUnavailableException $e) {
             return response()->json(['message' => $e->getMessage()], $e->status);
@@ -314,7 +318,10 @@ class PosController extends Controller
     public function payReservation(Reservation $reservation, Request $request): JsonResponse
     {
         $data = $request->validate([
-            'payment_method' => ['required', 'string', 'in:cash,card,szep_card'],
+            'payment_method' => ['required_without:payments', 'nullable', 'string', 'in:cash,card,szep_card'],
+            'payments' => ['sometimes', 'array', 'min:1', 'max:5'],
+            'payments.*.method' => ['required', 'string', Rule::in(PaymentSplit::METHODS)],
+            'payments.*.amount' => ['required', 'integer', 'min:1', 'max:10000000'],
             // Részfizetés: csak ezeket a székeket fizeti ki, a többi a foglalásban marad
             'seat_keys' => ['sometimes', 'array', 'min:1', 'max:20'],
             'seat_keys.*' => ['string', 'max:120', 'distinct'],
@@ -346,7 +353,7 @@ class PosController extends Controller
                 $allSeats = $locked->items->pluck('seat_key')->all();
 
                 if (!$paySeats || count($paySeats) >= count($allSeats)) {
-                    return ['reservation' => $this->markPaid($locked, $data['payment_method'], $request)];
+                    return ['reservation' => $this->markPaid($locked, $data['payment_method'] ?? null, $request, $data['payments'] ?? null)];
                 }
                 if (array_diff($paySeats, $allSeats)) {
                     return ['message' => 'A kiválasztott szék nem tartozik a foglaláshoz.', 'status' => 422];
@@ -385,7 +392,7 @@ class PosController extends Controller
 
                 $paidReservation->load('showtime.movie', 'showtime.auditorium');
 
-                return ['reservation' => $this->markPaid($paidReservation, $data['payment_method'], $request)];
+                return ['reservation' => $this->markPaid($paidReservation, $data['payment_method'] ?? null, $request, $data['payments'] ?? null)];
             });
         } catch (SeatUnavailableException $e) {
             return response()->json(['message' => $e->getMessage()], $e->status);
@@ -406,10 +413,35 @@ class PosController extends Controller
     }
 
     /** @throws SeatUnavailableException */
-    private function markPaid(Reservation $reservation, string $method, Request $request): Reservation
+    private function markPaid(Reservation $reservation, ?string $method, Request $request, ?array $payments = null): Reservation
     {
         // A székek zárolása nem törlődik, hanem véglegessé válik: az eladott szék nem adható ki újra
         $this->claims->finalizeClaims($reservation);
+
+        $payments = $payments ? PaymentSplit::normalize($payments) : null;
+        if ($payments) {
+            // Az élménykártyás jegyek értékét a kártya fedezi, a befizetéseknek a többi tétel árát kell kiadniuk
+            $payable = (int) $reservation->items()->get()
+                ->reject(fn($item) => $item->category === TicketCategory::EXPERIENCE_CARD)
+                ->sum('price_amount');
+
+            if ($payable <= 0) {
+                $payments = null;
+            } else {
+                $entered = array_sum(array_column($payments, 'amount'));
+                if ($entered !== $payable) {
+                    throw ValidationException::withMessages([
+                        'payments' => sprintf(
+                            'A részfizetés összege (%s Ft) nem egyezik a fizetendő összeggel (%s Ft).',
+                            number_format($entered, 0, ',', ' '),
+                            number_format($payable, 0, ',', ' ')
+                        ),
+                    ]);
+                }
+                $method = count($payments) > 1 ? PaymentSplit::MIXED : $payments[0]['method'];
+            }
+        }
+        $method ??= 'cash';
 
         $reservation->update([
             'status' => 'PAID',
@@ -419,7 +451,7 @@ class PosController extends Controller
             'handled_by_admin_id' => $request->user()->id,
         ]);
 
-        $this->tickets->issueForReservation($reservation, $method, $request->user(), 'pos');
+        $this->tickets->issueForReservation($reservation, $method, $request->user(), 'pos', $payments);
 
         return $reservation;
     }

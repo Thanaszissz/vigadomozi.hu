@@ -9,11 +9,21 @@ export function paymentLabel(method: string): string {
     case 'cash': return 'Készpénz';
     case 'card': return 'Bankkártya';
     case 'szep_card': return 'SZÉP kártya';
+    case 'voucher': return 'Utalvány';
+    case 'mixed': return 'Vegyes fizetés';
     case 'stripe': return 'Online';
     case 'simplepay': return 'Online (bankkártya)';
     case 'experience_card': return 'Élménykártya';
     default: return method;
   }
+}
+
+/** A jegy fizetési módja; részfizetésnél a módonkénti összegekkel, pl. „Készpénz 1 000 Ft + Utalvány 1 000 Ft”. */
+export function ticketPaymentLabel(t: { payment_method: string; payment_split?: Array<{ method: string; amount: number }> | null }): string {
+  if (t.payment_split?.length) {
+    return t.payment_split.map(p => `${paymentLabel(p.method)} ${p.amount.toLocaleString('hu-HU')} Ft`).join(' + ');
+  }
+  return paymentLabel(t.payment_method);
 }
 
 // Nyomtatáskor jegyenként egy 210 mm x 100 mm-es oldal
@@ -81,7 +91,7 @@ export async function printTickets(tickets: Ticket[], onPrint?: (numbers: string
         <div class="tp-ticket" *ngFor="let t of tickets">
           <div [innerHTML]="markup(t, previewScale)"></div>
           <div class="tp-foot">
-            {{ paymentLabel(t.payment_method) }} • {{ t.sold_at | date:'yyyy.MM.dd. HH:mm' }}
+            {{ ticketPaymentLabel(t) }} • {{ t.sold_at | date:'yyyy.MM.dd. HH:mm' }}
             <span *ngIf="t.sold_by_name"> • {{ t.sold_by_name }}</span>
           </div>
         </div>
@@ -120,6 +130,7 @@ export class TicketPrintComponent {
   @Output() close = new EventEmitter<void>();
 
   paymentLabel = paymentLabel;
+  ticketPaymentLabel = ticketPaymentLabel;
   previewScale = PREVIEW_SCALE;
 
   constructor(private admin: AdminService, private sanitizer: DomSanitizer) {}

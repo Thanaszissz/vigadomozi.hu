@@ -7,6 +7,7 @@ use App\Models\NavSubmission;
 use App\Models\Setting;
 use App\Models\Ticket;
 use App\Models\User;
+use App\Support\PaymentSplit;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
@@ -168,7 +169,7 @@ class NavReceiptService
             ->whereBetween('sold_at', [$from, $to])
             ->orderBy('sold_at')
             ->orderBy('id')
-            ->get(['id', 'ticket_number', 'price_amount', 'payment_method', 'sold_at']);
+            ->get(['id', 'ticket_number', 'price_amount', 'payment_method', 'payment_split', 'sold_at']);
 
         $total = (int) $tickets->sum('price_amount');
         $c = $this->config();
@@ -181,7 +182,7 @@ class NavReceiptService
             'last_serial' => (string) ($tickets->last()->ticket_number ?? ''),
             'currency' => 'HUF',
             'vat' => [['name' => $c['vat_category'], 'sale' => $total, 'modifying' => 0]],
-            'by_method' => $tickets->groupBy('payment_method')->map(fn($g, $m) => ['method' => $m, 'tickets' => $g->count(), 'amount' => (int) $g->sum('price_amount')])->values()->all(),
+            'by_method' => array_values(array_map(fn($r) => ['method' => $r['payment_method'], 'tickets' => $r['tickets'], 'amount' => $r['amount']], PaymentSplit::summary($tickets))),
         ];
     }
 

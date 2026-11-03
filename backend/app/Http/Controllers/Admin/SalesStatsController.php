@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Ticket;
 use App\Services\ActivityLogger;
+use App\Support\PaymentSplit;
 use App\Support\TicketCategory;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
@@ -44,7 +45,7 @@ class SalesStatsController extends Controller
             ->whereBetween('tickets.sold_at', [$from->copy()->utc(), $to->copy()->utc()])
             ->orderBy('tickets.sold_at')
             ->get([
-                'tickets.sold_at', 'tickets.price_amount', 'tickets.payment_method', 'tickets.category',
+                'tickets.sold_at', 'tickets.price_amount', 'tickets.payment_method', 'tickets.payment_split', 'tickets.category',
                 'tickets.movie_title', 'reservations.customer_zip',
             ]);
 
@@ -55,10 +56,12 @@ class SalesStatsController extends Controller
         foreach ($rows as $row) {
             $amount = (int) $row->price_amount;
             $isService = $row->category === TicketCategory::SERVICE;
-            $method = $row->payment_method ?: 'unknown';
 
             $summary['revenue'] += $amount;
-            $this->add($payment, $method, $method, 1, $amount);
+            // Részfizetésnél a jegy összege a ténylegesen használt fizetési módok között oszlik meg
+            foreach (PaymentSplit::parts($row) as $part) {
+                $this->add($payment, $part['method'], $part['method'], 1, $part['amount']);
+            }
 
             // A szolgáltatás-nyugták a bevételben szerepelnek, de nem jegyek (nem növelik a jegyszámot)
             $key = $this->bucketKey($row->sold_at->copy()->timezone(self::TZ), $group);

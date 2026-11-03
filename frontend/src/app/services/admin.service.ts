@@ -71,6 +71,22 @@ export interface TheaterShow {
 
 export type PaymentMethod = 'cash' | 'card' | 'szep_card';
 
+/** Részfizetésnél választható fizetési módok. */
+export type SplitMethod = PaymentMethod | 'experience_card' | 'voucher';
+
+export interface PaymentPart {
+  method: SplitMethod;
+  amount: number;
+}
+
+export const SPLIT_METHODS: Array<{ key: SplitMethod; label: string; icon: string }> = [
+  { key: 'cash', label: 'Készpénz', icon: '💶' },
+  { key: 'card', label: 'Bankkártya', icon: '💳' },
+  { key: 'szep_card', label: 'SZÉP kártya', icon: '🏖️' },
+  { key: 'experience_card', label: 'Élménykártya', icon: '🎁' },
+  { key: 'voucher', label: 'Utalvány', icon: '🎟️' }
+];
+
 export interface Ticket {
   id: number;
   ticket_year: number;
@@ -88,6 +104,8 @@ export interface Ticket {
   price_amount: number;
   currency: string;
   payment_method: string;
+  /** Részfizetésnél (payment_method = 'mixed') a módonkénti összegek. */
+  payment_split?: PaymentPart[] | null;
   channel: string;
   category?: TicketCategory;
   sold_by_name: string | null;
@@ -154,6 +172,7 @@ export interface ShowtimeDayTotals {
   cash: number;
   card: number;
   szep_card: number;
+  voucher: number;
   experience_card: number;
   online: number;
   staff: number;
@@ -609,7 +628,8 @@ export class AdminService {
   posSell(payload: {
     showtime_id: number;
     seatKeys: string[];
-    payment_method: PaymentMethod;
+    payment_method?: PaymentMethod;
+    payments?: PaymentPart[];
     customer_name?: string;
     seat_categories?: Record<string, TicketCategory>;
   }): Observable<{ reservation: any; tickets: Ticket[] }> {
@@ -669,11 +689,15 @@ export class AdminService {
     return this.http.delete<any>(`${this.apiUrl}/pos/reservations/${reservationId}`);
   }
 
-  posPayReservation(reservationId: number, paymentMethod: PaymentMethod, seatKeys?: string[]): Observable<{ reservation: any; tickets: Ticket[] }> {
-    return this.http.post<{ reservation: any; tickets: Ticket[] }>(
-      `${this.apiUrl}/pos/reservations/${reservationId}/pay`,
-      seatKeys ? { payment_method: paymentMethod, seat_keys: seatKeys } : { payment_method: paymentMethod }
-    );
+  posPayReservation(
+    reservationId: number,
+    paymentMethod: PaymentMethod | null,
+    seatKeys?: string[],
+    payments?: PaymentPart[]
+  ): Observable<{ reservation: any; tickets: Ticket[] }> {
+    const body: Record<string, unknown> = payments ? { payments } : { payment_method: paymentMethod };
+    if (seatKeys) body['seat_keys'] = seatKeys;
+    return this.http.post<{ reservation: any; tickets: Ticket[] }>(`${this.apiUrl}/pos/reservations/${reservationId}/pay`, body);
   }
 
   // Eladott jegyek archívuma

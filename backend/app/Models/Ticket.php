@@ -30,6 +30,7 @@ class Ticket extends Model
         'price_amount',
         'currency',
         'payment_method',
+        'payment_split',
         'channel',
         'category',
         'sold_by_user_id',
@@ -45,6 +46,7 @@ class Ticket extends Model
         'starts_at' => 'datetime',
         'sold_at' => 'datetime',
         'voided_at' => 'datetime',
+        'payment_split' => 'array',
     ];
 
     /** A jegyen szereplő szint (a szék kulcsából), szint nélküli széknél null. */

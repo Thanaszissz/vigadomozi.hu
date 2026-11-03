@@ -5,8 +5,8 @@ import { Router } from '@angular/router';
 import { Subject, Subscription, of } from 'rxjs';
 import { catchError, debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import { ApiService, Seat, Showtime, ShowtimeDetail } from '../../../../core/api/api.service';
-import { AdminService, InvoiceBuyer, PaymentMethod, PosInvoice, Ticket, TicketCategory, categoryLabel } from '../../../../services/admin.service';
-import { TicketPrintComponent, preloadTicketBackground, printTickets } from '../ticket-print/ticket-print.component';
+import { AdminService, InvoiceBuyer, PaymentMethod, PaymentPart, PosInvoice, SPLIT_METHODS, SplitMethod, Ticket, TicketCategory, categoryLabel } from '../../../../services/admin.service';
+import { TicketPrintComponent, preloadTicketBackground, printTickets, ticketPaymentLabel } from '../ticket-print/ticket-print.component';
 import { AuthService } from '../../../../services/auth.service';
 import { PosServicesComponent } from './pos-services.component';
 import { rowLabelOf, seatNumberOf, seatLabel, sectionBlocks, newlyIsolatedSeats } from '../../../../core/util/seat';
@@ -70,6 +70,11 @@ export class PosAdminComponent implements OnInit, OnDestroy {
   payCount: number | null = null;
   paymentMethod: PaymentMethod | null = null;
   cashGiven: number | null = null;
+  // Részfizetés: a fizetendő összeg több fizetési mód között osztva
+  splitMode = false;
+  splitMethods = SPLIT_METHODS;
+  ticketPaymentLabel = ticketPaymentLabel;
+  splitAmounts: Partial<Record<SplitMethod, number | null>> = {};
   customerName = '';
 
   processing = false;
@@ -626,7 +631,11 @@ export class PosAdminComponent implements OnInit, OnDestroy {
   get canConfirm(): boolean {
     if (!this.hasSelection || this.processing) return false;
     // Ha nincs fizetendő összeg (csak Dolgozó jegy / Élménykártya), a fizetési mód nem kötelező
-    if (this.payable > 0 && !this.paymentMethod) return false;
+    if (this.payable > 0 && this.splitMode) {
+      if (this.splitRemaining !== 0) return false;
+    } else if (this.payable > 0 && !this.paymentMethod) {
+      return false;
+    }
     if (this.paymentMethod === 'cash' && this.cashGiven !== null && this.cashGiven !== undefined && this.cashGiven < this.payable) {
       return false;
     }
@@ -641,8 +650,50 @@ export class PosAdminComponent implements OnInit, OnDestroy {
 
   setPayment(method: PaymentMethod): void {
     this.paymentMethod = method;
+    this.splitMode = false;
     this.cashGiven = null;
     this.error = null;
+  }
+
+  // ---- Részfizetés (több fizetési mód) ----
+
+  toggleSplit(): void {
+    this.splitMode = !this.splitMode;
+    this.paymentMethod = null;
+    this.cashGiven = null;
+    this.splitAmounts = {};
+    this.error = null;
+  }
+
+  splitValue(key: SplitMethod): number {
+    const value = Math.round(Number(this.splitAmounts[key]));
+    return Number.isFinite(value) && value > 0 ? value : 0;
+  }
+
+  get splitEntered(): number {
+    return this.splitMethods.reduce((sum, m) => sum + this.splitValue(m.key), 0);
+  }
+
+  /** A még nem fedezett összeg (negatív, ha többet adtak meg a fizetendőnél). */
+  get splitRemaining(): number {
+    return this.payable - this.splitEntered;
+  }
+
+  get splitParts(): PaymentPart[] {
+    return this.splitMethods
+      .map(m => ({ method: m.key, amount: this.splitValue(m.key) }))
+      .filter(p => p.amount > 0);
+  }
+
+  /** A sor összegét úgy tölti ki, hogy a többi mellett pont a fizetendő összeg jöjjön ki. */
+  fillRemaining(key: SplitMethod): void {
+    const others = this.splitEntered - this.splitValue(key);
+    this.splitAmounts[key] = Math.max(0, this.payable - others);
+    this.error = null;
+  }
+
+  splitLabel(key: string): string {
+    return this.splitMethods.find(m => m.key === key)?.label ?? key;
   }
 
   // ---- ÁFÁS számla ----
@@ -763,12 +814,13 @@ export class PosAdminComponent implements OnInit, OnDestroy {
     const partial = this.isPartialPayment;
     const remaining = this.reservationItems.length - this.payCountValue;
     const reservationId = this.selectedReservation?.id;
+    const payments = this.splitMode && this.payable > 0 ? this.splitParts : undefined;
     const request$ = this.mode === 'reservations' && this.selectedReservation
-      ? this.admin.posPayReservation(this.selectedReservation.id, method, partial ? this.payItems.map((i: any) => i.seat_key) : undefined)
+      ? this.admin.posPayReservation(this.selectedReservation.id, payments ? null : method, partial ? this.payItems.map((i: any) => i.seat_key) : undefined, payments)
       : this.admin.posSell({
           showtime_id: this.showtime.id,
           seatKeys: this.selectedSeats.map(s => s.key),
-          payment_method: method,
+          ...(payments ? { payments } : { payment_method: method }),
           customer_name: this.customerName.trim() || undefined,
           seat_categories: this.seatCategoriesPayload()
         });
@@ -894,6 +946,8 @@ export class PosAdminComponent implements OnInit, OnDestroy {
   private resetPayment(): void {
     this.paymentMethod = null;
     this.cashGiven = null;
+    this.splitMode = false;
+    this.splitAmounts = {};
     this.error = null;
   }
 

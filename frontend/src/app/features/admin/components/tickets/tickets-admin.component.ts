@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { DateInputComponent } from '../../../../shared/date-time-inputs.component';
 import { Router } from '@angular/router';
 import { AdminService, Ticket, TicketPage, categoryLabel } from '../../../../services/admin.service';
-import { TicketPrintComponent, paymentLabel } from '../ticket-print/ticket-print.component';
+import { TicketPrintComponent, paymentLabel, ticketPaymentLabel } from '../ticket-print/ticket-print.component';
 
 @Component({
   selector: 'app-tickets-admin',
@@ -30,6 +30,7 @@ export class TicketsAdminComponent implements OnInit {
   printTickets: Ticket[] = [];
 
   paymentLabel = paymentLabel;
+  ticketPaymentLabel = ticketPaymentLabel;
   categoryLabel = categoryLabel;
 
   /** Az összesítő kártyák a nem normál kategóriákról (Dolgozó jegy, Élménykártya, Egyéb szolgáltatás). */

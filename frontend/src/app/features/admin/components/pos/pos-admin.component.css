@@ -402,6 +402,41 @@ h1 { margin: 0; color: #e8d5b7; }
 .card-box { background: rgba(59, 130, 246, 0.12); border: 1px solid #3b82f6; border-radius: 6px; padding: 10px 12px; margin-bottom: 10px; font-size: 14px; }
 .card-box.szep-box { background: rgba(168, 85, 247, 0.12); border-color: #a855f7; }
 
+/* Részfizetés (több fizetési mód) */
+.btn-split {
+  width: auto;
+  margin: -4px 0 12px;
+  padding: 7px 14px;
+  border-radius: 8px;
+  border: 1.5px dashed #8b6f47;
+  background: transparent;
+  color: #e8d5b7;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.btn-split small { font-weight: 500; color: #a08060; }
+.btn-split:hover { border-color: #d4a574; }
+.btn-split.active { border-style: solid; border-color: #f59e0b; background: rgba(245, 158, 11, 0.14); }
+
+.split-box { background: #3d2817; border: 1px solid #5c3d2e; border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; }
+.split-row { display: grid; grid-template-columns: minmax(120px, 1fr) 110px auto auto; gap: 8px; align-items: center; padding: 5px 0; }
+.split-name { font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+.split-icon { font-size: 18px; }
+.split-row input { width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid #5c3d2e; background: #4a3425; color: #e8d5b7; font-size: 15px; text-align: right; box-sizing: border-box; }
+.split-unit { color: #a08060; font-size: 13px; }
+.split-fill { padding: 6px 10px; border-radius: 6px; border: 1px solid #5c3d2e; background: #4a3425; color: #d4a574; font-size: 12px; font-weight: 700; cursor: pointer; }
+.split-fill:hover { border-color: #d4a574; }
+.split-sum { margin-top: 8px; padding-top: 8px; border-top: 1px solid #5c3d2e; display: grid; gap: 4px; }
+.split-sum > div { display: flex; justify-content: space-between; font-size: 14px; color: #c9a982; }
+.split-sum b { color: #e8d5b7; }
+.split-sum .split-left { margin-top: 4px; padding: 8px 10px; border-radius: 8px; font-size: 16px; background: rgba(245, 158, 11, 0.16); border: 1px solid #f59e0b; }
+.split-sum .split-left b { color: #fcd34d; font-size: 18px; }
+.split-sum .split-left.done { background: rgba(34, 197, 94, 0.16); border-color: #22c55e; }
+.split-sum .split-left.done b { color: #86efac; }
+.split-sum .split-left.over { background: rgba(239, 68, 68, 0.16); border-color: #ef4444; }
+.split-sum .split-left.over b { color: #fca5a5; }
+
 .btn-confirm {
   width: 100%;
   padding: 16px;

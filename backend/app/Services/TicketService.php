@@ -6,6 +6,7 @@ use App\Models\Reservation;
 use App\Models\SalesLog;
 use App\Models\Ticket;
 use App\Models\User;
+use App\Support\PaymentSplit;
 use App\Support\TicketCategory;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -26,9 +27,10 @@ class TicketService
         Reservation $reservation,
         string $paymentMethod,
         ?User $seller = null,
-        string $channel = 'pos'
+        string $channel = 'pos',
+        ?array $payments = null
     ): Collection {
-        return DB::transaction(function () use ($reservation, $paymentMethod, $seller, $channel) {
+        return DB::transaction(function () use ($reservation, $paymentMethod, $seller, $channel, $payments) {
             $existing = Ticket::withoutGlobalScopes()->where('reservation_id', $reservation->id)->orderBy('id')->get();
             if ($existing->isNotEmpty()) {
                 return $existing->whereNull('voided_at')->values();
@@ -45,9 +47,20 @@ class TicketService
                 ->sortBy(fn($item) => sprintf('%s-%05d', $item->row_label, (int) $item->seat_number))
                 ->values();
 
+            $splitter = $payments ? new PaymentSplit($payments) : null;
+
             $tickets = collect();
             foreach ($items as $item) {
                 $seq = $this->numbering->nextSequence($prefix);
+
+                // Az élménykártyás jegyet a kártya fedezi; a többit (részfizetésnél) a befizetett összegek sorban
+                $method = $paymentMethod;
+                $split = null;
+                if ($item->category === TicketCategory::EXPERIENCE_CARD) {
+                    $method = TicketCategory::EXPERIENCE_CARD;
+                } elseif ($splitter) {
+                    [$method, $split] = $splitter->take((int) $item->price_amount);
+                }
 
                 $tickets->push(Ticket::create([
                     'ticket_year' => $year,
@@ -64,7 +77,8 @@ class TicketService
                     'seat_number' => $item->seat_number,
                     'price_amount' => $item->price_amount,
                     'currency' => $reservation->currency ?? 'HUF',
-                    'payment_method' => $item->category === TicketCategory::EXPERIENCE_CARD ? TicketCategory::EXPERIENCE_CARD : $paymentMethod,
+                    'payment_method' => $method,
+                    'payment_split' => $split,
                     'channel' => $channel,
                     'sold_by_user_id' => $seller?->id,
                     'sold_by_name' => $seller?->name,
@@ -73,7 +87,7 @@ class TicketService
                 ]));
             }
 
-            $this->logSale($reservation, $tickets, $paymentMethod, $seller, $channel, $soldAt);
+            $this->logSale($reservation, $tickets, $paymentMethod, $seller, $channel, $soldAt, $payments);
 
             return $tickets;
         });
@@ -162,7 +176,8 @@ class TicketService
         string $paymentMethod,
         ?User $seller,
         string $channel,
-        $soldAt
+        $soldAt,
+        ?array $payments = null
     ): void {
         if ($tickets->isEmpty()) {
             return;
@@ -203,7 +218,9 @@ class TicketService
         ]);
 
         if ($seller) {
-            $method = ['cash' => 'készpénz', 'card' => 'bankkártya', 'szep_card' => 'SZÉP kártya'][$paymentMethod] ?? $paymentMethod;
+            $method = $payments && count($payments) > 1
+                ? implode(' + ', array_map(fn($p) => mb_strtolower(PaymentSplit::label($p['method'])) . ' ' . number_format((int) $p['amount'], 0, ',', ' ') . ' Ft', $payments))
+                : (['cash' => 'készpénz', 'card' => 'bankkártya', 'szep_card' => 'SZÉP kártya'][$paymentMethod] ?? mb_strtolower(PaymentSplit::label($paymentMethod)));
             $title = $showtime?->program_title ?? 'Ismeretlen film';
             $when = $showtime?->starts_at?->copy()->timezone('Europe/Budapest')->format('Y.m.d. H:i');
 
@@ -216,6 +233,7 @@ class TicketService
                     'seats' => $tickets->pluck('seat_key')->all(),
                     'amount' => $total,
                     'payment_method' => $paymentMethod,
+                    'payments' => $payments,
                     'channel' => $channel,
                     'showtime_id' => $showtime?->id,
                 ],

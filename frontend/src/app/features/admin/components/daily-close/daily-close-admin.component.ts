@@ -5,7 +5,7 @@ import { DateInputComponent } from '../../../../shared/date-time-inputs.componen
 import { Router } from '@angular/router';
 import { AdminService, DailyClose, SalesLogEntry, Ticket, TicketCategory, categoryLabel } from '../../../../services/admin.service';
 import { AuthService } from '../../../../services/auth.service';
-import { paymentLabel } from '../ticket-print/ticket-print.component';
+import { paymentLabel, ticketPaymentLabel } from '../ticket-print/ticket-print.component';
 
 type Tab = 'close' | 'log';
 
@@ -49,6 +49,7 @@ export class DailyCloseAdminComponent implements OnInit {
   error: string | null = null;
 
   paymentLabel = paymentLabel;
+  ticketPaymentLabel = ticketPaymentLabel;
 
   constructor(
     private admin: AdminService,
@@ -102,20 +103,25 @@ export class DailyCloseAdminComponent implements OnInit {
       : this.close.sellers.filter(s => String(s.user_id ?? 0) === this.sellerFilter);
   }
 
-  get visibleTotals(): { tickets: number; amount: number; cash: number; card: number; szep: number; other: number; experience: number } {
+  get visibleTotals(): { tickets: number; amount: number; cash: number; card: number; szep: number; voucher: number; other: number; experience: number } {
     const all = this.visibleSellers.flatMap(s => s.tickets);
     return { tickets: all.length, ...this.sellerSums(all) };
   }
 
-  sellerSums(tickets: Ticket[]): { cash: number; card: number; szep: number; other: number; experience: number; amount: number } {
-    const sums = { cash: 0, card: 0, szep: 0, other: 0, experience: 0, amount: 0 };
+  sellerSums(tickets: Ticket[]): { cash: number; card: number; szep: number; voucher: number; other: number; experience: number; amount: number } {
+    const sums = { cash: 0, card: 0, szep: 0, voucher: 0, other: 0, experience: 0, amount: 0 };
     for (const t of tickets) {
       sums.amount += t.price_amount;
-      if (t.payment_method === 'cash') sums.cash += t.price_amount;
-      else if (t.payment_method === 'card') sums.card += t.price_amount;
-      else if (t.payment_method === 'szep_card') sums.szep += t.price_amount;
-      else if (t.payment_method === 'experience_card') sums.experience += t.price_amount;
-      else sums.other += t.price_amount;
+      // Részfizetésnél a jegy összege a módonkénti részek szerint oszlik meg
+      const parts = t.payment_split?.length ? t.payment_split : [{ method: t.payment_method, amount: t.price_amount }];
+      for (const p of parts) {
+        if (p.method === 'cash') sums.cash += p.amount;
+        else if (p.method === 'card') sums.card += p.amount;
+        else if (p.method === 'szep_card') sums.szep += p.amount;
+        else if (p.method === 'voucher') sums.voucher += p.amount;
+        else if (p.method === 'experience_card') sums.experience += p.amount;
+        else sums.other += p.amount;
+      }
     }
     return sums;
   }
@@ -193,7 +199,7 @@ export class DailyCloseAdminComponent implements OnInit {
           <td>${esc(t.movie_title)}${this.categoryTag(t) ? ` <i>(${esc(this.categoryTag(t))})</i>` : ''}${this.isService(t) ? ' <i>(szolgáltatás)</i>' : ''}</td>
           <td>${this.isService(t) ? '-' : esc(dt(t.starts_at))}</td>
           <td>${this.isService(t) ? '-' : `${esc((t.section ? t.section + ' · ' : '') + t.row_label)} / ${esc(t.seat_number ?? '-')}`}</td>
-          <td>${esc(paymentLabel(t.payment_method))}</td>
+          <td>${esc(ticketPaymentLabel(t))}</td>
           <td class="r">${esc(ft(t.price_amount))}</td>
         </tr>`).join('');
 
@@ -211,7 +217,7 @@ export class DailyCloseAdminComponent implements OnInit {
               ${rows}
               <tr class="sub">
                 <td colspan="4">Összesen: ${seller.tickets.length} jegy / nyugta${catRow ? '<br>' + catRow : ''}</td>
-                <td colspan="2">Készpénz: ${esc(ft(sums.cash))} • Kártya: ${esc(ft(sums.card))}${sums.szep ? ' • SZÉP kártya: ' + esc(ft(sums.szep)) : ''}${sums.experience ? ' • Élménykártya: ' + esc(ft(sums.experience)) : ''}${sums.other ? ' • Egyéb: ' + esc(ft(sums.other)) : ''}</td>
+                <td colspan="2">Készpénz: ${esc(ft(sums.cash))} • Kártya: ${esc(ft(sums.card))}${sums.szep ? ' • SZÉP kártya: ' + esc(ft(sums.szep)) : ''}${sums.voucher ? ' • Utalvány: ' + esc(ft(sums.voucher)) : ''}${sums.experience ? ' • Élménykártya: ' + esc(ft(sums.experience)) : ''}${sums.other ? ' • Egyéb: ' + esc(ft(sums.other)) : ''}</td>
                 <td class="r">${esc(ft(sums.amount))}</td>
               </tr>
             </tbody>
@@ -233,6 +239,8 @@ export class DailyCloseAdminComponent implements OnInit {
           <tr><td>Készpénz</td><td class="r">${esc(ft(totals.cash))}</td></tr>
           <tr><td>Bankkártya</td><td class="r">${esc(ft(totals.card))}</td></tr>
           ${totals.szep ? `<tr><td>SZÉP kártya</td><td class="r">${esc(ft(totals.szep))}</td></tr>` : ''}
+          ${totals.voucher ? `<tr><td>Utalvány</td><td class="r">${esc(ft(totals.voucher))}</td></tr>` : ''}
+          ${totals.experience ? `<tr><td>Élménykártya (érték)</td><td class="r">${esc(ft(totals.experience))}</td></tr>` : ''}
           ${totals.other ? `<tr><td>Egyéb (online)</td><td class="r">${esc(ft(totals.other))}</td></tr>` : ''}
           ${this.visibleCategorySums.map(c => `<tr><td>Ebből: ${esc(c.label)}</td><td class="r">${c.tickets} db${c.amount ? ' • ' + esc(ft(c.amount)) : ''}</td></tr>`).join('')}
           <tr><td><b>Mindösszesen</b></td><td class="r"><b>${esc(ft(totals.amount))}</b></td></tr>
