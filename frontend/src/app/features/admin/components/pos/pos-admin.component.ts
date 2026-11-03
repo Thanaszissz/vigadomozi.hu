@@ -189,7 +189,7 @@ export class PosAdminComponent implements OnInit, OnDestroy {
     });
   }
 
-  /** Az előadás napja rövid címkével, pl. „Ma 10.19.” */
+  /** Az előadás napja, pl. „2026. 11. 03. Kedd (ma)” */
   showtimeDayLabel(s: Showtime): string {
     return this.dayLabel(this.dayKey(new Date(s.starts_at)));
   }
@@ -928,7 +928,7 @@ export class PosAdminComponent implements OnInit, OnDestroy {
     const [y, m, d] = key.split('-').map(Number);
     const date = new Date(y, m - 1, d);
     const today = this.dayKey(new Date());
-    const dayName = key === today ? 'Ma' : names[date.getDay()];
-    return `${String(m).padStart(2, '0')}.${String(d).padStart(2, '0')}. ${dayName}`;
+    const dayName = names[date.getDay()];
+    return `${y}. ${String(m).padStart(2, '0')}. ${String(d).padStart(2, '0')}. ${dayName}${key === today ? ' (ma)' : ''}`;
   }
 }

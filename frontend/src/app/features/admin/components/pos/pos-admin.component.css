@@ -116,26 +116,19 @@ h1 { margin: 0; color: #e8d5b7; }
 }
 
 .showtime-list {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-}
-
-@media (max-width: 900px) {
-  .showtime-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-
-@media (max-width: 560px) {
-  .showtime-list { grid-template-columns: 1fr; }
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .showtime-card {
   display: grid;
-  grid-template-columns: auto 1fr;
-  grid-template-areas: "date date" "time title";
-  column-gap: 12px;
+  grid-template-columns: 230px 80px 1fr;
+  grid-template-areas: "date time title";
+  align-items: center;
+  column-gap: 16px;
   text-align: left;
-  padding: 10px 12px;
+  padding: 12px 16px;
   border-radius: 8px;
   border: 1px solid #5c3d2e;
   background: #3d2817;
@@ -143,11 +136,20 @@ h1 { margin: 0; color: #e8d5b7; }
   cursor: pointer;
 }
 
+@media (max-width: 640px) {
+  .showtime-card {
+    grid-template-columns: auto 1fr;
+    grid-template-areas: "date date" "time title";
+    column-gap: 12px;
+  }
+  .st-date { margin-bottom: 2px; }
+}
+
 .showtime-card:hover { border-color: #d4a574; }
 .showtime-card.active { border-color: #d4a574; background: #5c3d2e; }
-.st-date { grid-area: date; font-size: 12px; font-weight: 700; color: #a08060; margin-bottom: 2px; }
-.st-time { grid-area: time; font-size: 22px; font-weight: 800; color: #d4a574; align-self: center; }
-.st-title { grid-area: title; font-weight: 700; align-self: center; }
+.st-date { grid-area: date; font-size: 15px; font-weight: 700; color: #c9a982; }
+.st-time { grid-area: time; font-size: 22px; font-weight: 800; color: #d4a574; }
+.st-title { grid-area: title; font-size: 16px; font-weight: 700; }
 
 .gap-toast {
   position: fixed;
