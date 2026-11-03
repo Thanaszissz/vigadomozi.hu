@@ -8,6 +8,7 @@ export function paymentLabel(method: string): string {
   switch (method) {
     case 'cash': return 'Készpénz';
     case 'card': return 'Bankkártya';
+    case 'szep_card': return 'SZÉP kártya';
     case 'stripe': return 'Online';
     case 'simplepay': return 'Online (bankkártya)';
     case 'experience_card': return 'Élménykártya';

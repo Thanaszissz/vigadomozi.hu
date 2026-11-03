@@ -41,6 +41,7 @@
         <div class="pay-methods">
           <button type="button" class="pay-btn" [class.active]="paymentMethod === 'cash'" (click)="setPayment('cash')">💶 Készpénz</button>
           <button type="button" class="pay-btn" [class.active]="paymentMethod === 'card'" (click)="setPayment('card')">💳 Bankkártya</button>
+          <button type="button" class="pay-btn" [class.active]="paymentMethod === 'szep_card'" (click)="setPayment('szep_card')">🏖️ SZÉP kártya</button>
         </div>
 
         <div *ngIf="paymentMethod === 'cash'" class="cash-box">
@@ -85,7 +86,7 @@
         <td class="num">{{ t.ticket_number }}</td>
         <td>{{ t.movie_title }}</td>
         <td>{{ t.price_amount | number:'1.0-0' }} Ft</td>
-        <td>{{ t.payment_method === 'cash' ? 'Készpénz' : 'Bankkártya' }}</td>
+        <td>{{ t.payment_method === 'cash' ? 'Készpénz' : t.payment_method === 'szep_card' ? 'SZÉP kártya' : 'Bankkártya' }}</td>
         <td>{{ t.sold_at | date:'HH:mm' }}</td>
         <td>{{ t.sold_by_name || '—' }}</td>
         <td class="act"><button type="button" class="btn-small danger" (click)="askVoid(t)">Sztornó</button></td>

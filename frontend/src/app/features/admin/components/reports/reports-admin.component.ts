@@ -277,7 +277,7 @@ export class ReportsAdminComponent implements OnInit {
               ${this.summary.by_payment_method.map((item: any) => `
                 <tr>
                   <td>
-                    ${item.method === 'cash' ? '💵 Készpénz' : item.method === 'card' ? '💳 Kártya' : escapeHtml(item.method)}
+                    ${item.method === 'cash' ? '💵 Készpénz' : item.method === 'card' ? '💳 Kártya' : item.method === 'szep_card' ? '🏖️ SZÉP kártya' : escapeHtml(item.method)}
                   </td>
                   <td style="text-align: center;">${item.count}</td>
                   <td class="amount">${item.amount.toLocaleString('hu-HU')} Ft</td>

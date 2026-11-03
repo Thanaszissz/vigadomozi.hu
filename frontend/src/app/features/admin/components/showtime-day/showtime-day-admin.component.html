@@ -35,6 +35,7 @@
       <div class="card"><span>Összesen eladott jegy</span><b>{{ data.totals.tickets | number:'1.0-0' }} db</b></div>
       <div class="card"><span>Készpénz</span><b>{{ data.totals.cash | number:'1.0-0' }} Ft</b></div>
       <div class="card"><span>Bankkártya</span><b>{{ data.totals.card | number:'1.0-0' }} Ft</b></div>
+      <div class="card" *ngIf="data.totals.szep_card > 0"><span>SZÉP kártya</span><b>{{ data.totals.szep_card | number:'1.0-0' }} Ft</b></div>
       <div class="card" *ngIf="data.totals.online > 0"><span>Online</span><b>{{ data.totals.online | number:'1.0-0' }} Ft</b></div>
       <div class="card" *ngIf="data.totals.experience_tickets > 0"><span>Élménykártya</span><b>{{ data.totals.experience_tickets }} db • {{ data.totals.experience_card | number:'1.0-0' }} Ft</b></div>
       <div class="card" *ngIf="data.totals.staff > 0"><span>Dolgozó jegy</span><b>{{ data.totals.staff }} db</b></div>
@@ -57,6 +58,7 @@
               <th class="r">Bevétel</th>
               <th class="r">Készpénz</th>
               <th class="r">Kártya</th>
+              <th class="r">SZÉP kártya</th>
               <th class="r">Online</th>
               <th class="r">Élménykártya</th>
             </tr>
@@ -70,6 +72,7 @@
               <td class="r">{{ s.amount | number:'1.0-0' }} Ft</td>
               <td class="r">{{ s.cash | number:'1.0-0' }} Ft</td>
               <td class="r">{{ s.card | number:'1.0-0' }} Ft</td>
+              <td class="r">{{ s.szep_card | number:'1.0-0' }} Ft</td>
               <td class="r">{{ s.online | number:'1.0-0' }} Ft</td>
               <td class="r">{{ s.experience_tickets }} db<span *ngIf="s.experience_card"> • {{ s.experience_card | number:'1.0-0' }} Ft</span></td>
             </tr>
@@ -79,6 +82,7 @@
               <td class="r">{{ data.totals.amount | number:'1.0-0' }} Ft</td>
               <td class="r">{{ data.totals.cash | number:'1.0-0' }} Ft</td>
               <td class="r">{{ data.totals.card | number:'1.0-0' }} Ft</td>
+              <td class="r">{{ data.totals.szep_card | number:'1.0-0' }} Ft</td>
               <td class="r">{{ data.totals.online | number:'1.0-0' }} Ft</td>
               <td class="r">{{ data.totals.experience_tickets }} db</td>
             </tr>
@@ -117,7 +121,7 @@
                 <td class="num">{{ t.ticket_number }}</td>
                 <td>{{ t.section ? t.section + ' · ' : '' }}{{ t.row_label }} / {{ t.seat_number ?? '—' }}</td>
                 <td>{{ categoryLabel(t.category) }}</td>
-                <td><span class="badge" [class.cash]="t.payment_method === 'cash'" [class.card]="t.payment_method === 'card'">{{ paymentLabel(t.payment_method) }}</span></td>
+                <td><span class="badge" [class.cash]="t.payment_method === 'cash'" [class.card]="t.payment_method === 'card'" [class.szep]="t.payment_method === 'szep_card'">{{ paymentLabel(t.payment_method) }}</span></td>
                 <td>{{ t.channel === 'online' ? 'Online' : t.channel === 'admin' ? 'Admin' : 'Pénztár' }}</td>
                 <td>{{ t.sold_at | date:'MM.dd. HH:mm' }}</td>
                 <td>{{ t.sold_by_name || '—' }}</td>

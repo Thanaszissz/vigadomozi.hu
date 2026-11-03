@@ -141,7 +141,7 @@ class TicketService
             ]);
 
             if ($seller) {
-                $method = ['cash' => 'készpénz', 'card' => 'bankkártya'][$paymentMethod] ?? $paymentMethod;
+                $method = ['cash' => 'készpénz', 'card' => 'bankkártya', 'szep_card' => 'SZÉP kártya'][$paymentMethod] ?? $paymentMethod;
                 ActivityLogger::log(
                     'ticket.sale',
                     sprintf('Szolgáltatás eladás: %s, %s Ft, %s [%s]', $summary, number_format($total, 0, ',', ' '), $method, $numbers),
@@ -203,7 +203,7 @@ class TicketService
         ]);
 
         if ($seller) {
-            $method = ['cash' => 'készpénz', 'card' => 'bankkártya'][$paymentMethod] ?? $paymentMethod;
+            $method = ['cash' => 'készpénz', 'card' => 'bankkártya', 'szep_card' => 'SZÉP kártya'][$paymentMethod] ?? $paymentMethod;
             $title = $showtime?->program_title ?? 'Ismeretlen film';
             $when = $showtime?->starts_at?->copy()->timezone('Europe/Budapest')->format('Y.m.d. H:i');
 

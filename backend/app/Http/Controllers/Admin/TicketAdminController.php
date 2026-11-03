@@ -35,7 +35,7 @@ class TicketAdminController extends Controller
     {
         $request->validate([
             'year' => ['nullable', 'integer', 'min:2000', 'max:2100'],
-            'payment_method' => ['nullable', 'in:cash,card,stripe,simplepay,experience_card'],
+            'payment_method' => ['nullable', 'in:cash,card,szep_card,stripe,simplepay,experience_card'],
             'date' => ['nullable', 'date'],
             'q' => ['nullable', 'string', 'max:100'],
         ]);
@@ -194,6 +194,7 @@ class TicketAdminController extends Controller
             'amount' => (int) $rows->sum('price_amount'),
             'cash' => (int) $rows->where('payment_method', 'cash')->sum('price_amount'),
             'card' => (int) $rows->where('payment_method', 'card')->sum('price_amount'),
+            'szep_card' => (int) $rows->where('payment_method', 'szep_card')->sum('price_amount'),
             'experience_card' => (int) $rows->where('payment_method', 'experience_card')->sum('price_amount'),
             'online' => (int) $rows->whereIn('payment_method', ['stripe', 'simplepay'])->sum('price_amount'),
             'staff' => $rows->where('category', TicketCategory::STAFF)->count(),
@@ -246,7 +247,7 @@ class TicketAdminController extends Controller
             return response()->stream(function () use ($shows) {
                 $out = fopen('php://output', 'w');
                 fwrite($out, "\xEF\xBB\xBF");
-                fputcsv($out, ['Előadás kezdete', 'Film', 'Terem', 'Eladott jegyek (db)', 'Bevétel (Ft)', 'Készpénz (Ft)', 'Bankkártya (Ft)', 'Online (Ft)', 'Élménykártya (Ft)', 'Élménykártyás jegyek (db)', 'Dolgozó jegyek (db)'], ';');
+                fputcsv($out, ['Előadás kezdete', 'Film', 'Terem', 'Eladott jegyek (db)', 'Bevétel (Ft)', 'Készpénz (Ft)', 'Bankkártya (Ft)', 'SZÉP kártya (Ft)', 'Online (Ft)', 'Élménykártya (Ft)', 'Élménykártyás jegyek (db)', 'Dolgozó jegyek (db)'], ';');
                 foreach ($shows as $s) {
                     fputcsv($out, [
                         $s['starts_at']->copy()->timezone('Europe/Budapest')->format('Y-m-d H:i'),
@@ -256,6 +257,7 @@ class TicketAdminController extends Controller
                         $s['amount'],
                         $s['cash'],
                         $s['card'],
+                        $s['szep_card'],
                         $s['online'],
                         $s['experience_card'],
                         $s['experience_tickets'],
@@ -266,7 +268,7 @@ class TicketAdminController extends Controller
             }, 200, $headers);
         }
 
-        $methods = ['cash' => 'Készpénz', 'card' => 'Bankkártya', 'stripe' => 'Online', 'simplepay' => 'Online (SimplePay)', 'experience_card' => 'Élménykártya'];
+        $methods = ['cash' => 'Készpénz', 'card' => 'Bankkártya', 'szep_card' => 'SZÉP kártya', 'stripe' => 'Online', 'simplepay' => 'Online (SimplePay)', 'experience_card' => 'Élménykártya'];
         $channels = ['pos' => 'Pénztár', 'admin' => 'Admin', 'online' => 'Online'];
         $query = $this->showtimeDayTickets($date);
 
@@ -323,7 +325,7 @@ class TicketAdminController extends Controller
     {
         $request->validate([
             'year' => ['required', 'integer', 'min:2000', 'max:2100'],
-            'payment_method' => ['nullable', 'in:cash,card,stripe,simplepay,experience_card'],
+            'payment_method' => ['nullable', 'in:cash,card,szep_card,stripe,simplepay,experience_card'],
             'date' => ['nullable', 'date'],
             'q' => ['nullable', 'string', 'max:100'],
         ]);
@@ -349,7 +351,7 @@ class TicketAdminController extends Controller
             'Content-Disposition' => 'attachment; filename="jegyek_' . $year . '.csv"',
         ];
 
-        $methods = ['cash' => 'Készpénz', 'card' => 'Bankkártya', 'stripe' => 'Online', 'simplepay' => 'Online (SimplePay)', 'experience_card' => 'Élménykártya'];
+        $methods = ['cash' => 'Készpénz', 'card' => 'Bankkártya', 'szep_card' => 'SZÉP kártya', 'stripe' => 'Online', 'simplepay' => 'Online (SimplePay)', 'experience_card' => 'Élménykártya'];
 
         return response()->stream(function () use ($query, $methods) {
             $out = fopen('php://output', 'w');

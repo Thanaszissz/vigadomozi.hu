@@ -18,6 +18,7 @@ interface StatRow {
 const PAYMENT_LABELS: Record<string, string> = {
   cash: 'Készpénz',
   card: 'Bankkártya',
+  szep_card: 'SZÉP kártya',
   experience_card: 'Élménykártya',
   simplepay: 'Online (SimplePay)',
   stripe: 'Online (Stripe)',
@@ -179,7 +180,7 @@ export class SalesStatsAdminComponent implements OnInit {
   }
 
   paymentIcon(row: StatRow): string {
-    return ({ cash: '💵', card: '💳', experience_card: '🎁', simplepay: '🌐', stripe: '🌐' } as Record<string, string>)[row.key] ?? '•';
+    return ({ cash: '💵', card: '💳', szep_card: '🏖️', experience_card: '🎁', simplepay: '🌐', stripe: '🌐' } as Record<string, string>)[row.key] ?? '•';
   }
 
   /** Egy sor aránya a lista legnagyobb értékéhez képest (oszlopdiagramhoz). */

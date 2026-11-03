@@ -69,7 +69,8 @@
                   <td>
                     <span *ngIf="item.method === 'cash'">💵 Készpénz</span>
                     <span *ngIf="item.method === 'card'">💳 Kártya</span>
-                    <span *ngIf="item.method !== 'cash' && item.method !== 'card'">{{ item.method }}</span>
+                    <span *ngIf="item.method === 'szep_card'">🏖️ SZÉP kártya</span>
+                    <span *ngIf="item.method !== 'cash' && item.method !== 'card' && item.method !== 'szep_card'">{{ item.method }}</span>
                   </td>
                   <td>{{ item.count }}</td>
                   <td class="amount">{{ item.amount | number:'1.0-0' }} Ft</td>
@@ -181,6 +182,7 @@
                 <td>
                   <span *ngIf="reservation.payment_provider === 'cash'" class="payment-badge cash">💵 KP</span>
                   <span *ngIf="reservation.payment_provider === 'card'" class="payment-badge card">💳 Kártya</span>
+                  <span *ngIf="reservation.payment_provider === 'szep_card'" class="payment-badge szep">🏖️ SZÉP</span>
                 </td>
               </tr>
             </tbody>

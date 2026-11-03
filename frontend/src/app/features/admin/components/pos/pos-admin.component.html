@@ -77,7 +77,7 @@
               <td class="num">{{ t.ticket_number }}</td>
               <td>{{ seatLabel(t.seat_key) }}</td>
               <td>{{ t.price_amount | number:'1.0-0' }} Ft</td>
-              <td>{{ t.payment_method === 'cash' ? 'Készpénz' : t.payment_method === 'card' ? 'Kártya' : t.payment_method === 'experience_card' ? 'Élménykártya' : 'Online' }}</td>
+              <td>{{ t.payment_method === 'cash' ? 'Készpénz' : t.payment_method === 'card' ? 'Kártya' : t.payment_method === 'szep_card' ? 'SZÉP kártya' : t.payment_method === 'experience_card' ? 'Élménykártya' : 'Online' }}</td>
               <td>{{ t.sold_at | date:'MM.dd. HH:mm' }}</td>
               <td>{{ t.sold_by_name || 'Online' }}</td>
               <td class="act">
@@ -224,6 +224,7 @@
         <div class="pay-methods" *ngIf="payable > 0">
           <button type="button" class="pay-btn m-cash" [class.active]="paymentMethod === 'cash'" (click)="setPayment('cash')"><span class="pay-icon">💶</span>Készpénz</button>
           <button type="button" class="pay-btn m-card" [class.active]="paymentMethod === 'card'" (click)="setPayment('card')"><span class="pay-icon">💳</span>Bankkártya</button>
+          <button type="button" class="pay-btn m-szep" [class.active]="paymentMethod === 'szep_card'" (click)="setPayment('szep_card')"><span class="pay-icon">🏖️</span>SZÉP kártya</button>
         </div>
         <div *ngIf="payable === 0" class="muted free-note">Nincs fizetendő összeg (0 Ft), a jegyek fizetés nélkül kiállíthatók.</div>
 
@@ -239,6 +240,10 @@
 
         <div *ngIf="paymentMethod === 'card'" class="card-box">
           Kérje a kártyaterminálon <b>{{ payable | number:'1.0-0' }} Ft</b> fizetését, és a sikeres terminálos fizetés után rögzítse az eladást.
+        </div>
+
+        <div *ngIf="paymentMethod === 'szep_card'" class="card-box szep-box">
+          Kérje a SZÉP kártyás terminálon <b>{{ payable | number:'1.0-0' }} Ft</b> fizetését, és a sikeres terminálos fizetés után rögzítse az eladást.
         </div>
 
         <button type="button" class="btn-invoice" *ngIf="invoicingEnabled && payable > 0" [class.active]="invoiceRequested" [disabled]="processing" (click)="toggleInvoice()">
@@ -371,7 +376,7 @@
         <li *ngIf="invoiceBuyer.tax_number"><span>Adószám</span><b>{{ invoiceBuyer.tax_number }}</b></li>
         <li *ngIf="invoiceBuyer.email"><span>E-mail</span><b>{{ invoiceBuyer.email }}</b></li>
         <li><span>Tételek</span><b>{{ invoiceLineAmounts.length }} db jegy</b></li>
-        <li><span>Fizetés módja</span><b>{{ paymentMethod === 'cash' ? 'Készpénz' : 'Bankkártya' }}</b></li>
+        <li><span>Fizetés módja</span><b>{{ paymentMethod === 'cash' ? 'Készpénz' : paymentMethod === 'szep_card' ? 'SZÉP kártya' : 'Bankkártya' }}</b></li>
         <li><span>Nettó</span><b>{{ invoiceTotals.net | number:'1.0-0' }} Ft</b></li>
         <li><span>ÁFA ({{ invoiceVatLabel }})</span><b>{{ invoiceTotals.vat | number:'1.0-0' }} Ft</b></li>
         <li class="grand"><span>Bruttó összesen</span><b>{{ invoiceTotals.gross | number:'1.0-0' }} Ft</b></li>

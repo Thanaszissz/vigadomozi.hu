@@ -86,7 +86,7 @@ HTML,
             ->map(fn($i) => SeatKey::label($i->seat_key))
             ->implode(', ');
 
-        $providers = ['stripe' => 'Bankkártya (online)', 'simplepay' => 'Bankkártya (online)', 'card' => 'Bankkártya', 'cash' => 'Készpénz'];
+        $providers = ['stripe' => 'Bankkártya (online)', 'simplepay' => 'Bankkártya (online)', 'card' => 'Bankkártya', 'szep_card' => 'SZÉP kártya', 'cash' => 'Készpénz'];
 
         $vars = [
             'nev' => $reservation->customer_name ?: 'Vásárló',

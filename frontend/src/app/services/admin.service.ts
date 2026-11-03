@@ -69,7 +69,7 @@ export interface TheaterShow {
   trailer_youtube_url?: string;
 }
 
-export type PaymentMethod = 'cash' | 'card';
+export type PaymentMethod = 'cash' | 'card' | 'szep_card';
 
 export interface Ticket {
   id: number;
@@ -153,6 +153,7 @@ export interface ShowtimeDayTotals {
   amount: number;
   cash: number;
   card: number;
+  szep_card: number;
   experience_card: number;
   online: number;
   staff: number;

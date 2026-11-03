@@ -235,6 +235,11 @@ h1 {
   color: #1976d2;
 }
 
+.payment-badge.szep {
+  background: #f3e5f5;
+  color: #7b1fa2;
+}
+
 .hourly-chart {
   display: flex;
   flex-direction: column;

@@ -33,9 +33,9 @@
 .item-list li { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; border-bottom: 1px solid #5c3d2e; font-size: 14px; }
 .total { display: flex; justify-content: space-between; font-size: 18px; padding: 10px 0; }
 
-.pay-methods { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0; }
+.pay-methods { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 10px 0; }
 .pay-btn {
-  padding: 12px; border-radius: 10px; border: 1.5px solid #5c3d2e; background: #4a3425; color: #e8d5b7; font-weight: 700; font-size: 15px; cursor: pointer;
+  padding: 10px 6px; border-radius: 10px; border: 1.5px solid #5c3d2e; background: #4a3425; color: #e8d5b7; font-weight: 700; font-size: 14px; cursor: pointer;
 }
 .pay-btn.active { border-color: #d4a574; background: #5c3d2e; }
 

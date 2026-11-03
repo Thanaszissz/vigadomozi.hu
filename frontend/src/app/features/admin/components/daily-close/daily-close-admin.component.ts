@@ -102,17 +102,18 @@ export class DailyCloseAdminComponent implements OnInit {
       : this.close.sellers.filter(s => String(s.user_id ?? 0) === this.sellerFilter);
   }
 
-  get visibleTotals(): { tickets: number; amount: number; cash: number; card: number; other: number; experience: number } {
+  get visibleTotals(): { tickets: number; amount: number; cash: number; card: number; szep: number; other: number; experience: number } {
     const all = this.visibleSellers.flatMap(s => s.tickets);
     return { tickets: all.length, ...this.sellerSums(all) };
   }
 
-  sellerSums(tickets: Ticket[]): { cash: number; card: number; other: number; experience: number; amount: number } {
-    const sums = { cash: 0, card: 0, other: 0, experience: 0, amount: 0 };
+  sellerSums(tickets: Ticket[]): { cash: number; card: number; szep: number; other: number; experience: number; amount: number } {
+    const sums = { cash: 0, card: 0, szep: 0, other: 0, experience: 0, amount: 0 };
     for (const t of tickets) {
       sums.amount += t.price_amount;
       if (t.payment_method === 'cash') sums.cash += t.price_amount;
       else if (t.payment_method === 'card') sums.card += t.price_amount;
+      else if (t.payment_method === 'szep_card') sums.szep += t.price_amount;
       else if (t.payment_method === 'experience_card') sums.experience += t.price_amount;
       else sums.other += t.price_amount;
     }
@@ -210,7 +211,7 @@ export class DailyCloseAdminComponent implements OnInit {
               ${rows}
               <tr class="sub">
                 <td colspan="4">Összesen: ${seller.tickets.length} jegy / nyugta${catRow ? '<br>' + catRow : ''}</td>
-                <td colspan="2">Készpénz: ${esc(ft(sums.cash))} • Kártya: ${esc(ft(sums.card))}${sums.experience ? ' • Élménykártya: ' + esc(ft(sums.experience)) : ''}${sums.other ? ' • Egyéb: ' + esc(ft(sums.other)) : ''}</td>
+                <td colspan="2">Készpénz: ${esc(ft(sums.cash))} • Kártya: ${esc(ft(sums.card))}${sums.szep ? ' • SZÉP kártya: ' + esc(ft(sums.szep)) : ''}${sums.experience ? ' • Élménykártya: ' + esc(ft(sums.experience)) : ''}${sums.other ? ' • Egyéb: ' + esc(ft(sums.other)) : ''}</td>
                 <td class="r">${esc(ft(sums.amount))}</td>
               </tr>
             </tbody>
@@ -231,6 +232,7 @@ export class DailyCloseAdminComponent implements OnInit {
           <tr><td>Eladott jegyek / nyugták száma</td><td class="r"><b>${totals.tickets} db</b></td></tr>
           <tr><td>Készpénz</td><td class="r">${esc(ft(totals.cash))}</td></tr>
           <tr><td>Bankkártya</td><td class="r">${esc(ft(totals.card))}</td></tr>
+          ${totals.szep ? `<tr><td>SZÉP kártya</td><td class="r">${esc(ft(totals.szep))}</td></tr>` : ''}
           ${totals.other ? `<tr><td>Egyéb (online)</td><td class="r">${esc(ft(totals.other))}</td></tr>` : ''}
           ${this.visibleCategorySums.map(c => `<tr><td>Ebből: ${esc(c.label)}</td><td class="r">${c.tickets} db${c.amount ? ' • ' + esc(ft(c.amount)) : ''}</td></tr>`).join('')}
           <tr><td><b>Mindösszesen</b></td><td class="r"><b>${esc(ft(totals.amount))}</b></td></tr>

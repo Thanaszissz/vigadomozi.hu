@@ -43,7 +43,7 @@ class PosController extends Controller
             'showtime_id' => ['required', 'integer', 'exists:showtimes,id'],
             'seatKeys' => ['required', 'array', 'min:1', 'max:20'],
             'seatKeys.*' => ['string', 'max:120', 'distinct'],
-            'payment_method' => ['required', 'string', 'in:cash,card'],
+            'payment_method' => ['required', 'string', 'in:cash,card,szep_card'],
             'customer_name' => ['nullable', 'string', 'max:255', 'regex:/^[^<>\x00-\x1F\x7F]+$/u'],
             'customer_phone' => ['nullable', 'string', 'max:20'],
             'seat_categories' => ['nullable', 'array'],
@@ -177,7 +177,7 @@ class PosController extends Controller
             'items' => ['required', 'array', 'min:1', 'max:20'],
             'items.*.service_id' => ['required', 'integer', 'distinct', 'exists:extra_services,id'],
             'items.*.quantity' => ['required', 'integer', 'min:1', 'max:20'],
-            'payment_method' => ['required', 'string', 'in:cash,card'],
+            'payment_method' => ['required', 'string', 'in:cash,card,szep_card'],
         ]);
 
         $services = ExtraService::whereIn('id', collect($data['items'])->pluck('service_id'))->get()->keyBy('id');
@@ -314,7 +314,7 @@ class PosController extends Controller
     public function payReservation(Reservation $reservation, Request $request): JsonResponse
     {
         $data = $request->validate([
-            'payment_method' => ['required', 'string', 'in:cash,card'],
+            'payment_method' => ['required', 'string', 'in:cash,card,szep_card'],
             // Részfizetés: csak ezeket a székeket fizeti ki, a többi a foglalásban marad
             'seat_keys' => ['sometimes', 'array', 'min:1', 'max:20'],
             'seat_keys.*' => ['string', 'max:120', 'distinct'],
