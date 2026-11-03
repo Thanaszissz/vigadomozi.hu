@@ -112,7 +112,7 @@
                     <button class="btn-act print" type="button" [disabled]="printing.has(r.id)" (click)="printReservationTickets(r)">
                       {{ printing.has(r.id) ? '…' : '🖨️ Jegyek' }}
                     </button>
-                    <button class="btn-act receipt" type="button" (click)="printReceipt(r, view.raw)">📄 Igazolás</button>
+                    <button class="btn-act receipt" type="button" [disabled]="printing.has(r.id)" (click)="printReceipt(r, view.raw)">📄 Igazolás</button>
                   </ng-container>
                 </td>
               </tr>

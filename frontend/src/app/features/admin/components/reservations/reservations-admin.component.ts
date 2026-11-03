@@ -2,9 +2,12 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule, formatDate } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { AdminService } from '../../../../services/admin.service';
-import { escapeHtml } from '../../../../core/util/html';
+import { of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+import { AdminService, Ticket } from '../../../../services/admin.service';
+import { AuthService } from '../../../../services/auth.service';
 import { paymentLabel, printTickets } from '../ticket-print/ticket-print.component';
+import { buildReceiptHtml } from './reservation-receipt';
 
 type StatusFilter = 'all' | 'PENDING' | 'PAID' | 'CLOSED';
 
@@ -64,6 +67,7 @@ export class ReservationsAdminComponent implements OnInit {
 
   constructor(
     private adminService: AdminService,
+    private auth: AuthService,
     private router: Router
   ) {}
 
@@ -371,87 +375,49 @@ export class ReservationsAdminComponent implements OnInit {
     });
   }
 
+  /** Befizetési igazolás: a foglalás jegyeivel és a módonkénti bontással, rejtett keretből nyomtatva (nem blokkolja a felugró ablak tiltás). */
   printReceipt(reservation: any, showtime: any): void {
-    if (!reservation || reservation.status !== 'PAID') {
+    if (!reservation || reservation.status !== 'PAID' || this.printing.has(reservation.id)) {
       return;
     }
 
-    const logoUrl = `${window.location.origin}/assets/vigado_logo_beige.png`;
-    const createdAt = reservation.created_at ? new Date(reservation.created_at).toLocaleString('hu-HU') : '';
-    const showtimeDate = showtime?.starts_at ? new Date(showtime.starts_at).toLocaleString('hu-HU') : '';
-    const seats = (reservation.items || []).map((item: any) => `${item.section ? item.section + ' ' : ''}${item.row_label}-${item.seat_number}`).join(', ');
-    const totalAmount = reservation.total_amount ?? 0;
+    this.notice = '';
+    this.printing.add(reservation.id);
+    this.adminService.getReservationTickets(reservation.id).pipe(catchError(() => of([] as Ticket[]))).subscribe(tickets => {
+      const html = buildReceiptHtml({
+        reservation,
+        showtime,
+        tickets,
+        issuedBy: this.auth.getCurrentUser()?.name ?? '',
+        logoUrl: `${window.location.origin}/assets/vigado_logo_beige.png`
+      });
 
-    const receiptHtml = `
-      <!DOCTYPE html>
-      <html lang="hu">
-      <head>
-        <meta charset="utf-8" />
-        <title>Befizetési igazolás</title>
-        <style>
-          body { font-family: Arial, sans-serif; padding: 24px; color: #2c1810; }
-          .header { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
-          .logo { max-width: 160px; }
-          h1 { font-size: 20px; margin: 0; }
-          .section { margin-bottom: 16px; }
-          .label { color: #5c3d2e; font-weight: 600; margin-bottom: 4px; }
-          .value { font-size: 14px; }
-          .total { font-size: 18px; font-weight: 700; margin-top: 12px; }
-          .divider { height: 1px; background: #d4a574; margin: 16px 0; }
-          @media print { .no-print { display: none; } }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <img class="logo" src="${logoUrl}" alt="Vigadó Jegy" />
-          <div>
-            <h1>Befizetési igazolás</h1>
-            <div class="value">Foglalás #${reservation.id}</div>
-          </div>
-        </div>
+      const frame = document.createElement('iframe');
+      frame.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;';
+      document.body.appendChild(frame);
+      const doc = frame.contentDocument!;
+      doc.open();
+      doc.write(html);
+      doc.close();
 
-        <div class="section">
-          <div class="label">Ügyfél</div>
-          <div class="value">${escapeHtml(reservation.customer_name || 'N/A')} • ${escapeHtml(reservation.customer_email || 'N/A')} • ${escapeHtml(reservation.customer_phone || 'N/A')}</div>
-        </div>
-
-        <div class="section">
-          <div class="label">Előadás</div>
-          <div class="value">${escapeHtml(showtime?.movie?.title || 'N/A')}</div>
-          <div class="value">${escapeHtml(showtimeDate)} • ${escapeHtml(showtime?.auditorium?.name || 'N/A')}</div>
-        </div>
-
-        <div class="section">
-          <div class="label">Ülések</div>
-          <div class="value">${escapeHtml(seats || 'N/A')}</div>
-        </div>
-
-        <div class="section">
-          <div class="label">Fizetés</div>
-          <div class="value">${escapeHtml(reservation.payment_provider ? paymentLabel(reservation.payment_provider) : '—')} • ${escapeHtml(createdAt)}</div>
-        </div>
-
-        <div class="divider"></div>
-
-        <div class="total">Összesen: ${escapeHtml(totalAmount)} Ft</div>
-
-        <div class="no-print" style="margin-top: 20px;">
-          <button onclick="window.print()">Nyomtatás / PDF</button>
-        </div>
-      </body>
-      </html>
-    `;
-
-    const printWindow = window.open('', '_blank', 'width=800,height=700');
-    if (!printWindow) {
-      return;
-    }
-
-    printWindow.document.open();
-    printWindow.document.write(receiptHtml);
-    printWindow.document.close();
-    printWindow.focus();
-    printWindow.print();
+      // a logó betöltése után nyomtatunk (legfeljebb 2 mp-et várunk)
+      const logo = doc.querySelector('img');
+      const done = () => {
+        frame.contentWindow?.focus();
+        frame.contentWindow?.print();
+        setTimeout(() => frame.remove(), 1000);
+        this.printing.delete(reservation.id);
+      };
+      if (logo && !logo.complete) {
+        let fired = false;
+        const once = () => { if (!fired) { fired = true; done(); } };
+        logo.addEventListener('load', once);
+        logo.addEventListener('error', once);
+        setTimeout(once, 2000);
+      } else {
+        setTimeout(done, 100);
+      }
+    });
   }
 
   goBack(): void {
