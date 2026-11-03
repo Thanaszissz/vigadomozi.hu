@@ -61,6 +61,9 @@ export interface Showtime {
   auditorium_id: number;
   starts_at: string;
   status: string;
+  /** Külső jegyértékesítő: a jegyek nem nálunk, hanem az external_url címen vásárolhatók. */
+  is_external?: boolean;
+  external_url?: string | null;
   movie: Movie;
   auditorium: Auditorium;
 }

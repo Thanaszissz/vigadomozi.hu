@@ -468,6 +468,10 @@ class PosController extends Controller
 
     private function salesClosedReason(Showtime $showtime): ?string
     {
+        if ($showtime->is_external) {
+            return 'Erre az előadásra a jegyeket külső szolgáltató értékesíti, a pénztárban nem adható el.';
+        }
+
         if ($showtime->status !== 'active') {
             return 'Ez az előadás nem aktív.';
         }

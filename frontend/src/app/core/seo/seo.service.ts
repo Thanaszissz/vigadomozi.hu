@@ -112,7 +112,7 @@ export class SeoService {
         eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
         location: THEATER,
         workPresented: { '@type': 'Movie', name: movie.title },
-        url: this.absolute(`/showtimes/${s.id}/select-seats`),
+        url: s.is_external && s.external_url ? s.external_url : this.absolute(`/showtimes/${s.id}/select-seats`),
         image: movie.poster_path || undefined
       }));
 

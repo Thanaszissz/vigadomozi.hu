@@ -118,7 +118,9 @@ export class ShowtimesAdminComponent implements OnInit {
       theater_show_id: null,
       auditorium_id: null,
       starts_at: '',
-      status: 'active'
+      status: 'active',
+      is_external: false,
+      external_url: ''
     };
     this.movieSearchTerm = '';
     this.auditoriumSearchTerm = '';
@@ -144,12 +146,21 @@ export class ShowtimesAdminComponent implements OnInit {
 
     const startsAt = this.combineDateAndTime(this.dateString, this.timeString);
 
+    const isExternal = !!this.editingShowtime.is_external;
+    const externalUrl = (this.editingShowtime.external_url || '').trim();
+    if (isExternal && !/^https?:\/\/\S+$/i.test(externalUrl)) {
+      this.error = 'Külső szolgáltatónál add meg a jegyvásárlás teljes webcímét (https://...).';
+      return;
+    }
+
     const showtimeData = {
       movie_id: this.editingShowtime.movie_id ?? null,
       theater_show_id: this.editingShowtime.theater_show_id ?? null,
       auditorium_id: this.editingShowtime.auditorium_id,
       starts_at: startsAt,
-      status: this.editingShowtime.status || 'active'
+      status: this.editingShowtime.status || 'active',
+      is_external: isExternal,
+      external_url: isExternal ? externalUrl : null
     };
 
     if (this.isNewShowtime) {

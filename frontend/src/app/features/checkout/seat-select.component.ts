@@ -55,6 +55,11 @@ export class SeatSelectComponent implements OnInit {
 
     this.apiService.getShowtimeById(this.showtimeId).subscribe({
       next: (data) => {
+        // Külső jegyértékesítőnél nincs nálunk nézőtér: átirányítjuk a vásárlót a szolgáltató oldalára
+        if (data.is_external && data.external_url) {
+          window.location.replace(data.external_url);
+          return;
+        }
         this.showtime = data;
         this.loading = false;
         setTimeout(() => this.fitSeats());

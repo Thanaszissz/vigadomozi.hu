@@ -37,6 +37,14 @@ class ShowtimeController extends Controller
 
     public function show(Showtime $showtime)
     {
+        // Külső jegyértékesítőnél nincs nézőtér: az oldal a megadott címre irányít
+        if ($showtime->is_external) {
+            return response()->json([
+                'showtime' => $showtime->load(['movie', 'auditorium:id,name']),
+                'seatMap' => null,
+            ], 200);
+        }
+
         $seatMapService = app(SeatMapService::class);
         $pricingService = app(PricingService::class);
         

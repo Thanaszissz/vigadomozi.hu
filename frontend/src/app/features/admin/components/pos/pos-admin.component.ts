@@ -181,7 +181,7 @@ export class PosAdminComponent implements OnInit, OnDestroy {
       next: (showtimes) => {
         const limit = Date.now() - this.graceMinutes * 60000;
         const open = showtimes
-          .filter(s => s.status === 'active' && new Date(s.starts_at).getTime() >= limit)
+          .filter(s => s.status === 'active' && !s.is_external && new Date(s.starts_at).getTime() >= limit)
           .sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime());
 
         this.showtimes = open;

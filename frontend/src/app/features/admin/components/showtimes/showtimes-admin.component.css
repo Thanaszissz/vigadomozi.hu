@@ -196,6 +196,43 @@ h1 {
   color: #2e7d32;
 }
 
+.external-badge {
+  margin-left: 8px;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  background: #e3f2fd;
+  color: #1565c0;
+  white-space: nowrap;
+}
+
+.external-group {
+  padding: 12px 14px;
+  border: 2px dashed #e0e0e0;
+  border-radius: 8px;
+}
+
+.external-group .check-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+  cursor: pointer;
+}
+
+.external-group .check-label input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+}
+
+.external-group .hint {
+  display: block;
+  margin-bottom: 10px;
+  color: #8a7a68;
+  font-size: 12px;
+}
+
 /* Modal styles */
 .modal-overlay {
   position: fixed;

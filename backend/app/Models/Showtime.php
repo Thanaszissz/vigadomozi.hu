@@ -31,6 +31,8 @@ class Showtime extends Model
         'sales_close_at',
         'pricing_override_json',
         'status',
+        'is_external',
+        'external_url',
     ];
 
     protected $casts = [
@@ -38,6 +40,7 @@ class Showtime extends Model
         'sales_open_at' => 'datetime',
         'sales_close_at' => 'datetime',
         'pricing_override_json' => 'array',
+        'is_external' => 'boolean',
     ];
 
     // Az előadás-időpontoknál a program (előadás) mindig betöltődik, hogy a JSON-ban a film helyén megjelenhessen

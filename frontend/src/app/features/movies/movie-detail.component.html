@@ -55,10 +55,16 @@
             <div class="showtime-date">{{ showtime.starts_at | date: 'yyyy.MM.dd.' }}</div>
             <div class="showtime-time">{{ showtime.starts_at | date: 'HH:mm' }}</div>
             <div class="showtime-auditorium">🎞️ {{ showtime.auditorium.name }}</div>
-            <a [routerLink]="'/showtimes/' + showtime.id + '/select-seats'" class="book-btn">
-              <span>🎟️ Jegyek foglalása</span>
-              <span class="arrow">→</span>
+            <a *ngIf="showtime.is_external && showtime.external_url; else ownBooking" [href]="showtime.external_url" target="_blank" rel="noopener noreferrer" class="book-btn">
+              <span>🎟️ Jegyvásárlás külső oldalon</span>
+              <span class="arrow">↗</span>
             </a>
+            <ng-template #ownBooking>
+              <a [routerLink]="'/showtimes/' + showtime.id + '/select-seats'" class="book-btn">
+                <span>🎟️ Jegyek foglalása</span>
+                <span class="arrow">→</span>
+              </a>
+            </ng-template>
           </div>
         </div>
       </div>

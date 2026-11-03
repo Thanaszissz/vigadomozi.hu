@@ -22,6 +22,10 @@ class SeatLockController extends Controller
     /** Foglalás azonnali (kártyás) fizetéshez: a székek 10 percig zároltak. */
     public function lock(Showtime $showtime, Request $request): JsonResponse
     {
+        if ($showtime->is_external) {
+            return $this->externalOnly($showtime);
+        }
+
         $data = $this->validated($request);
 
         try {
@@ -39,6 +43,10 @@ class SeatLockController extends Controller
     /** Fizetés nélküli foglalás: a székek lejárati idő nélkül zároltak, a fizetés a pénztárban történik. */
     public function hold(Showtime $showtime, Request $request): JsonResponse
     {
+        if ($showtime->is_external) {
+            return $this->externalOnly($showtime);
+        }
+
         $data = $this->validated($request);
 
         try {
@@ -54,6 +62,15 @@ class SeatLockController extends Controller
             'reservation' => $reservation->load('items'),
             'status' => 'held',
         ], 200);
+    }
+
+    /** Külső szolgáltatónál értékesített előadásra nálunk nem foglalható hely. */
+    private function externalOnly(Showtime $showtime): JsonResponse
+    {
+        return response()->json([
+            'message' => 'Erre az előadásra a jegyek külső szolgáltatónál vásárolhatók.',
+            'external_url' => $showtime->external_url,
+        ], 422);
     }
 
     private function validated(Request $request): array

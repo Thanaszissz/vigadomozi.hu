@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Showtime;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class ShowtimeAdminController extends Controller
 {
@@ -31,12 +32,16 @@ class ShowtimeAdminController extends Controller
             'sales_close_at' => ['nullable', 'date'],
             'pricing_override_json' => ['nullable', 'array'],
             'status' => ['sometimes', 'in:active,inactive,cancelled,completed'],
+            'is_external' => ['sometimes', 'boolean'],
+            'external_url' => [Rule::requiredIf(fn() => $request->boolean('is_external')), 'nullable', 'url:http,https', 'max:2048'],
         ]);
 
         // egy időpont vagy filmhez, vagy előadáshoz tartozik
         if (!empty($data['theater_show_id'])) {
             $data['movie_id'] = null;
         }
+
+        $data = $this->normalizeExternal($data);
 
         $showtime = Showtime::create($data);
 
@@ -54,6 +59,8 @@ class ShowtimeAdminController extends Controller
             'sales_close_at' => ['sometimes', 'date'],
             'pricing_override_json' => ['sometimes', 'array'],
             'status' => ['sometimes', 'in:active,inactive,cancelled,completed'],
+            'is_external' => ['sometimes', 'boolean'],
+            'external_url' => [Rule::requiredIf(fn() => $request->boolean('is_external')), 'nullable', 'url:http,https', 'max:2048'],
         ]);
 
         if (!empty($data['theater_show_id'])) {
@@ -61,6 +68,8 @@ class ShowtimeAdminController extends Controller
         } elseif (!empty($data['movie_id'])) {
             $data['theater_show_id'] = null;
         }
+
+        $data = $this->normalizeExternal($data);
 
         $showtime->update($data);
 
@@ -72,5 +81,17 @@ class ShowtimeAdminController extends Controller
         $showtime->delete();
 
         return response()->json(null, 204);
+    }
+
+    /** Külső értékesítőnél a hivatkozás kötelező; ha az előadás nem külső, a korábbi hivatkozás törlődik. */
+    private function normalizeExternal(array $data): array
+    {
+        if (array_key_exists('is_external', $data) && !$data['is_external']) {
+            $data['external_url'] = null;
+        } elseif (isset($data['external_url'])) {
+            $data['external_url'] = trim($data['external_url']);
+        }
+
+        return $data;
     }
 }

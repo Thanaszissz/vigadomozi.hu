@@ -315,6 +315,16 @@ class CatalogImportService
             $problem ??= 'A pricing_override_json objektum vagy tömb lehet.';
         }
 
+        // Külső jegyértékesítő: ha van external_url, az előadásra nem nálunk lehet jegyet venni
+        $externalUrl = $raw['external_url'] ?? $movieDefaults['external_url'] ?? null;
+        if ($externalUrl === '') {
+            $externalUrl = null;
+        }
+        if ($externalUrl !== null && (!is_string($externalUrl) || mb_strlen($externalUrl) > 2048
+            || !preg_match('#^https?://#i', $externalUrl) || filter_var($externalUrl, FILTER_VALIDATE_URL) === false)) {
+            $problem ??= 'Érvénytelen external_url (http:// vagy https:// címnek kell lennie).';
+        }
+
         $times = $raw['starts_at'] ?? null;
         $times = is_array($times) ? $times : [$times];
         if ($times === [] || $times === [null]) {
@@ -371,6 +381,8 @@ class CatalogImportService
                     'sales_close_at' => $close,
                     'pricing_override_json' => $pricing,
                     'status' => $status,
+                    'is_external' => $externalUrl !== null,
+                    'external_url' => $externalUrl,
                 ])->id;
             }
             $summary['showtimes_created']++;
