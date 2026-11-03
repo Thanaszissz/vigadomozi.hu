@@ -70,13 +70,19 @@ h1 { margin: 0; color: #e8d5b7; }
 .seller h2 { margin: 0 0 8px; font-size: 18px; color: #fdf7ed; display: flex; align-items: baseline; gap: 12px; }
 .seller h2 small { font-size: 13px; color: #a08060; font-weight: 400; }
 
-.table-wrap { background: #2c1810; border: 1px solid #5c3d2e; border-radius: 12px; padding: 8px; overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; }
-th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid #4a3425; white-space: nowrap; }
+.table-wrap { display: block; width: fit-content; max-width: 100%; background: #2c1810; border: 1px solid #5c3d2e; border-radius: 12px; padding: 6px 10px; overflow-x: auto; }
+table { width: auto; border-collapse: collapse; }
+th, td { padding: 6px 14px 6px 0; text-align: left; border-bottom: 1px solid #4a3425; white-space: nowrap; }
+td:last-child, th:last-child { padding-right: 4px; }
+td:nth-child(3) { white-space: normal; max-width: 300px; }
 th { color: #a08060; font-size: 12px; text-transform: uppercase; }
-td.r, th.r { text-align: right; }
+td.r, th.r { text-align: right; padding-left: 18px; }
 td.num { font-family: 'Courier New', monospace; font-weight: 700; color: #fdf7ed; }
 tr.subtotal td { font-weight: 700; border-top: 2px solid #5c3d2e; border-bottom: none; color: #d4a574; }
+
+.sums { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.sums span { padding: 5px 12px; border-radius: 999px; background: #2c1810; border: 1px solid #5c3d2e; color: #c9a982; font-size: 13px; white-space: nowrap; }
+.sums b { margin-left: 6px; color: #d4a574; }
 
 .badge { padding: 2px 8px; border-radius: 999px; font-size: 12px; background: #4a3425; }
 .badge.cash { background: rgba(34, 197, 94, 0.2); color: #86efac; }

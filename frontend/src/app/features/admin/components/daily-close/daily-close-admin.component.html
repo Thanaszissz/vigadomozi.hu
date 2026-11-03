@@ -99,18 +99,19 @@
               <td class="r">{{ ft(t.price_amount) }}</td>
             </tr>
             <tr class="subtotal">
-              <td colspan="5">Összesen</td>
-              <td>
-                Készpénz: {{ ft(sellerSums(seller.tickets).cash) }} •
-                Kártya: {{ ft(sellerSums(seller.tickets).card) }}
-                <ng-container *ngIf="sellerSums(seller.tickets).szep > 0"> • SZÉP kártya: {{ ft(sellerSums(seller.tickets).szep) }}</ng-container>
-                <ng-container *ngIf="sellerSums(seller.tickets).voucher > 0"> • Utalvány: {{ ft(sellerSums(seller.tickets).voucher) }}</ng-container>
-                <ng-container *ngIf="sellerSums(seller.tickets).experience > 0"> • Élménykártya: {{ ft(sellerSums(seller.tickets).experience) }}</ng-container>
-              </td>
+              <td colspan="6">Összesen • {{ seller.tickets.length }} jegy / nyugta</td>
               <td class="r">{{ ft(sellerSums(seller.tickets).amount) }}</td>
             </tr>
           </tbody>
         </table>
+      </div>
+      <div class="sums" *ngIf="sellerSums(seller.tickets) as x">
+        <span>💶 Készpénz <b>{{ ft(x.cash) }}</b></span>
+        <span>💳 Kártya <b>{{ ft(x.card) }}</b></span>
+        <span *ngIf="x.szep > 0">🏖️ SZÉP kártya <b>{{ ft(x.szep) }}</b></span>
+        <span *ngIf="x.voucher > 0">🎟️ Utalvány <b>{{ ft(x.voucher) }}</b></span>
+        <span *ngIf="x.experience > 0">🎁 Élménykártya <b>{{ ft(x.experience) }}</b></span>
+        <span *ngIf="x.other > 0">🌐 Online <b>{{ ft(x.other) }}</b></span>
       </div>
     </section>
   </ng-container>
