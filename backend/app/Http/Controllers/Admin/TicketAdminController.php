@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\SalesLog;
 use App\Models\Ticket;
 use App\Services\ActivityLogger;
+use App\Services\TicketArchivePdfService;
 use App\Support\PaymentSplit;
 use App\Support\TicketCategory;
 use Carbon\Carbon;
@@ -44,7 +45,25 @@ class TicketAdminController extends Controller
         $year = (int) ($request->query('year') ?: now()->timezone('Europe/Budapest')->year);
         $query = $this->filtered($request, $year);
 
-        $summary = (clone $query)
+        $summary = $this->summaryFor($query);
+        $page = $query->orderByDesc('id')->paginate(50);
+
+        return response()->json([
+            'year' => $year,
+            'summary' => $summary,
+            'tickets' => $page,
+        ]);
+    }
+
+    /**
+     * A szűrt jegyek összesítője: darabszám, összeg, fizetési módonként és kategóriánként.
+     * A vegyes (részfizetéses) jegyek összege a módonkénti bontásban szerepel; a jegyek és az összeg összesítése nem változik.
+     *
+     * @return array{tickets:int,amount:int,by_method:array<int,array>,by_category:array<int,array>}
+     */
+    private function summaryFor(Builder $query): array
+    {
+        $byMethod = (clone $query)
             ->select('payment_method', DB::raw('count(*) as tickets'), DB::raw('sum(price_amount) as amount'))
             ->groupBy('payment_method')
             ->get();
@@ -54,11 +73,8 @@ class TicketAdminController extends Controller
             ->groupBy('category')
             ->get();
 
-        $page = $query->orderByDesc('id')->paginate(50);
-
-        // A vegyes (részfizetéses) jegyek összege a módonkénti bontásban szerepel; a jegyek és az összeg összesítése nem változik
         $methods = [];
-        foreach ($summary as $s) {
+        foreach ($byMethod as $s) {
             if ($s->payment_method !== PaymentSplit::MIXED) {
                 $methods[$s->payment_method] = ['payment_method' => $s->payment_method, 'tickets' => (int) $s->tickets, 'amount' => (int) $s->amount];
             }
@@ -70,19 +86,70 @@ class TicketAdminController extends Controller
             $methods[$method]['amount'] += $row['amount'];
         }
 
-        return response()->json([
-            'year' => $year,
-            'summary' => [
-                'tickets' => (int) $summary->sum('tickets'),
-                'amount' => (int) $summary->sum('amount'),
-                'by_method' => array_values($methods),
-                'by_category' => $byCategory->map(fn($s) => [
-                    'category' => $s->category,
-                    'tickets' => (int) $s->tickets,
-                    'amount' => (int) $s->amount,
-                ])->values(),
+        return [
+            'tickets' => (int) $byMethod->sum('tickets'),
+            'amount' => (int) $byMethod->sum('amount'),
+            'by_method' => array_values($methods),
+            'by_category' => $byCategory->map(fn($s) => [
+                'category' => $s->category,
+                'tickets' => (int) $s->tickets,
+                'amount' => (int) $s->amount,
+            ])->values()->all(),
+        ];
+    }
+
+    /**
+     * A szűrt jegyek PDF-je (összesítőkkel és a jegyek táblázatával). Nagyon sok jegynél a CSV export javasolt.
+     */
+    public function exportPdf(Request $request)
+    {
+        $request->validate([
+            'year' => ['required', 'integer', 'min:2000', 'max:2100'],
+            'payment_method' => ['nullable', 'in:cash,card,szep_card,voucher,mixed,stripe,simplepay,experience_card'],
+            'date' => ['nullable', 'date'],
+            'q' => ['nullable', 'string', 'max:100'],
+        ]);
+        $year = (int) $request->query('year');
+        $query = $this->filtered($request, $year);
+
+        $total = (clone $query)->count();
+        if ($total > TicketArchivePdfService::MAX_TICKETS) {
+            return response()->json([
+                'message' => sprintf('A szűrésnek megfelelő %s jegy túl sok a PDF-hez (legfeljebb %s). Szűkítsd a szűrést, vagy használd a CSV exportot.',
+                    number_format($total, 0, ',', ' '), number_format(TicketArchivePdfService::MAX_TICKETS, 0, ',', ' ')),
+            ], 422);
+        }
+
+        $filters = array_values(array_filter([
+            $request->query('date') ? 'nap: ' . \Carbon\Carbon::parse($request->query('date'))->format('Y.m.d.') : null,
+            $request->query('payment_method') ? 'fizetés: ' . PaymentSplit::label($request->query('payment_method')) : null,
+            trim((string) $request->query('q')) !== '' ? 'keresés: ' . trim((string) $request->query('q')) : null,
+        ]));
+
+        ActivityLogger::log(
+            'report.export_tickets_pdf',
+            "Jegyek exportálása (PDF): {$year}" . ($filters ? ' (szűrt)' : ''),
+            null,
+            ['year' => $year, 'tickets' => $total]
+        );
+
+        @ini_set('memory_limit', '512M');
+        @set_time_limit(120);
+
+        $pdf = app(TicketArchivePdfService::class)->render(
+            [
+                'year' => $year,
+                'filters' => $filters,
+                'generated_by' => $request->user()?->name,
+                'generated_at' => now()->timezone('Europe/Budapest')->format('Y.m.d. H:i'),
             ],
-            'tickets' => $page,
+            $this->summaryFor($query),
+            (clone $query)->orderBy('id')->get()
+        );
+
+        return response($pdf, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="jegyek_' . $year . '.pdf"',
         ]);
     }
 

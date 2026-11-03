@@ -722,6 +722,15 @@ export class AdminService {
     return this.http.get(`${this.apiUrl}/tickets/export`, { params: query, responseType: 'blob' });
   }
 
+  exportTicketsPdf(params: { year: number; payment_method?: string; date?: string; q?: string }): Observable<Blob> {
+    const query: Record<string, string> = { year: String(params.year) };
+    if (params.payment_method) query['payment_method'] = params.payment_method;
+    if (params.date) query['date'] = params.date;
+    if (params.q) query['q'] = params.q;
+
+    return this.http.get(`${this.apiUrl}/tickets/export-pdf`, { params: query, responseType: 'blob' });
+  }
+
   // Egy nap előadásainak teljes jegyeladása
   getShowtimeDay(date: string): Observable<ShowtimeDay> {
     return this.http.get<ShowtimeDay>(`${this.apiUrl}/tickets/showtime-day`, { params: { date } });

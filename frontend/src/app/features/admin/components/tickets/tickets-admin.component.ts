@@ -26,6 +26,8 @@ export class TicketsAdminComponent implements OnInit {
   loading = false;
   error: string | null = null;
   exporting = false;
+  exportingPdf = false;
+  private defaultYear = new Date().getFullYear();
 
   printTickets: Ticket[] = [];
 
@@ -90,6 +92,7 @@ export class TicketsAdminComponent implements OnInit {
         if (years.length && !years.includes(this.year)) {
           this.year = years[0];
         }
+        this.defaultYear = this.year;
         this.load();
       },
       error: () => this.load()
@@ -126,6 +129,50 @@ export class TicketsAdminComponent implements OnInit {
   changeYear(): void {
     this.date = '';
     this.load();
+  }
+
+  /** Van-e bármilyen szűrő beállítva (az alapértelmezett évtől eltérő év is annak számít). */
+  get filtersActive(): boolean {
+    return !!this.date || !!this.paymentMethod || !!this.query.trim() || this.year !== this.defaultYear;
+  }
+
+  clearFilters(): void {
+    this.year = this.defaultYear;
+    this.date = '';
+    this.paymentMethod = '';
+    this.query = '';
+    this.load();
+  }
+
+  exportPdf(): void {
+    this.exportingPdf = true;
+    this.error = null;
+    this.admin.exportTicketsPdf({
+      year: this.year,
+      payment_method: this.paymentMethod,
+      date: this.date,
+      q: this.query.trim()
+    }).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `jegyek_${this.year}${this.date ? '_' + this.date : ''}${this.paymentMethod ? '_' + this.paymentMethod : ''}.pdf`;
+        link.click();
+        URL.revokeObjectURL(url);
+        this.exportingPdf = false;
+      },
+      error: async (err) => {
+        // a hibaüzenet blobként érkezik (pl. túl sok jegy a PDF-hez)
+        let message = 'A PDF készítése sikertelen.';
+        try {
+          const body = err?.error instanceof Blob ? JSON.parse(await err.error.text()) : err?.error;
+          if (body?.message) message = body.message;
+        } catch { /* marad az általános üzenet */ }
+        this.error = message;
+        this.exportingPdf = false;
+      }
+    });
   }
 
   exportCsv(): void {

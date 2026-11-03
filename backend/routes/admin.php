@@ -191,6 +191,7 @@ Route::middleware('permission:daily_close.all')->group(function () {
 Route::middleware('permission:tickets.archive')->group(function () {
     Route::get('tickets/years', [TicketAdminController::class, 'years']);
     Route::get('tickets/export', [TicketAdminController::class, 'export']);
+    Route::get('tickets/export-pdf', [TicketAdminController::class, 'exportPdf']);
     Route::get('tickets', [TicketAdminController::class, 'index']);
     Route::get('tickets/{ticket}', [TicketAdminController::class, 'show'])->whereNumber('ticket');
 });

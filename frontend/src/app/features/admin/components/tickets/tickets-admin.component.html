@@ -35,8 +35,12 @@
       <input type="text" [(ngModel)]="query" (keyup.enter)="load()" placeholder="pl. 2026-000123" />
     </label>
     <button type="button" class="btn" (click)="load()">Szűrés</button>
+    <button type="button" class="btn" (click)="clearFilters()" [disabled]="!filtersActive || loading" title="Év, nap, fizetés és keresés visszaállítása">✕ Szűrők törlése</button>
     <button type="button" class="btn primary" (click)="exportCsv()" [disabled]="exporting">
       {{ exporting ? 'Exportálás...' : '⬇ CSV export (' + (result?.tickets?.total ?? 0) + ' jegy)' }}
+    </button>
+    <button type="button" class="btn primary" (click)="exportPdf()" [disabled]="exportingPdf || !result || result.tickets.total === 0">
+      {{ exportingPdf ? 'PDF készül...' : '📄 PDF (' + (result?.tickets?.total ?? 0) + ' jegy)' }}
     </button>
   </div>
 

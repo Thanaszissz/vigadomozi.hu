@@ -84,6 +84,28 @@ class SplitPaymentTest extends TestCase
         $this->assertDatabaseHas('sales_logs', ['reservation_id' => $reservation->id, 'payment_method' => 'mixed', 'total_amount' => 10000]);
     }
 
+    public function test_archive_pdf_endpoint_returns_a_pdf_with_summary_and_split_tickets(): void
+    {
+        $user = User::factory()->create(['role' => \App\Support\Roles::ADMIN]);
+        \Laravel\Sanctum\Sanctum::actingAs($user, ['admin:access']);
+        $reservation = $this->reservationWithSeats(3);
+
+        app(TicketService::class)->issueForReservation($reservation, 'mixed', $user, 'pos', [
+            ['method' => 'cash', 'amount' => 3000],
+            ['method' => 'voucher', 'amount' => 3000],
+        ]);
+
+        $year = now()->timezone('Europe/Budapest')->year;
+        $response = $this->get('/api/tickets/export-pdf?year=' . $year);
+
+        $response->assertOk();
+        $this->assertSame('application/pdf', $response->headers->get('Content-Type'));
+        $this->assertStringStartsWith('%PDF', $response->getContent());
+
+        // ismeretlen fizetési mód szűrőként érvénytelen kérés
+        $this->getJson('/api/tickets/export-pdf?year=' . $year . '&payment_method=nincs')->assertStatus(422);
+    }
+
     public function test_experience_card_category_tickets_stay_outside_the_split(): void
     {
         $user = User::factory()->create();
