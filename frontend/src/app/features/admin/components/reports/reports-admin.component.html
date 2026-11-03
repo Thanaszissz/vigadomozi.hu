@@ -18,176 +18,146 @@
       <button (click)="exportPDF()" class="btn-export" *ngIf="!loading && !error && summary">📄 PDF exportálás</button>
     </div>
 
-    <div *ngIf="loading" class="loading">
-      Riport betöltése...
-    </div>
-
-    <div *ngIf="error" class="error-message">
-      {{ error }}
-    </div>
+    <div *ngIf="loading" class="loading">Riport betöltése...</div>
+    <div *ngIf="error" class="error-message">{{ error }}</div>
 
     <div *ngIf="!loading && !error && summary" class="report-content">
-      <!-- Összesítés -->
-      <div class="summary-cards">
-        <div class="summary-card">
-          <div class="card-icon">🎫</div>
-          <div class="card-value">{{ summary.total_reservations }}</div>
-          <div class="card-label">Foglalások</div>
-        </div>
-        <div class="summary-card">
-          <div class="card-icon">🪑</div>
-          <div class="card-value">{{ summary.total_tickets }}</div>
-          <div class="card-label">Jegyek</div>
-        </div>
-        <div class="summary-card highlight">
-          <div class="card-icon">💰</div>
-          <div class="card-value">{{ summary.total_amount | number:'1.0-0' }} Ft</div>
-          <div class="card-label">Bevétel</div>
-        </div>
-      </div>
+      <div *ngIf="!summary.total_receipts" class="empty-state">📭 Ezen a napon nem történt jegyeladás.</div>
 
-      <!-- Nincs adat -->
-      <div *ngIf="!reservations?.length" class="empty-state">
-        📭 Ezen a napon nem történt foglalás.
-      </div>
+      <ng-container *ngIf="summary.total_receipts">
+        <!-- Áttekintő -->
+        <div class="overview">
+          <div class="kpi">
+            <span>Bevétel</span>
+            <b>{{ ft(summary.total_amount) }}</b>
+            <small>{{ num(summary.total_tickets) }} jegy • {{ num(summary.total_services) }} szolgáltatás-nyugta • {{ num(summary.total_sales) }} eladás</small>
+          </div>
 
-      <ng-container *ngIf="reservations?.length">
-        <!-- Fizetési módok és óránkénti forgalom egymás mellett -->
+          <section class="panel">
+            <h3>Fizetési módok</h3>
+            <ul class="rows">
+              <li *ngFor="let m of summary.by_payment_method">
+                <span class="lbl"><i>{{ methodIcon(m.method) }}</i>{{ paymentLabel(m.method) }}</span>
+                <span class="share">{{ pct(m.amount) }}</span>
+                <b>{{ ft(m.amount) }}</b>
+              </li>
+            </ul>
+            <div class="rows-total"><span>Összesen</span><b>{{ ft(summary.total_amount) }}</b></div>
+          </section>
+
+          <section class="panel">
+            <h3>Értékesítés típusa</h3>
+            <ul class="rows">
+              <li *ngFor="let k of summary.by_kind">
+                <span class="lbl"><i>{{ kindIcon(k.key) }}</i>{{ k.label }}</span>
+                <span class="share">{{ num(k.tickets) }} db</span>
+                <b>{{ ft(k.amount) }}</b>
+              </li>
+            </ul>
+            <h3 class="sub">Csatorna</h3>
+            <ul class="rows">
+              <li *ngFor="let c of summary.by_channel">
+                <span class="lbl"><i>{{ channelIcon(c.key) }}</i>{{ channelLabel(c.key) }}</span>
+                <span class="share">{{ num(c.tickets) }} db</span>
+                <b>{{ ft(c.amount) }}</b>
+              </li>
+            </ul>
+          </section>
+        </div>
+
         <div class="two-col">
-          <div class="report-section" *ngIf="summary.by_payment_method?.length">
-            <h2>💳 Fizetési módok</h2>
-            <table class="report-table">
-              <thead>
-                <tr>
-                  <th>Fizetési mód</th>
-                  <th>Tranzakciók</th>
-                  <th>Összeg</th>
-                </tr>
-              </thead>
+          <!-- Óránkénti forgalom -->
+          <section class="panel" *ngIf="summary.hourly?.length">
+            <h3>Óránkénti forgalom</h3>
+            <div class="hourly">
+              <div class="hour" *ngFor="let h of summary.hourly">
+                <span class="h">{{ h.hour < 10 ? '0' : '' }}{{ h.hour }}:00</span>
+                <div class="bar"><div class="fill" [style.width]="hourWidth(h.amount)"></div></div>
+                <span class="v">{{ num(h.count) }} db • {{ ft(h.amount) }}</span>
+              </div>
+            </div>
+          </section>
+
+          <!-- Eladók -->
+          <section class="panel" *ngIf="summary.by_seller?.length">
+            <h3>Eladónként</h3>
+            <ul class="rows">
+              <li *ngFor="let s of summary.by_seller">
+                <span class="lbl">{{ s.label }}</span>
+                <span class="share">{{ num(s.tickets) }} db</span>
+                <b>{{ ft(s.amount) }}</b>
+              </li>
+            </ul>
+            <div class="rows-total"><span>Összesen</span><b>{{ num(summary.total_receipts) }} db • {{ ft(summary.total_amount) }}</b></div>
+          </section>
+        </div>
+
+        <!-- Előadások és programok -->
+        <section class="panel" *ngIf="summary.by_program?.length">
+          <h3>Előadások és programok</h3>
+          <div class="table-wrap">
+            <table class="fixed">
+              <colgroup><col style="width: 15%"><col style="width: 38%"><col style="width: 15%"><col style="width: 10%"><col style="width: 10%"><col style="width: 12%"></colgroup>
+              <thead><tr><th>Időpont</th><th>Cím</th><th>Terem</th><th class="r">Jegy</th><th class="r">Ebből online</th><th class="r">Bevétel</th></tr></thead>
               <tbody>
-                <tr *ngFor="let item of summary.by_payment_method">
-                  <td>
-                    <span *ngIf="item.method === 'cash'">💵 Készpénz</span>
-                    <span *ngIf="item.method === 'card'">💳 Kártya</span>
-                    <span *ngIf="item.method === 'szep_card'">🏖️ SZÉP kártya</span>
-                    <span *ngIf="item.method === 'mixed'">➗ Vegyes fizetés</span>
-                    <span *ngIf="item.method !== 'cash' && item.method !== 'card' && item.method !== 'szep_card' && item.method !== 'mixed'">{{ item.method }}</span>
-                  </td>
-                  <td>{{ item.count }}</td>
-                  <td class="amount">{{ item.amount | number:'1.0-0' }} Ft</td>
+                <tr *ngFor="let p of summary.by_program">
+                  <td>{{ p.starts_at | date:'yyyy.MM.dd. HH:mm' }}</td>
+                  <td>{{ kindIcon(p.kind) }} {{ p.title }}</td>
+                  <td>{{ p.auditorium_name || '—' }}</td>
+                  <td class="r">{{ num(p.tickets) }}</td>
+                  <td class="r">{{ p.online_tickets ? num(p.online_tickets) : '—' }}</td>
+                  <td class="r amount">{{ ft(p.amount) }}</td>
+                </tr>
+              </tbody>
+              <tfoot>
+                <tr><td colspan="3">Összesen</td><td class="r">{{ num(summary.total_tickets) }}</td><td></td><td class="r">{{ ft(programTotal) }}</td></tr>
+              </tfoot>
+            </table>
+          </div>
+        </section>
+
+        <!-- Egyéb szolgáltatások -->
+        <section class="panel" *ngIf="summary.by_service?.length">
+          <h3>Egyéb szolgáltatások</h3>
+          <div class="table-wrap">
+            <table class="fixed">
+              <colgroup><col style="width: 60%"><col style="width: 18%"><col style="width: 22%"></colgroup>
+              <thead><tr><th>Szolgáltatás</th><th class="r">Nyugta</th><th class="r">Bevétel</th></tr></thead>
+              <tbody>
+                <tr *ngFor="let s of summary.by_service">
+                  <td>🛍️ {{ s.name }}</td>
+                  <td class="r">{{ num(s.tickets) }}</td>
+                  <td class="r amount">{{ ft(s.amount) }}</td>
+                </tr>
+              </tbody>
+              <tfoot>
+                <tr><td>Összesen</td><td class="r">{{ num(summary.total_services) }}</td><td class="r">{{ ft(serviceTotal) }}</td></tr>
+              </tfoot>
+            </table>
+          </div>
+        </section>
+
+        <!-- Részletes lista (alapból összecsukva) -->
+        <details class="panel collapsible">
+          <summary>📋 Részletes lista ({{ sales.length }} eladás)</summary>
+          <div class="table-wrap">
+            <table class="fixed">
+              <colgroup><col style="width: 6%"><col style="width: 11%"><col style="width: 9%"><col style="width: 13%"><col style="width: 25%"><col style="width: 6%"><col style="width: 18%"><col style="width: 12%"></colgroup>
+              <thead><tr><th>Idő</th><th>Eladó</th><th>Csatorna</th><th>Vevő</th><th>Tétel</th><th class="r">Db</th><th>Fizetés</th><th class="r">Összeg</th></tr></thead>
+              <tbody>
+                <tr *ngFor="let s of sales">
+                  <td>{{ s.sold_at | date:'HH:mm' }}</td>
+                  <td>{{ s.seller }}</td>
+                  <td>{{ channelLabel(s.channel) }}</td>
+                  <td>{{ s.customer && s.customer !== 'Helyszíni vásárló' ? s.customer : '—' }}</td>
+                  <td>{{ kindIcon(s.kind) }} {{ s.title }}<small *ngIf="s.starts_at"> • {{ s.starts_at | date:'MM.dd. HH:mm' }}</small></td>
+                  <td class="r">{{ s.tickets }}</td>
+                  <td>{{ salePayment(s) }}</td>
+                  <td class="r amount">{{ ft(s.amount) }}</td>
                 </tr>
               </tbody>
             </table>
           </div>
-
-          <div class="report-section" *ngIf="summary.hourly?.length">
-            <h2>⏰ Óránkénti forgalom</h2>
-            <div class="hourly-chart">
-              <div *ngFor="let item of summary.hourly" class="hourly-bar">
-                <div class="bar-label">{{ item.hour }}:00</div>
-                <div class="bar-container">
-                  <div
-                    class="bar-fill"
-                    [style.width]="(item.amount / summary.total_amount * 100) + '%'"
-                  ></div>
-                </div>
-                <div class="bar-value">{{ item.count }} db / {{ item.amount | number:'1.0-0' }} Ft</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Előadások szerinti bevétel -->
-        <div class="report-section" *ngIf="summary.by_showtime?.length">
-          <h2>🎟️ Előadások szerinti bevétel</h2>
-          <table class="report-table">
-            <thead>
-              <tr>
-                <th>Film</th>
-                <th>Előadás időpont</th>
-                <th>Terem</th>
-                <th>Foglalások</th>
-                <th>Jegyek</th>
-                <th>Bevétel</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let item of summary.by_showtime">
-                <td>{{ item.movie_title }}</td>
-                <td>{{ item.starts_at | date:'yyyy-MM-dd HH:mm' }}</td>
-                <td>{{ item.auditorium_name }}</td>
-                <td>{{ item.reservations_count }}</td>
-                <td>{{ item.tickets_count }}</td>
-                <td class="amount">{{ item.total_amount | number:'1.0-0' }} Ft</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Adminisztrátorónkénti bontás -->
-        <div class="report-section" *ngIf="summary.by_admin?.length">
-          <h2>👨‍💼 Adminisztrátorónkénti bontás</h2>
-          <table class="report-table">
-            <thead>
-              <tr>
-                <th>Adminisztrátor neve</th>
-                <th>Email</th>
-                <th>Foglalások</th>
-                <th>Jegyek</th>
-                <th>Bevétel</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let item of summary.by_admin">
-                <td>{{ item.admin_name }}</td>
-                <td>{{ item.admin_email }}</td>
-                <td>{{ item.reservations_count }}</td>
-                <td>{{ item.tickets_count }}</td>
-                <td class="amount">{{ item.total_amount | number:'1.0-0' }} Ft</td>
-              </tr>
-            </tbody>
-            <tfoot>
-              <tr class="total-row">
-                <td colspan="2"><strong>ÖSSZESEN</strong></td>
-                <td><strong>{{ summary.total_reservations }}</strong></td>
-                <td><strong>{{ summary.total_tickets }}</strong></td>
-                <td class="amount"><strong>{{ summary.total_amount | number:'1.0-0' }} Ft</strong></td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
-
-        <!-- Részletes lista (alapból összecsukva) -->
-        <details class="report-section collapsible">
-          <summary>📋 Részletes lista ({{ reservations.length }} foglalás)</summary>
-          <table class="report-table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Időpont</th>
-                <th>Film</th>
-                <th>Ügyfél</th>
-                <th>Jegyek</th>
-                <th>Összeg</th>
-                <th>Fizetés</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let reservation of reservations">
-                <td>#{{ reservation.id }}</td>
-                <td>{{ reservation.created_at | date:'HH:mm' }}</td>
-                <td>{{ reservation.showtime?.movie?.title || 'N/A' }}</td>
-                <td>{{ reservation.customer_name || 'N/A' }}</td>
-                <td>{{ reservation.items?.length || 0 }}</td>
-                <td class="amount">{{ reservation.total_amount | number:'1.0-0' }} Ft</td>
-                <td>
-                  <span *ngIf="reservation.payment_provider === 'cash'" class="payment-badge cash">💵 KP</span>
-                  <span *ngIf="reservation.payment_provider === 'card'" class="payment-badge card">💳 Kártya</span>
-                  <span *ngIf="reservation.payment_provider === 'szep_card'" class="payment-badge szep">🏖️ SZÉP</span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
         </details>
       </ng-container>
     </div>

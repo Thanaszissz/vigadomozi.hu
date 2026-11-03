@@ -6,6 +6,7 @@ import { SalesStatsAdminComponent } from '../sales-stats/sales-stats-admin.compo
 import { Router } from '@angular/router';
 import { AdminService } from '../../../../services/admin.service';
 import { AuthService } from '../../../../services/auth.service';
+import { paymentLabel } from '../ticket-print/ticket-print.component';
 import { buildDailyReportHtml } from './daily-report-print';
 
 @Component({
@@ -20,9 +21,11 @@ export class ReportsAdminComponent implements OnInit {
   activeTab: 'daily' | 'stats' = 'daily';
   loading = false;
   error = '';
-  
+
   summary: any = null;
-  reservations: any[] = [];
+  sales: any[] = [];
+
+  paymentLabel = paymentLabel;
 
   constructor(
     private adminService: AdminService,
@@ -41,7 +44,7 @@ export class ReportsAdminComponent implements OnInit {
     this.adminService.getDailyReport(this.selectedDate).subscribe({
       next: (data) => {
         this.summary = data.summary;
-        this.reservations = data.reservations;
+        this.sales = data.sales ?? [];
         this.loading = false;
       },
       error: (err) => {
@@ -56,6 +59,58 @@ export class ReportsAdminComponent implements OnInit {
     this.router.navigate(['/admin/dashboard']);
   }
 
+  // ---- Megjelenítés ----
+
+  /** Forint, ezres tagolással (szóközzel), sortörés nélkül. */
+  ft(n: number | string): string {
+    return `${Math.round(Number(n) || 0).toLocaleString('hu-HU')}\u00A0Ft`;
+  }
+
+  num(n: number | string): string {
+    return Math.round(Number(n) || 0).toLocaleString('hu-HU');
+  }
+
+  pct(amount: number): string {
+    const total = Number(this.summary?.total_amount) || 0;
+    return total > 0 ? `${Math.round((amount / total) * 100)}%` : '–';
+  }
+
+  channelLabel(channel: string): string {
+    return ({ pos: 'Pénztár', admin: 'Admin', online: 'Online' } as Record<string, string>)[channel] ?? channel;
+  }
+
+  channelIcon(channel: string): string {
+    return ({ pos: '🏪', admin: '🧑‍💼', online: '🌐' } as Record<string, string>)[channel] ?? '•';
+  }
+
+  kindIcon(kind: string): string {
+    return ({ movie: '🎬', theater: '🎭', service: '🛍️' } as Record<string, string>)[kind] ?? '•';
+  }
+
+  methodIcon(method: string): string {
+    return ({ cash: '💶', card: '💳', szep_card: '🏖️', voucher: '🎟️', experience_card: '🎁', mixed: '➗', stripe: '🌐', simplepay: '🌐' } as Record<string, string>)[method] ?? '•';
+  }
+
+  /** Egy eladás fizetése: egy módnál a neve, több módnál módonként az összeg. */
+  salePayment(sale: any): string {
+    const parts: Array<{ method: string; amount: number }> = sale.payments ?? [];
+    if (parts.length <= 1) return parts.length ? paymentLabel(parts[0].method) : '—';
+    return parts.map(p => `${paymentLabel(p.method)} ${this.ft(p.amount)}`).join(' + ');
+  }
+
+  get programTotal(): number {
+    return (this.summary?.by_program ?? []).reduce((s: number, p: any) => s + Number(p.amount), 0);
+  }
+
+  get serviceTotal(): number {
+    return (this.summary?.by_service ?? []).reduce((s: number, p: any) => s + Number(p.amount), 0);
+  }
+
+  hourWidth(amount: number): string {
+    const max = Math.max(1, ...(this.summary?.hourly ?? []).map((h: any) => Number(h.amount)));
+    return `${Math.max(2, Math.round((amount / max) * 100))}%`;
+  }
+
   /** A napi riport nyomtatása / PDF-be mentése rejtett keretből (nem blokkolja a felugró ablak tiltás). */
   exportPDF(): void {
     if (!this.summary) return;
@@ -63,7 +118,7 @@ export class ReportsAdminComponent implements OnInit {
     const html = buildDailyReportHtml({
       date: this.selectedDate,
       summary: this.summary,
-      reservations: this.reservations,
+      sales: this.sales,
       issuedBy: this.auth.getCurrentUser()?.name ?? '',
       logoUrl: `${window.location.origin}/assets/vigado_logo_beige.png`
     });

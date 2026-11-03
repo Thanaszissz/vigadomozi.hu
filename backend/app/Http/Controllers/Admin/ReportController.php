@@ -3,100 +3,166 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Reservation;
+use App\Models\Ticket;
 use App\Services\ActivityLogger;
+use App\Support\PaymentSplit;
+use App\Support\TicketCategory;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 
 class ReportController extends Controller
 {
-    public function dailyReport(Request $request)
+    private const TZ = 'Europe/Budapest';
+
+    private const KIND_LABELS = [
+        'movie' => 'Film',
+        'theater' => 'Előadás / program',
+        'service' => 'Egyéb szolgáltatás',
+    ];
+
+    /**
+     * Napi riport: a nap (budapesti idő) minden eladott jegye és szolgáltatás-nyugtája, csatornától (pénztár, admin, online)
+     * és típustól (film, előadás / program, egyéb szolgáltatás) függetlenül. A sztornózott jegyek nincsenek benne.
+     */
+    public function dailyReport(Request $request): JsonResponse
     {
-        $date = $request->query('date', now()->toDateString());
+        $request->validate(['date' => ['nullable', 'date_format:Y-m-d']]);
+        $date = $request->query('date') ?: now(self::TZ)->toDateString();
 
         ActivityLogger::log('report.daily_report', "Napi riport megtekintése: {$date}", null, ['date' => $date]);
-        
-        $startDate = Carbon::parse($date)->startOfDay();
-        $endDate = Carbon::parse($date)->endOfDay();
 
-        $reservations = Reservation::query()
-            ->where('status', 'PAID')
-            ->whereBetween('created_at', [$startDate, $endDate])
-            ->with(['items', 'showtime.movie', 'showtime.auditorium', 'handledByAdmin'])
-            ->orderBy('created_at')
+        $start = Carbon::parse($date, self::TZ)->startOfDay()->utc();
+        $end = $start->copy()->addDay();
+
+        $tickets = Ticket::query()
+            ->whereBetween('sold_at', [$start, $end])
+            ->with(['showtime:id,theater_show_id', 'reservation:id,customer_name'])
+            ->orderBy('sold_at')
+            ->orderBy('id')
             ->get();
+
+        $kindOf = function (Ticket $t): string {
+            if ($t->category === TicketCategory::SERVICE) {
+                return 'service';
+            }
+
+            return $t->showtime?->theater_show_id ? 'theater' : 'movie';
+        };
+
+        $services = $tickets->filter(fn(Ticket $t) => $t->category === TicketCategory::SERVICE);
+        $seats = $tickets->reject(fn(Ticket $t) => $t->category === TicketCategory::SERVICE);
+        $sales = $this->sales($tickets, $kindOf);
 
         $summary = [
             'date' => $date,
-            'total_reservations' => $reservations->count(),
-            'total_tickets' => $reservations->sum(fn($r) => $r->items->count()),
-            'total_amount' => $reservations->sum('total_amount'),
-            'by_admin' => [],
-            'by_showtime' => [],
-            'by_payment_method' => [],
-            'hourly' => [],
+            'total_amount' => (int) $tickets->sum('price_amount'),
+            'total_receipts' => $tickets->count(),
+            'total_tickets' => $seats->count(),
+            'total_services' => $services->count(),
+            'total_sales' => $sales->count(),
+            'by_payment_method' => collect(PaymentSplit::summary($tickets))
+                ->map(fn($r) => ['method' => $r['payment_method'] ?: 'unknown', 'count' => $r['tickets'], 'amount' => $r['amount']])
+                ->sortByDesc('amount')->values()->all(),
+            'by_channel' => $this->grouped($tickets, fn(Ticket $t) => $t->channel ?: 'pos', fn($key) => $key),
+            'by_kind' => $this->grouped($tickets, $kindOf, fn($key) => self::KIND_LABELS[$key] ?? $key),
+            'by_category' => $this->grouped($tickets, fn(Ticket $t) => $t->category ?: TicketCategory::STANDARD, fn($key) => $key),
+            'by_seller' => $this->grouped($tickets, fn(Ticket $t) => $t->sold_by_name ?: 'Online / rendszer', fn($key) => $key),
+            'by_program' => $this->programs($seats, $kindOf),
+            'by_service' => $services->groupBy('movie_title')
+                ->map(fn(Collection $g, $name) => ['name' => (string) $name, 'tickets' => $g->count(), 'amount' => (int) $g->sum('price_amount')])
+                ->sortByDesc('amount')->values()->all(),
+            'hourly' => $tickets
+                ->groupBy(fn(Ticket $t) => (int) $t->sold_at->copy()->timezone(self::TZ)->format('G'))
+                ->map(fn(Collection $g, $hour) => ['hour' => (int) $hour, 'count' => $g->count(), 'amount' => (int) $g->sum('price_amount')])
+                ->sortBy('hour')->values()->all(),
         ];
-
-        // Adminisztrátoronkénti összesítés
-        $adminGroups = $reservations->groupBy('handled_by_admin_id');
-
-        foreach ($adminGroups as $adminId => $adminReservations) {
-            $admin = $adminReservations->first()->handledByAdmin;
-            $summary['by_admin'][] = [
-                'admin_id' => $adminId,
-                'admin_name' => $admin?->name ?? 'Rendszer/Online',
-                'admin_email' => $admin?->email ?? 'N/A',
-                'reservations_count' => $adminReservations->count(),
-                'tickets_count' => $adminReservations->sum(fn($r) => $r->items->count()),
-                'total_amount' => $adminReservations->sum('total_amount'),
-            ];
-        }
-
-        // Előadások szerinti bevétel lista
-        $showtimeGroups = $reservations->groupBy('showtime_id');
-        foreach ($showtimeGroups as $showtimeId => $showtimeReservations) {
-            $showtime = $showtimeReservations->first()->showtime;
-            $summary['by_showtime'][] = [
-                'showtime_id' => $showtimeId,
-                'movie_title' => $showtime?->program_title ?? 'N/A',
-                'starts_at' => $showtime?->starts_at,
-                'auditorium_name' => $showtime?->auditorium?->name ?? 'N/A',
-                'reservations_count' => $showtimeReservations->count(),
-                'tickets_count' => $showtimeReservations->sum(fn($r) => $r->items->count()),
-                'total_amount' => $showtimeReservations->sum('total_amount'),
-            ];
-        }
-
-        // Fizetési módok szerinti összesítés
-        foreach ($reservations->groupBy('payment_provider') as $method => $methodReservations) {
-            $summary['by_payment_method'][] = [
-                'method' => $method ?: 'unknown',
-                'count' => $methodReservations->count(),
-                'amount' => $methodReservations->sum('total_amount'),
-            ];
-        }
-
-        // Óránkénti bontás
-        for ($hour = 0; $hour < 24; $hour++) {
-            $hourStart = $startDate->copy()->addHours($hour);
-            $hourEnd = $hourStart->copy()->addHour();
-            
-            $hourReservations = $reservations->filter(function ($r) use ($hourStart, $hourEnd) {
-                return $r->created_at >= $hourStart && $r->created_at < $hourEnd;
-            });
-
-            if ($hourReservations->count() > 0) {
-                $summary['hourly'][] = [
-                    'hour' => $hour,
-                    'count' => $hourReservations->count(),
-                    'amount' => $hourReservations->sum('total_amount'),
-                ];
-            }
-        }
 
         return response()->json([
             'summary' => $summary,
-            'reservations' => $reservations,
+            'sales' => $sales->values()->all(),
         ]);
+    }
+
+    /**
+     * Csoportosított összesítés: kulcsonként darabszám és összeg, bevétel szerint csökkenő sorrendben.
+     *
+     * @return array<int,array{key:string,label:string,tickets:int,amount:int}>
+     */
+    private function grouped(Collection $tickets, callable $keyOf, callable $label): array
+    {
+        return $tickets->groupBy($keyOf)
+            ->map(fn(Collection $g, $key) => [
+                'key' => (string) $key,
+                'label' => (string) $label($key),
+                'tickets' => $g->count(),
+                'amount' => (int) $g->sum('price_amount'),
+            ])
+            ->sortByDesc('amount')->values()->all();
+    }
+
+    /**
+     * Előadásonként / programonként egy sor: az adott napon az előadásra eladott jegyek (az előadás napjától függetlenül).
+     *
+     * @return array<int,array<string,mixed>>
+     */
+    private function programs(Collection $seats, callable $kindOf): array
+    {
+        return $seats
+            ->groupBy(fn(Ticket $t) => ($t->showtime_id ?? 0) . '|' . $t->movie_title)
+            ->map(function (Collection $g) use ($kindOf) {
+                /** @var Ticket $first */
+                $first = $g->first();
+
+                return [
+                    'showtime_id' => $first->showtime_id,
+                    'title' => $first->movie_title,
+                    'kind' => $kindOf($first),
+                    'starts_at' => $first->starts_at,
+                    'auditorium_name' => $first->auditorium_name,
+                    'tickets' => $g->count(),
+                    'online_tickets' => $g->where('channel', 'online')->count(),
+                    'amount' => (int) $g->sum('price_amount'),
+                ];
+            })
+            ->sortBy(fn($r) => $r['starts_at'])
+            ->values()->all();
+    }
+
+    /**
+     * Eladásonként egy sor: egy foglalás jegyei, illetve egy szolgáltatás-eladás nyugtái (azonos időpont és eladó).
+     */
+    private function sales(Collection $tickets, callable $kindOf): Collection
+    {
+        return $tickets
+            ->groupBy(fn(Ticket $t) => $t->reservation_id
+                ? 'r' . $t->reservation_id
+                : 's' . $t->sold_at->timestamp . '|' . ($t->sold_by_user_id ?? 0))
+            ->map(function (Collection $g) use ($kindOf) {
+                /** @var Ticket $first */
+                $first = $g->first();
+                $isService = $first->category === TicketCategory::SERVICE;
+                $titles = $g->groupBy('movie_title')
+                    ->map(fn(Collection $x, $title) => $isService && $x->count() > 1 ? $x->count() . '× ' . $title : $title)
+                    ->values();
+
+                return [
+                    'sold_at' => $first->sold_at,
+                    'channel' => $first->channel ?: 'pos',
+                    'seller' => $first->sold_by_name ?: 'Online / rendszer',
+                    'customer' => $first->reservation?->customer_name,
+                    'kind' => $kindOf($first),
+                    'title' => $titles->implode(', '),
+                    'starts_at' => $isService ? null : $first->starts_at,
+                    'tickets' => $g->count(),
+                    'amount' => (int) $g->sum('price_amount'),
+                    'payments' => collect(PaymentSplit::amounts($g))
+                        ->map(fn($amount, $method) => ['method' => (string) $method, 'amount' => (int) $amount])->values()->all(),
+                    'numbers' => $first->ticket_number . ($g->count() > 1 ? ' – ' . $g->last()->ticket_number : ''),
+                ];
+            })
+            ->sortBy(fn($s) => $s['sold_at'])
+            ->values();
     }
 }
