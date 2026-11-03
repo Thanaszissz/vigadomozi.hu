@@ -33,9 +33,52 @@ export class TicketsAdminComponent implements OnInit {
   ticketPaymentLabel = ticketPaymentLabel;
   categoryLabel = categoryLabel;
 
-  /** Az összesítő kártyák a nem normál kategóriákról (Dolgozó jegy, Élménykártya, Egyéb szolgáltatás). */
-  get categoryCards(): Array<{ category: string; tickets: number; amount: number }> {
-    return (this.result?.summary.by_category ?? []).filter(c => c.category !== 'standard');
+  /** Forint, ezres tagolással (szóközzel), sortörés nélkül. */
+  ft(n: number): string {
+    return `${Math.round(n).toLocaleString('hu-HU')}\u00A0Ft`;
+  }
+
+  num(n: number): string {
+    return Math.round(n).toLocaleString('hu-HU');
+  }
+
+  /** Fizetési módonkénti sorok: a készpénz és a bankkártya mindig látszik, a többi csak ha volt forgalom. */
+  get methodRows(): Array<{ key: string; icon: string; label: string; tickets: number; amount: number }> {
+    const known: Array<{ key: string; icon: string; label: string; always?: boolean }> = [
+      { key: 'cash', icon: '💶', label: 'Készpénz', always: true },
+      { key: 'card', icon: '💳', label: 'Bankkártya', always: true },
+      { key: 'szep_card', icon: '🏖️', label: 'SZÉP kártya' },
+      { key: 'voucher', icon: '🎟️', label: 'Utalvány' },
+      { key: 'experience_card', icon: '🎁', label: 'Élménykártya' },
+      { key: 'stripe', icon: '🌐', label: 'Online' },
+      { key: 'simplepay', icon: '🌐', label: 'Online (SimplePay)' }
+    ];
+    const rows = known
+      .map(m => ({ ...m, ...this.methodSummary(m.key) }))
+      .filter(m => m.always || m.tickets > 0 || m.amount > 0);
+
+    // ismeretlen (új) fizetési módok sem maradhatnak ki az összesítésből
+    const knownKeys = new Set(known.map(m => m.key));
+    for (const row of this.result?.summary.by_method ?? []) {
+      if (!knownKeys.has(row.payment_method)) {
+        rows.push({ key: row.payment_method, icon: '•', label: paymentLabel(row.payment_method), tickets: row.tickets, amount: row.amount });
+      }
+    }
+    return rows;
+  }
+
+  /** A jegyek kategóriánként: együtt kiadják az összes jegyet és a bevételt. */
+  get categoryRows(): Array<{ key: string; label: string; tickets: number; amount: number }> {
+    const labels: Record<string, string> = {
+      standard: 'Normál jegy',
+      staff: 'Dolgozó jegy',
+      experience_card: 'Élménykártyás jegy',
+      service: 'Egyéb szolgáltatás (nyugta)'
+    };
+    const byKey = new Map((this.result?.summary.by_category ?? []).map(c => [c.category as string, c]));
+    return ['standard', 'staff', 'experience_card', 'service']
+      .map(key => ({ key, label: labels[key], tickets: byKey.get(key)?.tickets ?? 0, amount: byKey.get(key)?.amount ?? 0 }))
+      .filter(c => c.tickets > 0);
   }
 
   constructor(private admin: AdminService, private router: Router) {}

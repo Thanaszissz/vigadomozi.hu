@@ -42,7 +42,7 @@
 
   <ng-template #pagerTpl>
     <div class="pager" *ngIf="result && result.tickets.total > 0">
-      <span class="range">{{ rangeFrom }}–{{ rangeTo }} / {{ result.tickets.total | number:'1.0-0' }} jegy</span>
+      <span class="range">{{ rangeFrom }}–{{ rangeTo }} / {{ num(result.tickets.total) }} jegy</span>
       <ng-container *ngIf="result.tickets.last_page > 1">
         <button type="button" class="btn small" [disabled]="page <= 1 || loading" (click)="load(page - 1)">‹ Előző</button>
         <ng-container *ngFor="let p of pageButtons">
@@ -56,16 +56,36 @@
 
   <div *ngIf="error" class="alert">{{ error }}</div>
 
-  <div class="summary" *ngIf="result">
-    <div class="card"><span>Jegyek ({{ result.year }})</span><b>{{ result.summary.tickets | number:'1.0-0' }} db</b></div>
-    <div class="card"><span>Bevétel</span><b>{{ result.summary.amount | number:'1.0-0' }} Ft</b></div>
-    <div class="card"><span>Készpénz</span><b>{{ methodSummary('cash').tickets }} db • {{ methodSummary('cash').amount | number:'1.0-0' }} Ft</b></div>
-    <div class="card"><span>Bankkártya</span><b>{{ methodSummary('card').tickets }} db • {{ methodSummary('card').amount | number:'1.0-0' }} Ft</b></div>
-    <div class="card" *ngIf="methodSummary('szep_card').tickets > 0"><span>SZÉP kártya</span><b>{{ methodSummary('szep_card').tickets }} db • {{ methodSummary('szep_card').amount | number:'1.0-0' }} Ft</b></div>
-    <div class="card" *ngIf="methodSummary('voucher').tickets > 0"><span>Utalvány</span><b>{{ methodSummary('voucher').tickets }} db • {{ methodSummary('voucher').amount | number:'1.0-0' }} Ft</b></div>
-    <div class="card" *ngIf="methodSummary('stripe').tickets > 0"><span>Online</span><b>{{ methodSummary('stripe').tickets }} db • {{ methodSummary('stripe').amount | number:'1.0-0' }} Ft</b></div>
-    <div class="card" *ngIf="methodSummary('simplepay').tickets > 0"><span>Online (SimplePay)</span><b>{{ methodSummary('simplepay').tickets }} db • {{ methodSummary('simplepay').amount | number:'1.0-0' }} Ft</b></div>
-    <div class="card" *ngFor="let c of categoryCards"><span>{{ categoryLabel(c.category) }}</span><b>{{ c.tickets }} db<ng-container *ngIf="c.amount"> • {{ c.amount | number:'1.0-0' }} Ft</ng-container></b></div>
+  <div class="overview" *ngIf="result">
+    <div class="kpi">
+      <span>Bevétel ({{ result.year }})</span>
+      <b>{{ ft(result.summary.amount) }}</b>
+      <small>{{ num(result.summary.tickets) }} db jegy / nyugta</small>
+    </div>
+
+    <section class="panel">
+      <h3>Fizetési módok</h3>
+      <ul class="rows">
+        <li *ngFor="let m of methodRows">
+          <span class="lbl"><i>{{ m.icon }}</i>{{ m.label }}</span>
+          <span class="share">{{ num(m.tickets) }} db</span>
+          <b>{{ ft(m.amount) }}</b>
+        </li>
+      </ul>
+      <div class="rows-total"><span>Összesen</span><b>{{ ft(result.summary.amount) }}</b></div>
+    </section>
+
+    <section class="panel">
+      <h3>Jegykategóriák</h3>
+      <ul class="rows">
+        <li *ngFor="let c of categoryRows">
+          <span class="lbl">{{ c.label }}</span>
+          <span class="share">{{ num(c.tickets) }} db</span>
+          <b>{{ ft(c.amount) }}</b>
+        </li>
+      </ul>
+      <div class="rows-total"><span>Összesen</span><b>{{ num(result.summary.tickets) }} db • {{ ft(result.summary.amount) }}</b></div>
+    </section>
   </div>
 
   <div *ngIf="loading" class="muted">Betöltés...</div>
@@ -75,7 +95,10 @@
 
     <ng-container *ngTemplateOutlet="pagerTpl"></ng-container>
 
-    <table *ngIf="result.tickets.data.length > 0">
+    <table class="fixed" *ngIf="result.tickets.data.length > 0">
+      <colgroup>
+        <col style="width: 10%"><col style="width: 11%"><col style="width: 19%"><col style="width: 11%"><col style="width: 13%"><col style="width: 14%"><col style="width: 10%"><col style="width: 8%"><col style="width: 4%">
+      </colgroup>
       <thead>
         <tr>
           <th>Jegyszám</th>
@@ -83,9 +106,9 @@
           <th>Film / szolgáltatás</th>
           <th>Előadás</th>
           <th>Sor / szék</th>
-          <th>Ár</th>
           <th>Fizetés</th>
           <th>Értékesítő</th>
+          <th class="r">Ár</th>
           <th></th>
         </tr>
       </thead>
@@ -96,10 +119,10 @@
           <td>{{ t.movie_title }}<small class="cat-tag" *ngIf="t.category && t.category !== 'standard'" [class.svc]="t.category === 'service'"> {{ categoryLabel(t.category) }}</small></td>
           <td>{{ t.category === 'service' ? '—' : (t.starts_at | date:'yyyy.MM.dd. HH:mm') }}</td>
           <td>{{ t.category === 'service' ? '—' : ((t.section ? t.section + ' · ' : '') + t.row_label + ' / ' + (t.seat_number ?? '—')) }}</td>
-          <td>{{ t.price_amount | number:'1.0-0' }} Ft</td>
           <td><span class="badge" [class.cash]="t.payment_method === 'cash'" [class.card]="t.payment_method === 'card'" [class.szep]="t.payment_method === 'szep_card'" [class.mixed]="t.payment_method === 'mixed'">{{ ticketPaymentLabel(t) }}</span></td>
           <td>{{ t.sold_by_name || '—' }}</td>
-          <td><button type="button" class="btn small" (click)="print(t)">🖨️</button></td>
+          <td class="r">{{ ft(t.price_amount) }}</td>
+          <td class="r"><button type="button" class="btn small" (click)="print(t)">🖨️</button></td>
         </tr>
       </tbody>
     </table>
