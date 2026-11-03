@@ -76,7 +76,10 @@
         <small>{{ seller.tickets.length }} jegy • {{ ft(seller.totals.amount) }}</small>
       </h2>
       <div class="table-wrap">
-        <table>
+        <table class="fixed">
+          <colgroup>
+            <col style="width: 11%"><col style="width: 6%"><col style="width: 25%"><col style="width: 14%"><col style="width: 16%"><col style="width: 19%"><col style="width: 9%">
+          </colgroup>
           <thead>
             <tr>
               <th>Jegyszám</th>
@@ -98,20 +101,22 @@
               <td><span class="badge" [class.cash]="t.payment_method === 'cash'" [class.card]="t.payment_method === 'card'" [class.szep]="t.payment_method === 'szep_card'" [class.mixed]="t.payment_method === 'mixed'">{{ ticketPaymentLabel(t) }}</span></td>
               <td class="r">{{ ft(t.price_amount) }}</td>
             </tr>
-            <tr class="subtotal">
-              <td colspan="6">Összesen • {{ seller.tickets.length }} jegy / nyugta</td>
-              <td class="r">{{ ft(sellerSums(seller.tickets).amount) }}</td>
+            <tr class="subtotal" *ngIf="sellerSums(seller.tickets) as x">
+              <td colspan="3">Összesen<small>{{ seller.tickets.length }} jegy / nyugta</small></td>
+              <td colspan="3">
+                <div class="sums">
+                  <span>💶 Készpénz <b>{{ ft(x.cash) }}</b></span>
+                  <span>💳 Kártya <b>{{ ft(x.card) }}</b></span>
+                  <span *ngIf="x.szep > 0">🏖️ SZÉP kártya <b>{{ ft(x.szep) }}</b></span>
+                  <span *ngIf="x.voucher > 0">🎟️ Utalvány <b>{{ ft(x.voucher) }}</b></span>
+                  <span *ngIf="x.experience > 0">🎁 Élménykártya <b>{{ ft(x.experience) }}</b></span>
+                  <span *ngIf="x.other > 0">🌐 Online <b>{{ ft(x.other) }}</b></span>
+                </div>
+              </td>
+              <td class="r">{{ ft(x.amount) }}</td>
             </tr>
           </tbody>
         </table>
-      </div>
-      <div class="sums" *ngIf="sellerSums(seller.tickets) as x">
-        <span>💶 Készpénz <b>{{ ft(x.cash) }}</b></span>
-        <span>💳 Kártya <b>{{ ft(x.card) }}</b></span>
-        <span *ngIf="x.szep > 0">🏖️ SZÉP kártya <b>{{ ft(x.szep) }}</b></span>
-        <span *ngIf="x.voucher > 0">🎟️ Utalvány <b>{{ ft(x.voucher) }}</b></span>
-        <span *ngIf="x.experience > 0">🎁 Élménykártya <b>{{ ft(x.experience) }}</b></span>
-        <span *ngIf="x.other > 0">🌐 Online <b>{{ ft(x.other) }}</b></span>
       </div>
     </section>
   </ng-container>
@@ -119,7 +124,10 @@
   <ng-container *ngIf="tab === 'log' && !loading">
     <div *ngIf="logs.length === 0" class="muted">Ezen a napon nincs naplózott jegyeladás.</div>
     <div class="table-wrap" *ngIf="logs.length > 0">
-      <table>
+      <table class="fixed">
+        <colgroup>
+          <col style="width: 7%"><col style="width: 13%"><col style="width: 8%"><col style="width: 24%"><col style="width: 20%"><col style="width: 12%"><col style="width: 9%"><col style="width: 7%">
+        </colgroup>
         <thead>
           <tr>
             <th>Idő</th>
