@@ -123,7 +123,7 @@ h1 { margin: 0; color: #e8d5b7; }
 
 .showtime-card {
   display: grid;
-  grid-template-columns: 230px 80px 1fr;
+  grid-template-columns: 350px 90px 1fr;
   grid-template-areas: "date time title";
   align-items: center;
   column-gap: 16px;
@@ -147,7 +147,7 @@ h1 { margin: 0; color: #e8d5b7; }
 
 .showtime-card:hover { border-color: #d4a574; }
 .showtime-card.active { border-color: #d4a574; background: #5c3d2e; }
-.st-date { grid-area: date; font-size: 15px; font-weight: 700; color: #c9a982; }
+.st-date { grid-area: date; font-size: 22px; font-weight: 800; color: #c9a982; white-space: nowrap; }
 .st-time { grid-area: time; font-size: 22px; font-weight: 800; color: #d4a574; }
 .st-title { grid-area: title; font-size: 16px; font-weight: 700; }
 
