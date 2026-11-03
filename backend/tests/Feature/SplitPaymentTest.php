@@ -106,6 +106,19 @@ class SplitPaymentTest extends TestCase
         $this->getJson('/api/tickets/export-pdf?year=' . $year . '&payment_method=nincs')->assertStatus(422);
     }
 
+    public function test_grouped_reservations_include_the_seller_name(): void
+    {
+        $user = User::factory()->create(['role' => \App\Support\Roles::ADMIN, 'name' => 'Jankó Lajos']);
+        \Laravel\Sanctum\Sanctum::actingAs($user, ['admin:access']);
+        $reservation = $this->reservationWithSeats(2);
+        $reservation->update(['handled_by_admin_id' => $user->id]);
+
+        $row = $this->getJson('/api/reservations/grouped')->assertOk()->json('0.reservations.0');
+
+        $this->assertSame('Jankó Lajos', $row['handled_by_admin']['name']);
+        $this->assertCount(2, $row['items']);
+    }
+
     public function test_experience_card_category_tickets_stay_outside_the_split(): void
     {
         $user = User::factory()->create();

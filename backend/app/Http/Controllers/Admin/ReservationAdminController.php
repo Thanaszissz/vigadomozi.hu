@@ -36,6 +36,7 @@ class ReservationAdminController extends Controller
                 'movie',
                 'auditorium',
                 'reservations.items',
+                'reservations.handledByAdmin:id,name',
             ])
             ->orderBy('starts_at')
             ->get()

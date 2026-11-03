@@ -1,84 +1,127 @@
 <div class="admin-container">
   <div class="header">
-    <h1>Foglalások kezelése</h1>
+    <h1>📋 Foglalások kezelése</h1>
     <button (click)="goBack()" class="btn-back">← Vissza a dashboardra</button>
   </div>
 
-  <div *ngIf="loading" class="loading">
-    Foglalások betöltése...
+  <div class="filters">
+    <label class="grow">
+      <span>Keresés (előadás, név, telefonszám, e-mail, eladó, foglalás #)</span>
+      <input type="search" [(ngModel)]="query" (ngModelChange)="applyFilters()" placeholder="pl. Hogyan tudnék élni, Kovács, 30 123 4567, Jankó Lajos" />
+    </label>
+    <label>
+      <span>Státusz</span>
+      <select [(ngModel)]="statusFilter" (ngModelChange)="applyFilters()">
+        <option value="all">Mind</option>
+        <option value="PENDING">Függő</option>
+        <option value="PAID">Fizetve</option>
+        <option value="CLOSED">Törölt / lejárt</option>
+      </select>
+    </label>
+    <button type="button" class="btn" (click)="clearFilters()" [disabled]="!filtersActive">✕ Szűrők törlése</button>
+    <button type="button" class="btn" (click)="loadReservations()" [disabled]="loading" title="Frissítés">↻ Frissítés</button>
   </div>
 
-  <div *ngIf="error" class="error-message">
-    {{ error }}
-  </div>
+  <div *ngIf="loading" class="loading">Foglalások betöltése...</div>
+  <div *ngIf="error" class="error-message">{{ error }}</div>
+  <div *ngIf="notice" class="notice">{{ notice }}</div>
 
-  <div *ngIf="!loading && !error && showtimeGroups.length === 0" class="empty-state">
-    Még nincsenek foglalások
-  </div>
+  <ng-container *ngIf="!loading && !error">
+    <div *ngIf="days.length === 0" class="empty-state">
+      {{ filtersActive ? 'Nincs a szűrésnek megfelelő foglalás.' : 'Még nincsenek foglalások' }}
+    </div>
 
-  <div *ngIf="!loading && !error && showtimeGroups.length > 0" class="group-list">
-    <div *ngFor="let group of showtimeGroups" class="group-card">
-      <div class="group-header" role="button" tabindex="0" (click)="toggleShowtime(group)">
-        <div>
-          <h2>{{ group.movie?.title || 'Ismeretlen film' }}</h2>
-          <div class="group-meta">
-            {{ group.starts_at | date:'yyyy-MM-dd HH:mm' }} • {{ group.auditorium?.name || 'N/A' }}
+    <div class="overview" *ngIf="days.length > 0">
+      <div class="stat"><span>Foglalások</span><b>{{ stats.reservations }}</b></div>
+      <div class="stat pending"><span>Függő (kifizetetlen)</span><b>{{ stats.pending }}</b></div>
+      <div class="stat paid"><span>Fizetve</span><b>{{ stats.paid }}</b></div>
+      <div class="stat"><span>Foglalt / eladott székek</span><b>{{ stats.seats }}</b></div>
+      <div class="stat money"><span>Kifizetett összeg</span><b>{{ ft(stats.paidAmount) }}</b></div>
+      <div class="expand-actions">
+        <button type="button" class="btn small" (click)="expandAll(true)">Mind kinyit</button>
+        <button type="button" class="btn small" (click)="expandAll(false)">Mind becsuk</button>
+      </div>
+    </div>
+
+    <section class="day" *ngFor="let day of days">
+      <h2 class="day-title">
+        {{ day.label }}
+        <small>{{ day.showtimes.length }} előadás • {{ day.reservations }} foglalás</small>
+      </h2>
+
+      <div class="group-card" *ngFor="let view of day.showtimes" [class.open]="expanded.has(view.id)">
+        <div class="group-header" role="button" tabindex="0" (click)="toggleShowtime(view)" (keydown.enter)="toggleShowtime(view)">
+          <div class="g-time">{{ view.startsAt | date:'HH:mm' }}</div>
+          <div class="g-title">
+            <h3>{{ view.title }}</h3>
+            <div class="g-meta">{{ view.auditorium || '—' }} • {{ view.seats }} szék</div>
           </div>
+          <div class="g-chips">
+            <span class="chip pending" *ngIf="view.pending">⏳ {{ view.pending }} függő</span>
+            <span class="chip paid" *ngIf="view.paid">✅ {{ view.paid }} fizetve • {{ ft(view.paidAmount) }}</span>
+            <span class="chip">{{ view.reservations.length }} foglalás</span>
+          </div>
+          <div class="g-toggle">{{ expanded.has(view.id) ? '▲' : '▼' }}</div>
         </div>
-        <div class="group-count">{{ group.reservations?.length || 0 }} foglalás</div>
-        <div class="group-toggle">
-          {{ expandedShowtimeId === group.id ? '▲' : '▼' }}
+
+        <div class="table-wrap" *ngIf="expanded.has(view.id)">
+          <table class="reservations-table">
+            <colgroup>
+              <col style="width: 5%"><col style="width: 13%"><col style="width: 18%"><col style="width: 14%"><col style="width: 8%"><col style="width: 10%"><col style="width: 10%"><col style="width: 9%"><col style="width: 13%">
+            </colgroup>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Foglaló</th>
+                <th>Elérhetőség</th>
+                <th>Székek</th>
+                <th class="r">Összeg</th>
+                <th>Státusz</th>
+                <th>Eladó</th>
+                <th>Létrehozva</th>
+                <th>Műveletek</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let r of view.reservations" [class.muted-row]="r.status === 'CANCELLED' || r.status === 'EXPIRED'">
+                <td class="id">#{{ r.id }}</td>
+                <td class="name">{{ r.customer_name || '—' }}</td>
+                <td class="contact">
+                  <div>{{ r.customer_phone || '—' }}</div>
+                  <small>{{ r.customer_email && !r.customer_email.endsWith('@vigadojegy.hu') ? r.customer_email : '' }}</small>
+                </td>
+                <td class="seats">
+                  <div *ngFor="let line of seatLines(r)">
+                    <small *ngIf="line.section">{{ line.section }}: </small>{{ line.seats }}
+                  </div>
+                </td>
+                <td class="r price">{{ ft(r.total_amount) }}</td>
+                <td>
+                  <span class="status-badge" [class.paid]="r.status === 'PAID'" [class.pending]="r.status === 'PENDING'" [class.cancelled]="r.status === 'CANCELLED'" [class.expired]="r.status === 'EXPIRED'">{{ statusLabel(r.status) }}</span>
+                  <small class="pay" *ngIf="r.status === 'PAID' && r.payment_provider">{{ paymentLabel(r.payment_provider) }}</small>
+                </td>
+                <td>{{ sellerName(r) || '—' }}</td>
+                <td>{{ r.created_at | date:'yyyy.MM.dd. HH:mm' }}</td>
+                <td class="actions">
+                  <ng-container *ngIf="r.status === 'PENDING'">
+                    <button class="btn-act card" type="button" (click)="startCardPayment(r)">💳 Kártya</button>
+                    <button class="btn-act cash" type="button" (click)="markPaidCash(r)">💶 Készpénz</button>
+                    <button class="btn-act del" type="button" (click)="askDelete(r)">🗑 Törlés</button>
+                  </ng-container>
+                  <ng-container *ngIf="r.status === 'PAID'">
+                    <button class="btn-act print" type="button" [disabled]="printing.has(r.id)" (click)="printReservationTickets(r)">
+                      {{ printing.has(r.id) ? '…' : '🖨️ Jegyek' }}
+                    </button>
+                    <button class="btn-act receipt" type="button" (click)="printReceipt(r, view.raw)">📄 Igazolás</button>
+                  </ng-container>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
-
-      <table class="reservations-table" *ngIf="expandedShowtimeId === group.id && group.reservations?.length">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Név</th>
-            <th>Telefon</th>
-            <th>Email</th>
-            <th>Ülések</th>
-            <th>Ár</th>
-            <th>Státusz</th>
-            <th>Fizetés</th>
-            <th>Dátum</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let reservation of group.reservations">
-            <td>#{{ reservation.id }}</td>
-            <td>{{ reservation.customer_name || 'N/A' }}</td>
-            <td>{{ reservation.customer_phone || 'N/A' }}</td>
-            <td>{{ reservation.customer_email || 'N/A' }}</td>
-            <td>
-              <span class="seat-badge">{{ reservation.items?.length || 0 }} ülés</span>
-            </td>
-            <td class="price">{{ reservation.total_amount }} Ft</td>
-            <td>
-              <span class="status-badge" [class.paid]="reservation.status === 'PAID'" [class.pending]="reservation.status === 'PENDING'" [class.cancelled]="reservation.status === 'CANCELLED'" [class.expired]="reservation.status === 'EXPIRED'">
-                {{ reservation.status === 'PAID' ? 'Fizetve' : reservation.status === 'PENDING' ? 'Függő' : reservation.status === 'CANCELLED' ? 'Törölve' : reservation.status === 'EXPIRED' ? 'Lejárt' : reservation.status }}
-              </span>
-            </td>
-            <td>
-              <div class="payment-actions" *ngIf="reservation.status === 'PENDING'">
-                <button class="btn-pay btn-card" type="button" (click)="startCardPayment(reservation)">Kártya</button>
-                <button class="btn-pay btn-cash" type="button" (click)="markPaidCash(reservation)">Készpénz</button>
-                <button class="btn-pay btn-delete" type="button" (click)="askDelete(reservation)">Törlés</button>
-              </div>
-              <div *ngIf="reservation.status !== 'PENDING'" class="paid-info">
-                <span>
-                  {{ reservation.payment_provider === 'cash' ? 'Készpénz' : (reservation.payment_provider || '—') }}
-                </span>
-                <button *ngIf="reservation.status === 'PAID'" class="btn-pay btn-receipt" type="button" (click)="printReceipt(reservation)">Igazolás (PDF)</button>
-              </div>
-            </td>
-            <td>{{ reservation.created_at | date:'yyyy-MM-dd HH:mm' }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
+    </section>
+  </ng-container>
 
   <div *ngIf="cashConfirmOpen" class="modal-backdrop" (click)="closeCashConfirm()"></div>
   <div *ngIf="cashConfirmOpen" class="modal" role="dialog" aria-modal="true">
@@ -87,8 +130,8 @@
       <p>A foglalást kifizetik készpénzzel?</p>
       <div *ngIf="cashPaymentError" class="modal-error">{{ cashPaymentError }}</div>
       <div class="modal-actions">
-        <button class="btn-pay btn-card" type="button" (click)="confirmCashPayment()">Igen</button>
-        <button class="btn-pay btn-cash" type="button" (click)="closeCashConfirm()">Mégsem</button>
+        <button class="btn-act card" type="button" (click)="confirmCashPayment()">Igen</button>
+        <button class="btn-act cash" type="button" (click)="closeCashConfirm()">Mégsem</button>
       </div>
     </div>
   </div>
@@ -104,8 +147,8 @@
       </p>
       <div *ngIf="deleteError" class="modal-error">{{ deleteError }}</div>
       <div class="modal-actions">
-        <button class="btn-pay btn-delete" type="button" [disabled]="deleting" (click)="confirmDelete()">Igen, törlöm</button>
-        <button class="btn-pay btn-cash" type="button" [disabled]="deleting" (click)="closeDeleteConfirm()">Mégsem</button>
+        <button class="btn-act del" type="button" [disabled]="deleting" (click)="confirmDelete()">Igen, törlöm</button>
+        <button class="btn-act cash" type="button" [disabled]="deleting" (click)="closeDeleteConfirm()">Mégsem</button>
       </div>
     </div>
   </div>

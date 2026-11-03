@@ -603,6 +603,11 @@ export class AdminService {
     return this.http.get<any[]>(`${this.apiUrl}/reservations/grouped`);
   }
 
+  /** Egy foglalás kiállított (nem sztornózott) jegyei, nyomtatáshoz. */
+  getReservationTickets(reservationId: number): Observable<Ticket[]> {
+    return this.http.get<Ticket[]>(`${this.apiUrl}/pos/reservations/${reservationId}/tickets`);
+  }
+
   startReservationPayment(reservationId: number, method: 'cash' | 'card'): Observable<any> {
     return this.http.post<any>(`${this.apiUrl}/reservations/${reservationId}/start-payment`, { method });
   }
