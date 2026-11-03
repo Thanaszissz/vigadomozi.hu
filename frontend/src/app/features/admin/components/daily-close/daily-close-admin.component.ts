@@ -152,6 +152,134 @@ export class DailyCloseAdminComponent implements OnInit {
     return ({ pos: 'Pénztár', admin: 'Admin', online: 'Online' } as Record<string, string>)[channel] ?? channel;
   }
 
+  // ---- Összesítő megjelenítés ----
+
+  /** Forint, ezres tagolással (szóközzel), sortörés nélkül. */
+  ft(n: number): string {
+    return `${Math.round(n).toLocaleString('hu-HU')}\u00A0Ft`;
+  }
+
+  /** A mindösszesen hány százaléka az adott összeg. */
+  pct(amount: number): string {
+    const total = this.visibleTotals.amount;
+    return total > 0 ? `${Math.round((amount / total) * 100)}%` : '–';
+  }
+
+  /** Fizetési módonkénti sorok: a készpénz és a bankkártya mindig látszik, a többi csak ha volt forgalom. */
+  get methodRows(): Array<{ key: string; icon: string; label: string; amount: number }> {
+    const t = this.visibleTotals;
+    return [
+      { key: 'cash', icon: '💶', label: 'Készpénz', amount: t.cash, always: true },
+      { key: 'card', icon: '💳', label: 'Bankkártya', amount: t.card, always: true },
+      { key: 'szep', icon: '🏖️', label: 'SZÉP kártya', amount: t.szep, always: false },
+      { key: 'voucher', icon: '🎟️', label: 'Utalvány', amount: t.voucher, always: false },
+      { key: 'experience', icon: '🎁', label: 'Élménykártya (érték)', amount: t.experience, always: false },
+      { key: 'other', icon: '🌐', label: 'Online (bankkártya)', amount: t.other, always: false }
+    ].filter(r => r.always || r.amount > 0);
+  }
+
+  /** A jegyek kategóriánként: a sorok együtt kiadják az összes jegyet és a mindösszesen összeget. */
+  get categoryRows(): Array<{ key: TicketCategory; label: string; tickets: number; amount: number }> {
+    const tickets = this.visibleSellers.flatMap(s => s.tickets);
+    const labels: Record<string, string> = {
+      standard: 'Normál jegy',
+      staff: 'Dolgozó jegy',
+      experience_card: 'Élménykártyás jegy',
+      service: 'Egyéb szolgáltatás (nyugta)'
+    };
+    return (['standard', 'staff', 'experience_card', 'service'] as TicketCategory[])
+      .map(key => {
+        const rows = tickets.filter(t => (t.category ?? 'standard') === key);
+        return { key, label: labels[key], tickets: rows.length, amount: rows.reduce((s, t) => s + t.price_amount, 0) };
+      })
+      .filter(c => c.tickets > 0);
+  }
+
+  // ---- CSV export ----
+
+  /**
+   * A látható napi zárás CSV-ben (Excel-barát: pontosvesszős, UTF-8 BOM-mal): fejléc, összesítők (fizetési mód, kategória, eladó),
+   * majd minden jegy külön sorban, fizetési módonkénti oszlopokkal (részfizetésnél a jegy összege szétosztva).
+   */
+  exportCsv(): void {
+    if (!this.close) return;
+
+    const sellers = this.visibleSellers;
+    const totals = this.visibleTotals;
+    const current = this.auth.getCurrentUser();
+    const day = this.date.replace(/-/g, '.') + '.';
+    const filterNote = this.sellerFilter === 'all' ? 'Minden eladó' : (sellers[0]?.user_name ?? '');
+    const dt = (v: string) => formatDate(v, 'yyyy-MM-dd HH:mm', 'en-US');
+
+    const lines: Array<Array<string | number>> = [];
+    const blank = () => lines.push([]);
+
+    lines.push(['Napi zárás – Vigadó Jegy']);
+    lines.push(['Nap', day]);
+    lines.push(['Eladó', filterNote]);
+    lines.push(['Készítette', current?.name ?? '']);
+    lines.push(['Készült', formatDate(new Date(), 'yyyy-MM-dd HH:mm', 'en-US')]);
+    blank();
+
+    lines.push(['FIZETÉSI MÓDOK']);
+    lines.push(['Fizetési mód', 'Összeg (Ft)']);
+    for (const m of this.methodRows) lines.push([m.label, m.amount]);
+    lines.push(['Mindösszesen', totals.amount]);
+    blank();
+
+    lines.push(['JEGYKATEGÓRIÁK']);
+    lines.push(['Kategória', 'Darab', 'Összeg (Ft)']);
+    for (const c of this.categoryRows) lines.push([c.label, c.tickets, c.amount]);
+    lines.push(['Összesen', totals.tickets, totals.amount]);
+    blank();
+
+    lines.push(['ELADÓNKÉNT']);
+    lines.push(['Eladó', 'Jegyek / nyugták (db)', 'Készpénz (Ft)', 'Bankkártya (Ft)', 'SZÉP kártya (Ft)', 'Utalvány (Ft)', 'Élménykártya (Ft)', 'Online (Ft)', 'Összesen (Ft)']);
+    for (const s of sellers) {
+      const x = this.sellerSums(s.tickets);
+      lines.push([s.user_name, s.tickets.length, x.cash, x.card, x.szep, x.voucher, x.experience, x.other, x.amount]);
+    }
+    blank();
+
+    lines.push(['TÉTELEK']);
+    lines.push(['Eladó', 'Jegyszám', 'Eladva', 'Film / szolgáltatás', 'Kategória', 'Előadás kezdete', 'Szint', 'Sor', 'Szék', 'Fizetési mód',
+      'Készpénz (Ft)', 'Bankkártya (Ft)', 'SZÉP kártya (Ft)', 'Utalvány (Ft)', 'Élménykártya (Ft)', 'Online (Ft)', 'Ár (Ft)']);
+    for (const s of sellers) {
+      for (const t of s.tickets) {
+        const x = this.sellerSums([t]);
+        const service = this.isService(t);
+        lines.push([
+          s.user_name, t.ticket_number, dt(t.sold_at), t.movie_title, categoryLabel(t.category),
+          service ? '' : dt(t.starts_at), service ? '' : (t.section ?? ''), service ? '' : t.row_label, service ? '' : (t.seat_number ?? ''),
+          ticketPaymentLabel(t), x.cash, x.card, x.szep, x.voucher, x.experience, x.other, t.price_amount
+        ]);
+      }
+    }
+
+    const cell = (v: string | number): string => {
+      if (typeof v === 'number') return String(Math.round(v));
+      // Táblázatkezelő-képlet beszúrás ellen: a =, +, -, @ kezdetű szöveg elé aposztróf kerül
+      const text = /^[=+\-@\t\r]/.test(v) ? `'${v}` : v;
+      return /[";\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+    };
+    const csv = '\uFEFF' + lines.map(row => row.map(cell).join(';')).join('\r\n') + '\r\n';
+
+    const who = this.sellerFilter === 'all' ? '' : '_' + (sellers[0]?.user_name ?? 'elado').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '').toLowerCase();
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+    link.download = `napi_zaras_${this.date}${who}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+
+    this.admin.logClientEvent(
+      'report.daily_close_export',
+      `Napi zárás exportálása (CSV): ${this.date}${this.sellerFilter === 'all' ? '' : ' (egy eladó)'}`,
+      { date: this.date, tickets: String(totals.tickets), amount: String(totals.amount) }
+    );
+  }
+
   // ---- Nyomtatás ----
 
   print(): void {

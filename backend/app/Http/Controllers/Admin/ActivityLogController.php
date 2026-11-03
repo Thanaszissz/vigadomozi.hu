@@ -13,7 +13,7 @@ use Illuminate\Validation\Rule;
 class ActivityLogController extends Controller
 {
     // A böngészőből bejelentett események (a nyomtatás csak a kliensen látszik)
-    private const CLIENT_EVENTS = ['ticket.print', 'report.daily_close_print'];
+    private const CLIENT_EVENTS = ['ticket.print', 'report.daily_close_print', 'report.daily_close_export'];
 
     public function index(Request $request): JsonResponse
     {

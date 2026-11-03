@@ -21,6 +21,7 @@
     </label>
 
     <span class="spacer"></span>
+    <button type="button" class="btn" (click)="exportCsv()" [disabled]="!close || loading">⬇️ CSV export</button>
     <button type="button" class="btn primary" (click)="print()" [disabled]="!close || loading">🖨️ Napi zárás nyomtatása</button>
   </div>
 
@@ -35,16 +36,36 @@
   <div *ngIf="error" class="alert">{{ error }}</div>
 
   <ng-container *ngIf="tab === 'close' && close && !loading">
-    <div class="summary">
-      <div class="card"><span>Eladott jegyek / nyugták</span><b>{{ visibleTotals.tickets }} db</b></div>
-      <div class="card"><span>Készpénz</span><b>{{ visibleTotals.cash | number:'1.0-0' }} Ft</b></div>
-      <div class="card"><span>Bankkártya</span><b>{{ visibleTotals.card | number:'1.0-0' }} Ft</b></div>
-      <div class="card" *ngIf="visibleTotals.szep > 0"><span>SZÉP kártya</span><b>{{ visibleTotals.szep | number:'1.0-0' }} Ft</b></div>
-      <div class="card" *ngIf="visibleTotals.voucher > 0"><span>Utalvány</span><b>{{ visibleTotals.voucher | number:'1.0-0' }} Ft</b></div>
-      <div class="card" *ngIf="visibleTotals.experience > 0"><span>Élménykártya (érték)</span><b>{{ visibleTotals.experience | number:'1.0-0' }} Ft</b></div>
-      <div class="card" *ngIf="visibleTotals.other > 0"><span>Egyéb (online)</span><b>{{ visibleTotals.other | number:'1.0-0' }} Ft</b></div>
-      <div class="card" *ngFor="let c of visibleCategorySums"><span>{{ c.label }}</span><b>{{ c.tickets }} db<ng-container *ngIf="c.amount"> • {{ c.amount | number:'1.0-0' }} Ft</ng-container></b></div>
-      <div class="card total"><span>Mindösszesen</span><b>{{ visibleTotals.amount | number:'1.0-0' }} Ft</b></div>
+    <div class="overview">
+      <div class="kpi">
+        <span>Mindösszesen</span>
+        <b>{{ ft(visibleTotals.amount) }}</b>
+        <small>{{ visibleTotals.tickets }} db jegy / nyugta</small>
+      </div>
+
+      <section class="panel">
+        <h3>Fizetési módok</h3>
+        <ul class="rows">
+          <li *ngFor="let m of methodRows">
+            <span class="lbl"><i>{{ m.icon }}</i>{{ m.label }}</span>
+            <span class="share">{{ pct(m.amount) }}</span>
+            <b>{{ ft(m.amount) }}</b>
+          </li>
+        </ul>
+        <div class="rows-total"><span>Összesen</span><b>{{ ft(visibleTotals.amount) }}</b></div>
+      </section>
+
+      <section class="panel">
+        <h3>Jegykategóriák</h3>
+        <ul class="rows">
+          <li *ngFor="let c of categoryRows">
+            <span class="lbl">{{ c.label }}</span>
+            <span class="share">{{ c.tickets }} db</span>
+            <b>{{ ft(c.amount) }}</b>
+          </li>
+        </ul>
+        <div class="rows-total"><span>Összesen</span><b>{{ visibleTotals.tickets }} db • {{ ft(visibleTotals.amount) }}</b></div>
+      </section>
     </div>
 
     <div *ngIf="visibleSellers.length === 0" class="muted">Ezen a napon nem volt jegyeladás.</div>
@@ -52,7 +73,7 @@
     <section class="seller" *ngFor="let seller of visibleSellers">
       <h2>
         {{ seller.user_name }}
-        <small>{{ seller.tickets.length }} jegy • {{ seller.totals.amount | number:'1.0-0' }} Ft</small>
+        <small>{{ seller.tickets.length }} jegy • {{ ft(seller.totals.amount) }}</small>
       </h2>
       <div class="table-wrap">
         <table>
@@ -75,18 +96,18 @@
               <td>{{ isService(t) ? '—' : (t.starts_at | date:'yyyy.MM.dd. HH:mm') }}</td>
               <td>{{ isService(t) ? '—' : ((t.section ? t.section + ' · ' : '') + t.row_label + ' / ' + (t.seat_number ?? '—')) }}</td>
               <td><span class="badge" [class.cash]="t.payment_method === 'cash'" [class.card]="t.payment_method === 'card'" [class.szep]="t.payment_method === 'szep_card'" [class.mixed]="t.payment_method === 'mixed'">{{ ticketPaymentLabel(t) }}</span></td>
-              <td class="r">{{ t.price_amount | number:'1.0-0' }} Ft</td>
+              <td class="r">{{ ft(t.price_amount) }}</td>
             </tr>
             <tr class="subtotal">
               <td colspan="5">Összesen</td>
               <td>
-                Készpénz: {{ sellerSums(seller.tickets).cash | number:'1.0-0' }} Ft •
-                Kártya: {{ sellerSums(seller.tickets).card | number:'1.0-0' }} Ft
-                <ng-container *ngIf="sellerSums(seller.tickets).szep > 0"> • SZÉP kártya: {{ sellerSums(seller.tickets).szep | number:'1.0-0' }} Ft</ng-container>
-                <ng-container *ngIf="sellerSums(seller.tickets).voucher > 0"> • Utalvány: {{ sellerSums(seller.tickets).voucher | number:'1.0-0' }} Ft</ng-container>
-                <ng-container *ngIf="sellerSums(seller.tickets).experience > 0"> • Élménykártya: {{ sellerSums(seller.tickets).experience | number:'1.0-0' }} Ft</ng-container>
+                Készpénz: {{ ft(sellerSums(seller.tickets).cash) }} •
+                Kártya: {{ ft(sellerSums(seller.tickets).card) }}
+                <ng-container *ngIf="sellerSums(seller.tickets).szep > 0"> • SZÉP kártya: {{ ft(sellerSums(seller.tickets).szep) }}</ng-container>
+                <ng-container *ngIf="sellerSums(seller.tickets).voucher > 0"> • Utalvány: {{ ft(sellerSums(seller.tickets).voucher) }}</ng-container>
+                <ng-container *ngIf="sellerSums(seller.tickets).experience > 0"> • Élménykártya: {{ ft(sellerSums(seller.tickets).experience) }}</ng-container>
               </td>
-              <td class="r">{{ sellerSums(seller.tickets).amount | number:'1.0-0' }} Ft</td>
+              <td class="r">{{ ft(sellerSums(seller.tickets).amount) }}</td>
             </tr>
           </tbody>
         </table>
@@ -118,7 +139,7 @@
             <td>{{ l.movie_title }} <span class="muted" *ngIf="l.starts_at">({{ l.starts_at | date:'MM.dd. HH:mm' }})</span></td>
             <td class="num">{{ l.ticket_numbers }}</td>
             <td>{{ paymentLabel(l.payment_method) }}</td>
-            <td class="r">{{ l.total_amount | number:'1.0-0' }} Ft</td>
+            <td class="r">{{ ft(l.total_amount) }}</td>
             <td>{{ l.ip_address || '—' }}</td>
           </tr>
         </tbody>
