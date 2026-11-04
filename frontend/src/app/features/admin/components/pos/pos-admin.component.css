@@ -123,8 +123,8 @@ h1 { margin: 0; color: #e8d5b7; }
 
 .showtime-card {
   display: grid;
-  grid-template-columns: 350px 90px 1fr;
-  grid-template-areas: "date time title";
+  grid-template-columns: minmax(0, 1fr) 330px 80px;
+  grid-template-areas: "title date time";
   align-items: center;
   column-gap: 16px;
   text-align: left;
@@ -138,18 +138,18 @@ h1 { margin: 0; color: #e8d5b7; }
 
 @media (max-width: 640px) {
   .showtime-card {
-    grid-template-columns: auto 1fr;
-    grid-template-areas: "date date" "time title";
+    grid-template-columns: 1fr auto;
+    grid-template-areas: "title title" "date time";
     column-gap: 12px;
   }
-  .st-date { margin-bottom: 2px; }
+  .st-title { margin-bottom: 2px; }
 }
 
 .showtime-card:hover { border-color: #d4a574; }
 .showtime-card.active { border-color: #d4a574; background: #5c3d2e; }
+.st-title { grid-area: title; font-size: 22px; font-weight: 800; color: #e8d5b7; overflow-wrap: anywhere; }
 .st-date { grid-area: date; font-size: 22px; font-weight: 800; color: #c9a982; white-space: nowrap; }
 .st-time { grid-area: time; font-size: 22px; font-weight: 800; color: #d4a574; }
-.st-title { grid-area: title; font-size: 16px; font-weight: 700; }
 
 .gap-toast {
   position: fixed;

@@ -35,9 +35,9 @@
     <div class="showtime-list" *ngIf="showtimes.length > 0">
       <button *ngFor="let s of showtimes" type="button" class="showtime-card"
               [class.active]="showtime?.id === s.id" (click)="selectShowtime(s)">
+        <span class="st-title">{{ s.movie.title }}</span>
         <span class="st-date">{{ showtimeDayLabel(s) }}</span>
         <span class="st-time">{{ s.starts_at | date:'HH:mm' }}</span>
-        <span class="st-title">{{ s.movie.title }}</span>
         <span class="st-cart" *ngIf="cartCountFor(s.id) > 0">🛒 {{ cartCountFor(s.id) }}</span>
       </button>
     </div>
