@@ -168,9 +168,15 @@ export class PosServicesComponent implements OnInit {
     this.printOpen = false;
   }
 
+  /** Előnyomott jegyalapnál (a jegyeladás beállítása) a jegyalap nem nyomtatódik, csak a szöveg. */
+  get withBackground(): boolean {
+    return localStorage.getItem('pos.preprintedStock') !== '1';
+  }
+
   printSold(): void {
     void printTickets(this.soldTickets, numbers =>
-      this.admin.logClientEvent('ticket.print', `Nyugtanyomtatás: ${numbers.join(', ')}`, { tickets: numbers })
+      this.admin.logClientEvent('ticket.print', `Nyugtanyomtatás: ${numbers.join(', ')}`, { tickets: numbers }),
+      this.withBackground
     );
   }
 

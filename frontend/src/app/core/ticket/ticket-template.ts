@@ -71,8 +71,11 @@ export function ticketBaseUrl(): string {
   return new URL('assets/ticket-base.png', document.baseURI).href;
 }
 
-/** Egy jegy HTML-je; a scale a 840 px-es vászon kicsinyítése (1 = eredeti méret). */
-export function ticketMarkup(t: TicketView, scale = 1): string {
+/**
+ * Egy jegy HTML-je; a scale a 840 px-es vászon kicsinyítése (1 = eredeti méret).
+ * Ha a withBackground hamis, a jegyalap (háttérkép) nem kerül rá: előnyomott jegyalapra nyomtatáshoz csak a szöveg jelenik meg.
+ */
+export function ticketMarkup(t: TicketView, scale = 1, withBackground = true): string {
   const service = t.category === 'service';
   const tag = t.category === 'staff' ? 'Dolgozó jegy' : t.category === 'experience_card' ? 'Élménykártya' : '';
   // A szolgáltatás-nyugtának nincs előadása: az eladás időpontja szerepel rajta
@@ -106,7 +109,7 @@ export function ticketMarkup(t: TicketView, scale = 1): string {
 
   return `<div class="tk-box" style="width:${TICKET_W * scale}px;height:${TICKET_H * scale}px;">
     <div class="tk" style="transform:scale(${scale});">
-      <img class="tk-bg" src="${esc(ticketBaseUrl())}" alt="">
+      ${withBackground ? `<img class="tk-bg" src="${esc(ticketBaseUrl())}" alt="">` : ''}
       <div class="tk-abs tk-main">
         <div class="tk-title" style="font-size:${titleSize(t.movie_title)}px;">${esc(t.movie_title)}</div>
         <div class="tk-when">${esc(whenLine)}</div>

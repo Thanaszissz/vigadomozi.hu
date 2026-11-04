@@ -12,6 +12,10 @@
   <div class="area-tabs">
     <button type="button" [class.active]="area === 'cinema'" (click)="area = 'cinema'">🎬 Mozijegyek</button>
     <button type="button" [class.active]="area === 'services'" (click)="area = 'services'">🎫 Egyéb szolgáltatások</button>
+    <label class="preprint-toggle" title="Előnyomott jegyalapra nyomtatáshoz: a jegyalap (háttér) nem nyomtatódik, csak a szöveg">
+      <input type="checkbox" [(ngModel)]="preprintedStock" (ngModelChange)="savePreprintedStock()">
+      Előnyomott jegyalap (csak a szöveg nyomtatása)
+    </label>
     <span class="cart-pill" *ngIf="cartItemCount > 0">🛒 {{ cartItemCount }} tétel • {{ cartAmount | number:'1.0-0' }} Ft</span>
   </div>
 
@@ -427,7 +431,7 @@
     </section>
   </div>
 
-  <app-ticket-print *ngIf="printOpen" [tickets]="soldTickets" (close)="closePrint()"></app-ticket-print>
+  <app-ticket-print *ngIf="printOpen" [tickets]="soldTickets" [withBackground]="!preprintedStock" (close)="closePrint()"></app-ticket-print>
   </ng-container>
 
   <div *ngIf="invoiceConfirmOpen" class="modal-backdrop" (click)="closeInvoiceConfirm()"></div>

@@ -104,7 +104,7 @@
   </table>
 </section>
 
-<app-ticket-print *ngIf="printOpen" [tickets]="soldTickets" (close)="closePrint()"></app-ticket-print>
+<app-ticket-print *ngIf="printOpen" [tickets]="soldTickets" [withBackground]="withBackground" (close)="closePrint()"></app-ticket-print>
 
 <div *ngIf="voidTarget" class="modal-backdrop" (click)="closeVoid()"></div>
 <div *ngIf="voidTarget" class="modal" role="dialog" aria-modal="true" (click)="closeVoid()">

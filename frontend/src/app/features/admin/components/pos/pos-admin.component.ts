@@ -103,6 +103,8 @@ export class PosAdminComponent implements OnInit, OnDestroy {
   printOpen = false;
   // eladás után a jegyek azonnal, előnézet nélkül a nyomtatóra mennek (a beállítás a böngészőben megmarad)
   autoPrint = localStorage.getItem('pos.autoPrint') !== '0';
+  // előnyomott jegyalap: a jegyalap (háttér) nem nyomtatódik, csak a szöveg (a beállítás a böngészőben megmarad)
+  preprintedStock = localStorage.getItem('pos.preprintedStock') === '1';
 
   // ÁFÁS számla (Számlázz.hu)
   invoicingEnabled = false;
@@ -1065,12 +1067,17 @@ export class PosAdminComponent implements OnInit, OnDestroy {
   /** Az eladott jegyek közvetlen nyomtatása (előnézet nélkül). */
   printSold(): void {
     void printTickets(this.soldTickets, numbers =>
-      this.admin.logClientEvent('ticket.print', `Jegynyomtatás: ${numbers.join(', ')}`, { tickets: numbers })
+      this.admin.logClientEvent('ticket.print', `Jegynyomtatás: ${numbers.join(', ')}`, { tickets: numbers }),
+      !this.preprintedStock
     );
   }
 
   saveAutoPrint(): void {
     localStorage.setItem('pos.autoPrint', this.autoPrint ? '1' : '0');
+  }
+
+  savePreprintedStock(): void {
+    localStorage.setItem('pos.preprintedStock', this.preprintedStock ? '1' : '0');
   }
 
   // ---- Foglalás fizetés nélkül ----

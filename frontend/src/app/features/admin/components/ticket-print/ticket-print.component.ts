@@ -49,7 +49,7 @@ export function preloadTicketBackground(): void {
  * Párbeszédablak nélküli nyomtatáshoz a böngészőt --kiosk-printing kapcsolóval kell indítani; ilyenkor az
  * alapértelmezett nyomtatóra megy a jegy.
  */
-export async function printTickets(tickets: Ticket[], onPrint?: (numbers: string[]) => void): Promise<void> {
+export async function printTickets(tickets: Ticket[], onPrint?: (numbers: string[]) => void, withBackground = true): Promise<void> {
   if (!tickets.length) return;
 
   onPrint?.(tickets.map(t => t.ticket_number));
@@ -61,7 +61,7 @@ export async function printTickets(tickets: Ticket[], onPrint?: (numbers: string
 
   const doc = frame.contentDocument!;
   doc.open();
-  const pages = tickets.map(t => ticketMarkup(t, TICKET_PRINT_SCALE)).join('');
+  const pages = tickets.map(t => ticketMarkup(t, TICKET_PRINT_SCALE, withBackground)).join('');
   doc.write(`<!doctype html><html><head><meta charset="utf-8"><title>Jegyek</title><style>${PRINT_PAGE_CSS}</style></head><body>${pages}</body></html>`);
   doc.close();
 
@@ -127,6 +127,8 @@ export async function printTickets(tickets: Ticket[], onPrint?: (numbers: string
 })
 export class TicketPrintComponent {
   @Input() tickets: Ticket[] = [];
+  /** Hamis esetén a jegyalap nélkül, csak a szöveg jelenik meg (előnyomott jegyalapra nyomtatáshoz). */
+  @Input() withBackground = true;
   @Output() close = new EventEmitter<void>();
 
   paymentLabel = paymentLabel;
@@ -137,13 +139,14 @@ export class TicketPrintComponent {
 
   // A jegy HTML-je saját, escape-elt sablonból készül, ezért biztonságos
   markup(t: Ticket, scale: number): SafeHtml {
-    return this.sanitizer.bypassSecurityTrustHtml(ticketMarkup(t, scale));
+    return this.sanitizer.bypassSecurityTrustHtml(ticketMarkup(t, scale, this.withBackground));
   }
 
   // A jegyeket külön, rejtett keretben nyomtatjuk, így az admin felület nem kerül rá a lapra
   async print(): Promise<void> {
     await printTickets(this.tickets, numbers =>
-      this.admin.logClientEvent('ticket.print', `Jegynyomtatás: ${numbers.join(', ')}`, { tickets: numbers })
+      this.admin.logClientEvent('ticket.print', `Jegynyomtatás: ${numbers.join(', ')}`, { tickets: numbers }),
+      this.withBackground
     );
   }
 }
