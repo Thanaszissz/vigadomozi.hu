@@ -81,6 +81,7 @@ Route::middleware('permission:reports.view')->group(function () {
 // Helyszíni jegyeladás (pénztáros, vezető, adminisztrátor)
 Route::middleware('permission:pos.sell')->group(function () {
     Route::post('pos/sell', [PosController::class, 'sell']);
+    Route::post('pos/sell-multi', [PosController::class, 'sellMulti']);
     Route::post('pos/hold', [PosController::class, 'hold']);
     Route::get('pos/customers', [PosController::class, 'searchCustomers']);
 

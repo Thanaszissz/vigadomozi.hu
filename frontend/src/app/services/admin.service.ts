@@ -641,6 +641,16 @@ export class AdminService {
     return this.http.post<{ reservation: any; tickets: Ticket[] }>(`${this.apiUrl}/pos/sell`, payload);
   }
 
+  // Egy tranzakcióban több különböző előadásra szóló eladás (kosár)
+  posSellMulti(payload: {
+    items: Array<{ showtime_id: number; seatKeys: string[]; seat_categories?: Record<string, TicketCategory> }>;
+    payment_method?: PaymentMethod;
+    payments?: PaymentPart[];
+    customer_name?: string;
+  }): Observable<{ reservation: any; reservations: any[]; tickets: Ticket[] }> {
+    return this.http.post<{ reservation: any; reservations: any[]; tickets: Ticket[] }>(`${this.apiUrl}/pos/sell-multi`, payload);
+  }
+
   // Egyéb szolgáltatások értékesítése (nyugtával)
   posServices(): Observable<{ services: Array<{ id: number; name: string; price: number }>; staff_price: number }> {
     return this.http.get<{ services: Array<{ id: number; name: string; price: number }>; staff_price: number }>(`${this.apiUrl}/pos/services`);

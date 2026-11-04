@@ -87,6 +87,108 @@ class PosController extends Controller
     }
 
     /**
+     * Egy tranzakcióban több különböző előadásra szóló jegyeladás: előadásonként külön foglalás készül,
+     * a fizetés (akár részfizetés) az egész kosárra egyben történik, és a jegyek sorszáma folyamatos.
+     * Bármelyik előadás ütközésekor semmi nem kerül rögzítésre.
+     */
+    public function sellMulti(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'items' => ['required', 'array', 'min:1', 'max:10'],
+            'items.*.showtime_id' => ['required', 'integer', 'distinct', 'exists:showtimes,id'],
+            'items.*.seatKeys' => ['required', 'array', 'min:1', 'max:20'],
+            'items.*.seatKeys.*' => ['string', 'max:120', 'distinct'],
+            'items.*.seat_categories' => ['nullable', 'array'],
+            'items.*.seat_categories.*' => ['string', Rule::in(TicketCategory::SEAT)],
+            'payment_method' => ['required_without:payments', 'nullable', 'string', 'in:cash,card,szep_card'],
+            'payments' => ['sometimes', 'array', 'min:1', 'max:5'],
+            'payments.*.method' => ['required', 'string', Rule::in(PaymentSplit::METHODS)],
+            'payments.*.amount' => ['required', 'integer', 'min:1', 'max:10000000'],
+            'customer_name' => ['nullable', 'string', 'max:255', 'regex:/^[^<>\x00-\x1F\x7F]+$/u'],
+            'customer_phone' => ['nullable', 'string', 'max:20'],
+        ]);
+
+        if (array_sum(array_map(fn($item) => count($item['seatKeys']), $data['items'])) > 50) {
+            return response()->json(['message' => 'Egyszerre legfeljebb 50 jegy adható el.'], 422);
+        }
+
+        $showtimes = Showtime::with(['movie', 'auditorium'])->findMany(array_column($data['items'], 'showtime_id'))->keyBy('id');
+        foreach ($data['items'] as $item) {
+            $this->assertCategoriesMatchSeats($item);
+
+            $showtime = $showtimes[$item['showtime_id']];
+            if ($error = $this->salesClosedReason($showtime)) {
+                return response()->json(['message' => "{$showtime->program_title}: {$error}"], 422);
+            }
+        }
+
+        try {
+            $reservations = DB::transaction(function () use ($showtimes, $data, $request) {
+                $created = [];
+                foreach ($data['items'] as $item) {
+                    $showtime = $showtimes[$item['showtime_id']];
+                    $reservation = Reservation::create([
+                        'showtime_id' => $showtime->id,
+                        'customer_email' => self::WALK_IN_EMAIL,
+                        'customer_name' => $data['customer_name'] ?? null ?: 'Helyszíni vásárló',
+                        'customer_phone' => $data['customer_phone'] ?? null,
+                        'status' => 'PENDING',
+                        'currency' => 'HUF',
+                        'total_amount' => 0,
+                        'expires_at' => null,
+                    ]);
+
+                    try {
+                        $this->claims->claimSeats($showtime, $reservation, $item['seatKeys'], null, $item['seat_categories'] ?? []);
+                    } catch (SeatUnavailableException $e) {
+                        throw new SeatUnavailableException("{$showtime->program_title}: {$e->getMessage()}", $e->status);
+                    }
+                    $created[] = $reservation;
+                }
+
+                $payables = array_map(
+                    fn(Reservation $r) => (int) $r->items()->get()->reject(fn($i) => $i->category === TicketCategory::EXPERIENCE_CARD)->sum('price_amount'),
+                    $created
+                );
+
+                $splitter = null;
+                $payments = isset($data['payments']) ? PaymentSplit::normalize($data['payments']) : null;
+                if ($payments && array_sum($payables) > 0) {
+                    $entered = array_sum(array_column($payments, 'amount'));
+                    if ($entered !== array_sum($payables)) {
+                        throw ValidationException::withMessages([
+                            'payments' => sprintf(
+                                'A részfizetés összege (%s Ft) nem egyezik a fizetendő összeggel (%s Ft).',
+                                number_format($entered, 0, ',', ' '),
+                                number_format(array_sum($payables), 0, ',', ' ')
+                            ),
+                        ]);
+                    }
+                    $splitter = new PaymentSplit($payments);
+                }
+
+                foreach ($created as $i => $reservation) {
+                    $parts = $splitter ? $splitter->allocate($payables[$i]) : null;
+                    $method = $parts ? null : ($data['payment_method'] ?? null);
+                    $this->markPaid($reservation, $method, $request, $parts ?: null);
+                }
+
+                return $created;
+            });
+        } catch (SeatUnavailableException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->status);
+        }
+
+        $payloads = array_map(fn(Reservation $r) => $this->payload($r), $reservations);
+
+        return response()->json([
+            'reservation' => $payloads[0]['reservation'],
+            'reservations' => array_column($payloads, 'reservation'),
+            'tickets' => collect($payloads)->pluck('tickets')->flatten(1)->values(),
+        ], 201);
+    }
+
+    /**
      * Helyszíni foglalás fizetés nélkül: a székek lejárati idő nélkül zároltak, a foglalás a foglalások között jelenik meg,
      * és később a pénztárban kifizethető. Név és telefonszám kötelező, az e-mail nem.
      */

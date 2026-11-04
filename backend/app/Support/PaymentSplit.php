@@ -94,6 +94,27 @@ final class PaymentSplit
     }
 
     /**
+     * Egy összeg kivétele a hátralévő befizetésekből (több foglalás közötti elosztáshoz).
+     *
+     * @return array<int,array{method:string,amount:int}>
+     */
+    public function allocate(int $amount): array
+    {
+        $parts = [];
+        while ($amount > 0 && $this->queue) {
+            $take = min($amount, $this->queue[0]['left']);
+            $parts[] = ['method' => $this->queue[0]['method'], 'amount' => $take];
+            $this->queue[0]['left'] -= $take;
+            $amount -= $take;
+            if ($this->queue[0]['left'] <= 0) {
+                array_shift($this->queue);
+            }
+        }
+
+        return self::normalize($parts);
+    }
+
+    /**
      * Módonkénti összeg egy jegycsoportban (a vegyes jegyek a részösszegek szerint bontva).
      *
      * @param iterable<object> $tickets

@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { Subject, Subscription, of } from 'rxjs';
+import { Observable, Subject, Subscription, of } from 'rxjs';
 import { catchError, debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import { ApiService, Seat, Showtime, ShowtimeDetail } from '../../../../core/api/api.service';
 import { AdminService, InvoiceBuyer, PaymentMethod, PaymentPart, PosInvoice, SPLIT_METHODS, SplitMethod, Ticket, TicketCategory, categoryLabel } from '../../../../services/admin.service';
@@ -12,6 +12,10 @@ import { PosServicesComponent } from './pos-services.component';
 import { rowLabelOf, seatNumberOf, seatLabel, sectionBlocks, newlyIsolatedSeats } from '../../../../core/util/seat';
 
 type SaleMode = 'seats' | 'reservations' | 'void';
+
+/** A kosár egy előadásra kiválasztott székei (a helyszíni eladás több előadásra is szólhat egy tranzakcióban). */
+interface CartSeat { key: string; price: number; category: TicketCategory }
+interface CartLine { showtimeId: number; title: string; startsAt: string; auditorium: string; seats: CartSeat[] }
 
 @Component({
   selector: 'app-pos-admin',
@@ -35,6 +39,7 @@ export class PosAdminComponent implements OnInit, OnDestroy {
   mode: SaleMode = 'seats';
   area: 'cinema' | 'services' = 'cinema';
   selectedSeats: Seat[] = [];
+  cart: CartLine[] = [];
 
   readonly rowLabelOf = rowLabelOf;
   readonly seatNumberOf = seatNumberOf;
@@ -47,7 +52,7 @@ export class PosAdminComponent implements OnInit, OnDestroy {
   /** Új eladás / foglalás esetén a kijelölés miatt egyedül maradó üres székek (figyelmeztetés, nem tiltás). */
   get isolatedSeatKeys(): string[] {
     const seatMap = this.showtime?.seatMap;
-    const keys = this.mode === 'seats' ? this.selectedSeats.map(s => s.key) : [];
+    const keys = this.mode === 'seats' ? [...this.selectedSeats.map(s => s.key), ...this.cartKeysFor(this.showtime?.id)] : [];
     const cacheKey = keys.join(',');
     if (cacheKey !== this.gapCacheKey || seatMap !== this.gapMapRef) {
       this.gapCacheKey = cacheKey;
@@ -103,10 +108,10 @@ export class PosAdminComponent implements OnInit, OnDestroy {
   invoiceRequested = false;
   invoiceConfirmOpen = false;
   invoiceBuyer = { name: '', zip: '', city: '', address: '', tax_number: '', email: '' };
-  pendingInvoice: { reservationId: number; buyer: InvoiceBuyer } | null = null;
+  pendingInvoice: { reservationIds: number[]; buyer: InvoiceBuyer } | null = null;
   invoiceBusy = false;
   invoiceError: string | null = null;
-  soldInvoice: PosInvoice | null = null;
+  soldInvoices: PosInvoice[] = [];
 
   constructor(
     private api: ApiService,
@@ -311,6 +316,7 @@ export class PosAdminComponent implements OnInit, OnDestroy {
       return this.editSeatKeys.includes(seat.key) ? 'selected' : seat.status;
     }
     if (this.isSelected(seat)) return 'selected';
+    if (this.mode === 'seats' && this.isInCart(seat)) return 'selected';
     if (this.reservationSeatKeys.has(seat.key)) return 'reserved-pick';
     return seat.status;
   }
@@ -330,7 +336,13 @@ export class PosAdminComponent implements OnInit, OnDestroy {
       this.error = null;
       return;
     }
-    if (this.mode !== 'seats' || this.isAisle(seat) || !seat.bookable || seat.status !== 'available') return;
+    if (this.mode !== 'seats' || this.isAisle(seat) || !seat.bookable) return;
+    // A kosárba tett szék újabb kattintásra kikerül a kosárból
+    if (this.showtime && this.isInCart(seat)) {
+      this.removeCartSeat(this.showtime.id, seat.key);
+      return;
+    }
+    if (seat.status !== 'available') return;
 
     this.selectedSeats = this.isSelected(seat)
       ? this.selectedSeats.filter(s => s.key !== seat.key)
@@ -374,6 +386,107 @@ export class PosAdminComponent implements OnInit, OnDestroy {
       if (seat) return seat;
     }
     return undefined;
+  }
+
+  // ---- Kosár (több előadás egy tranzakcióban) ----
+
+  private cartKeysFor(showtimeId: number | undefined): string[] {
+    return this.cart.filter(l => l.showtimeId === showtimeId).flatMap(l => l.seats.map(s => s.key));
+  }
+
+  isInCart(seat: Seat): boolean {
+    return !!this.showtime && this.cartKeysFor(this.showtime.id).includes(seat.key);
+  }
+
+  get cartSeatCount(): number {
+    return this.cart.reduce((sum, l) => sum + l.seats.length, 0);
+  }
+
+  cartCountFor(showtimeId: number): number {
+    return this.cartKeysFor(showtimeId).length;
+  }
+
+  /** Hány különböző előadásra szól a mostani eladás (a kosár és az éppen kijelölt székek együtt). */
+  get saleProgramCount(): number {
+    return this.saleItems().length;
+  }
+
+  cartLineTotal(line: CartLine): number {
+    return line.seats.reduce((sum, s) => sum + s.price, 0);
+  }
+
+  private get cartTotal(): number {
+    return this.cart.reduce((sum, l) => sum + this.cartLineTotal(l), 0);
+  }
+
+  private get cartPayable(): number {
+    return this.cart.reduce((sum, l) => sum + l.seats.filter(s => s.category !== 'experience_card').reduce((a, s) => a + s.price, 0), 0);
+  }
+
+  /** A kiválasztott székek kosárba tétele: utána másik előadás is választható, és minden egyben fizethető. */
+  addToCart(): void {
+    if (!this.showtime || this.mode !== 'seats' || this.selectedSeats.length === 0) return;
+
+    const showtimeId = this.showtime.id;
+    const seats: CartSeat[] = this.selectedSeats.map(s => ({ key: s.key, price: this.effectivePrice(s), category: this.categoryOf(s) }));
+    const existing = this.cart.find(l => l.showtimeId === showtimeId);
+    if (existing) {
+      existing.seats = [...existing.seats, ...seats];
+    } else {
+      this.cart = [...this.cart, {
+        showtimeId,
+        title: this.showtime.movie.title,
+        startsAt: this.showtime.starts_at,
+        auditorium: this.showtime.auditorium.name,
+        seats
+      }];
+    }
+    this.selectedSeats = [];
+    this.seatCategories = {};
+    this.error = null;
+    this.soldTickets = [];
+  }
+
+  removeCartSeat(showtimeId: number, seatKey: string): void {
+    this.cart = this.cart
+      .map(l => l.showtimeId === showtimeId ? { ...l, seats: l.seats.filter(s => s.key !== seatKey) } : l)
+      .filter(l => l.seats.length > 0);
+    this.error = null;
+  }
+
+  removeCartLine(line: CartLine): void {
+    this.cart = this.cart.filter(l => l !== line);
+    this.error = null;
+  }
+
+  clearCart(): void {
+    this.cart = [];
+    this.error = null;
+  }
+
+  /** A kosár tételei a szerver számára; az éppen kijelölt székek a saját előadásukhoz kerülnek. */
+  private saleItems(): Array<{ showtime_id: number; seatKeys: string[]; seat_categories?: Record<string, TicketCategory> }> {
+    const items = this.cart.map(l => {
+      const picked: Record<string, TicketCategory> = {};
+      for (const s of l.seats) {
+        if (s.category !== 'standard') picked[s.key] = s.category;
+      }
+      return { showtime_id: l.showtimeId, seatKeys: l.seats.map(s => s.key), seat_categories: Object.keys(picked).length ? picked : undefined };
+    });
+
+    if (this.showtime && this.selectedSeats.length > 0) {
+      const current = this.showtime.id;
+      const categories = this.seatCategoriesPayload();
+      const existing = items.find(i => i.showtime_id === current);
+      if (existing) {
+        existing.seatKeys = [...existing.seatKeys, ...this.selectedSeats.map(s => s.key)];
+        existing.seat_categories = categories || existing.seat_categories ? { ...existing.seat_categories, ...categories } : undefined;
+      } else {
+        items.push({ showtime_id: current, seatKeys: this.selectedSeats.map(s => s.key), seat_categories: categories });
+      }
+    }
+
+    return items;
   }
 
   // ---- Foglalások ----
@@ -600,7 +713,7 @@ export class PosAdminComponent implements OnInit, OnDestroy {
     if (this.mode === 'reservations') {
       return this.payItems.reduce((sum: number, i: any) => sum + Number(i.price_amount), 0);
     }
-    return this.selectedSeats.reduce((sum, seat) => sum + this.effectivePrice(seat), 0);
+    return this.selectedSeats.reduce((sum, seat) => sum + this.effectivePrice(seat), 0) + this.cartTotal;
   }
 
   /** A fizetendő összeg: az élménykártyás jegyek értéke nem készpénzzel/kártyával fizetendő (a kártya fedezi). */
@@ -612,7 +725,7 @@ export class PosAdminComponent implements OnInit, OnDestroy {
     }
     return this.selectedSeats
       .filter(seat => this.categoryOf(seat) !== 'experience_card')
-      .reduce((sum, seat) => sum + this.effectivePrice(seat), 0);
+      .reduce((sum, seat) => sum + this.effectivePrice(seat), 0) + this.cartPayable;
   }
 
   get cardCoveredAmount(): number {
@@ -620,7 +733,7 @@ export class PosAdminComponent implements OnInit, OnDestroy {
   }
 
   get hasSelection(): boolean {
-    return this.mode === 'seats' ? this.selectedSeats.length > 0 : !!this.selectedReservation;
+    return this.mode === 'seats' ? this.selectedSeats.length > 0 || this.cart.length > 0 : !!this.selectedReservation;
   }
 
   get change(): number | null {
@@ -721,7 +834,8 @@ export class PosAdminComponent implements OnInit, OnDestroy {
       ? this.payItems
           .filter((i: any) => i.category !== 'experience_card')
           .map((i: any) => Math.round(Number(i.price_amount)))
-      : this.selectedSeats.filter(s => this.categoryOf(s) !== 'experience_card').map(s => Math.round(this.effectivePrice(s)));
+      : [...this.selectedSeats.map(s => Math.round(this.effectivePrice(s)) * (this.categoryOf(s) === 'experience_card' ? 0 : 1)),
+         ...this.cart.flatMap(l => l.seats.map(s => s.category === 'experience_card' ? 0 : Math.round(s.price)))];
     return amounts.filter((a: number) => a > 0);
   }
 
@@ -770,16 +884,27 @@ export class PosAdminComponent implements OnInit, OnDestroy {
     };
   }
 
-  private issueInvoice(reservationId: number, buyer: InvoiceBuyer): void {
-    this.pendingInvoice = { reservationId, buyer };
+  /** A számlák foglalásonként (előadásonként) készülnek, egymás után; hiba esetén a hátralévők újrapróbálhatók. */
+  private issueInvoices(reservationIds: number[], buyer: InvoiceBuyer): void {
+    const [current, ...rest] = reservationIds;
+    if (current === undefined) {
+      this.pendingInvoice = null;
+      return;
+    }
+
+    this.pendingInvoice = { reservationIds, buyer };
     this.invoiceBusy = true;
     this.invoiceError = null;
 
-    this.admin.posIssueInvoice(reservationId, buyer).subscribe({
+    this.admin.posIssueInvoice(current, buyer).subscribe({
       next: (invoice) => {
-        this.invoiceBusy = false;
-        this.soldInvoice = invoice;
-        this.pendingInvoice = null;
+        this.soldInvoices = [...this.soldInvoices, invoice];
+        if (rest.length > 0) {
+          this.issueInvoices(rest, buyer);
+        } else {
+          this.invoiceBusy = false;
+          this.pendingInvoice = null;
+        }
       },
       error: (err) => {
         this.invoiceBusy = false;
@@ -791,13 +916,13 @@ export class PosAdminComponent implements OnInit, OnDestroy {
 
   retryInvoice(): void {
     if (this.pendingInvoice && !this.invoiceBusy) {
-      this.issueInvoice(this.pendingInvoice.reservationId, this.pendingInvoice.buyer);
+      this.issueInvoices(this.pendingInvoice.reservationIds, this.pendingInvoice.buyer);
     }
   }
 
-  openInvoicePdf(): void {
-    if (!this.soldInvoice) return;
-    this.admin.posInvoicePdf(this.soldInvoice.id).subscribe({
+  openInvoicePdf(invoice: PosInvoice): void {
+    if (!invoice.has_pdf) return;
+    this.admin.posInvoicePdf(invoice.id).subscribe({
       next: (blob) => window.open(URL.createObjectURL(blob), '_blank'),
       error: () => (this.invoiceError = 'A számla PDF letöltése sikertelen.')
     });
@@ -815,15 +940,26 @@ export class PosAdminComponent implements OnInit, OnDestroy {
     const remaining = this.reservationItems.length - this.payCountValue;
     const reservationId = this.selectedReservation?.id;
     const payments = this.splitMode && this.payable > 0 ? this.splitParts : undefined;
-    const request$ = this.mode === 'reservations' && this.selectedReservation
-      ? this.admin.posPayReservation(this.selectedReservation.id, payments ? null : method, partial ? this.payItems.map((i: any) => i.seat_key) : undefined, payments)
-      : this.admin.posSell({
-          showtime_id: this.showtime.id,
-          seatKeys: this.selectedSeats.map(s => s.key),
-          ...(payments ? { payments } : { payment_method: method }),
-          customer_name: this.customerName.trim() || undefined,
-          seat_categories: this.seatCategoriesPayload()
-        });
+    const multi = this.mode === 'seats' && this.cart.length > 0;
+    const paymentPart = payments ? { payments } : { payment_method: method };
+    let request$: Observable<{ reservation: any; reservations?: any[]; tickets: Ticket[] }>;
+    if (this.mode === 'reservations' && this.selectedReservation) {
+      request$ = this.admin.posPayReservation(this.selectedReservation.id, payments ? null : method, partial ? this.payItems.map((i: any) => i.seat_key) : undefined, payments);
+    } else if (multi) {
+      request$ = this.admin.posSellMulti({
+        items: this.saleItems(),
+        ...paymentPart,
+        customer_name: this.customerName.trim() || undefined
+      });
+    } else {
+      request$ = this.admin.posSell({
+        showtime_id: this.showtime.id,
+        seatKeys: this.selectedSeats.map(s => s.key),
+        ...paymentPart,
+        customer_name: this.customerName.trim() || undefined,
+        seat_categories: this.seatCategoriesPayload()
+      });
+    }
 
     request$.subscribe({
       next: (response) => {
@@ -835,26 +971,31 @@ export class PosAdminComponent implements OnInit, OnDestroy {
         }
         this.processing = false;
         this.selectedSeats = [];
+        this.seatCategories = {};
+        this.cart = [];
         this.selectedReservation = null;
         this.payCount = null;
         this.customerName = '';
         this.invoiceRequested = false;
         this.invoiceBuyer = { name: '', zip: '', city: '', address: '', tax_number: '', email: '' };
-        this.soldInvoice = null;
+        this.soldInvoices = [];
         this.invoiceError = null;
         this.pendingInvoice = null;
         this.resetPayment();
         this.heldNotice = partial ? `📌 A(z) #${reservationId} foglalásban még ${remaining} szék foglalt marad (kifizetetlen).` : null;
         this.refresh();
         if (buyer) {
-          this.issueInvoice(response.reservation.id, buyer);
+          const ids = (response.reservations ?? [response.reservation]).map((r: any) => r.id);
+          this.issueInvoices(ids, buyer);
         }
       },
       error: (err) => {
         this.processing = false;
-        this.error = err?.error?.message || 'A jegyeladás sikertelen. Próbálja újra.';
+        const errors = err?.error?.errors;
+        this.error = (multi && errors && (Object.values(errors) as string[][])[0]?.[0]) || err?.error?.message || 'A jegyeladás sikertelen. Próbálja újra.';
         if (err?.status === 409 || err?.status === 422) {
-          this.selectedSeats = [];
+          // Kosárnál a kosár megmarad (a hibás tétel kivehető), a kijelölésből csak a már nem szabad székek esnek ki
+          if (!multi) this.selectedSeats = [];
           this.refresh();
         }
       }
@@ -964,7 +1105,7 @@ export class PosAdminComponent implements OnInit, OnDestroy {
     this.invoiceRequested = false;
     this.invoiceConfirmOpen = false;
     this.invoiceBuyer = { name: '', zip: '', city: '', address: '', tax_number: '', email: '' };
-    this.soldInvoice = null;
+    this.soldInvoices = [];
     this.invoiceError = null;
     this.pendingInvoice = null;
     this.resetPayment();

@@ -38,6 +38,7 @@
         <span class="st-date">{{ showtimeDayLabel(s) }}</span>
         <span class="st-time">{{ s.starts_at | date:'HH:mm' }}</span>
         <span class="st-title">{{ s.movie.title }}</span>
+        <span class="st-cart" *ngIf="cartCountFor(s.id) > 0">🛒 {{ cartCountFor(s.id) }}</span>
       </button>
     </div>
   </section>
@@ -141,6 +142,28 @@
       </div>
 
       <ng-container *ngIf="hasSelection">
+        <div class="cart-box" *ngIf="mode === 'seats' && cart.length > 0">
+          <div class="cart-head">
+            <b>🛒 Kosár</b>
+            <small>{{ cartSeatCount }} jegy, {{ cart.length }} program</small>
+            <button type="button" class="btn-small" [disabled]="processing" (click)="clearCart()">Kosár ürítése</button>
+          </div>
+          <div class="cart-line" *ngFor="let l of cart">
+            <div class="cart-title">
+              <span><b>{{ l.title }}</b> <small>{{ l.startsAt | date:'MM.dd. HH:mm' }} • {{ l.auditorium }}</small></span>
+              <button type="button" class="cart-remove" title="A program törlése a kosárból" [disabled]="processing" (click)="removeCartLine(l)">✕</button>
+            </div>
+            <ul class="item-list">
+              <li *ngFor="let s of l.seats" class="seat-line">
+                <span>{{ seatLabel(s.key) }} <small class="cat-tag" *ngIf="s.category !== 'standard'">{{ categoryLabel(s.category) }}</small></span>
+                <b>{{ s.price | number:'1.0-0' }} Ft</b>
+                <button type="button" class="cart-remove" title="A szék törlése a kosárból" [disabled]="processing" (click)="removeCartSeat(l.showtimeId, s.key)">✕</button>
+              </li>
+            </ul>
+          </div>
+          <div class="muted" *ngIf="selectedSeats.length === 0">Válasszon másik előadást és további székeket, vagy fizesse ki a kosarat.</div>
+        </div>
+
         <ul class="item-list">
           <ng-container *ngIf="mode === 'seats'">
             <li *ngFor="let s of selectedSeats" class="seat-line">
@@ -161,6 +184,10 @@
             </li>
           </ng-container>
         </ul>
+
+        <button type="button" class="btn-cart" *ngIf="mode === 'seats' && selectedSeats.length > 0 && !editing" [disabled]="processing" (click)="addToCart()">
+          🛒 Kosárba <small>(másik programra is vásárol)</small>
+        </button>
 
         <div class="pay-count" *ngIf="mode === 'reservations' && selectedReservation && !editing && reservationItems.length > 1">
           <span>Most kifizetett jegyek száma</span>
@@ -365,12 +392,12 @@
           <span *ngIf="soldTickets.length > 1"> – {{ soldTickets[soldTickets.length - 1].ticket_number }}</span>)
         </div>
         <div *ngIf="invoiceBusy" class="muted">⏳ Számla kiállítása folyamatban...</div>
-        <div *ngIf="soldInvoice" class="invoice-done">
-          🧾 Számla kiállítva: <b>{{ soldInvoice.invoice_number }}</b> ({{ soldInvoice.gross_amount | number:'1.0-0' }} Ft)
-          <button type="button" class="btn-small" *ngIf="soldInvoice.has_pdf" (click)="openInvoicePdf()">📄 Számla megnyitása</button>
+        <div *ngFor="let invoice of soldInvoices" class="invoice-done">
+          🧾 Számla kiállítva: <b>{{ invoice.invoice_number }}</b> ({{ invoice.gross_amount | number:'1.0-0' }} Ft)
+          <button type="button" class="btn-small" *ngIf="invoice.has_pdf" (click)="openInvoicePdf(invoice)">📄 Számla megnyitása</button>
         </div>
         <div *ngIf="invoiceError" class="alert">
-          A jegyeladás megtörtént, de a számla kiállítása sikertelen (foglalás #{{ pendingInvoice?.reservationId }}): {{ invoiceError }}
+          A jegyeladás megtörtént, de a számla kiállítása sikertelen (foglalás #{{ pendingInvoice?.reservationIds?.[0] }}): {{ invoiceError }}
           <button type="button" class="btn-small" *ngIf="pendingInvoice" [disabled]="invoiceBusy" (click)="retryInvoice()">↻ Újrapróbálás</button>
         </div>
         <div class="sold-actions">
@@ -396,6 +423,7 @@
         <li *ngIf="invoiceBuyer.tax_number"><span>Adószám</span><b>{{ invoiceBuyer.tax_number }}</b></li>
         <li *ngIf="invoiceBuyer.email"><span>E-mail</span><b>{{ invoiceBuyer.email }}</b></li>
         <li><span>Tételek</span><b>{{ invoiceLineAmounts.length }} db jegy</b></li>
+        <li *ngIf="mode === 'seats' && cart.length > 0"><span>Számlák</span><b>programonként külön ({{ saleProgramCount }} db)</b></li>
         <li><span>Fizetés módja</span><b>{{ splitMode ? 'Vegyes fizetés' : paymentMethod === 'cash' ? 'Készpénz' : paymentMethod === 'szep_card' ? 'SZÉP kártya' : 'Bankkártya' }}</b></li>
         <li *ngFor="let p of (splitMode ? splitParts : [])"><span>&nbsp;&nbsp;{{ splitLabel(p.method) }}</span><b>{{ p.amount | number:'1.0-0' }} Ft</b></li>
         <li><span>Nettó</span><b>{{ invoiceTotals.net | number:'1.0-0' }} Ft</b></li>
