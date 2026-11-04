@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\ExtraService;
 use App\Models\Reservation;
 use App\Models\Showtime;
 use App\Models\Ticket;
@@ -113,6 +114,47 @@ class PosMultiSaleTest extends TestCase
 
         $this->assertSame(1, Reservation::count());
         $this->assertSame(1, Ticket::count());
+    }
+
+    public function test_services_can_be_added_to_the_same_transaction_with_a_split_payment(): void
+    {
+        $this->cashier();
+        $a = $this->showtime('Egyik');
+        $castle = ExtraService::create(['name' => 'Sarkanyvar', 'price' => 1000, 'kind' => ExtraService::KIND_SERVICE]);
+
+        $response = $this->postJson('/api/pos/sell-multi', [
+            'items' => [['showtime_id' => $a->id, 'seatKeys' => ['A-01']]],
+            'services' => [['service_id' => $castle->id, 'quantity' => 3]],
+            'payments' => [['method' => 'cash', 'amount' => 4000], ['method' => 'card', 'amount' => 1000]],
+        ])->assertCreated();
+
+        $this->assertCount(4, $response->json('tickets'));
+        $this->assertSame(1, Reservation::where('status', 'PAID')->count());
+        $this->assertSame(3, Ticket::where('category', 'service')->count());
+        $this->assertSame(['cash' => 4000, 'card' => 1000], PaymentSplit::amounts(Ticket::all()));
+        $this->assertSame(4, Ticket::distinct()->count('ticket_number'));
+    }
+
+    public function test_services_only_sale_and_wrong_split_rolls_back(): void
+    {
+        $this->cashier();
+        $castle = ExtraService::create(['name' => 'Sarkanyvar', 'price' => 1000, 'kind' => ExtraService::KIND_SERVICE]);
+
+        $response = $this->postJson('/api/pos/sell-multi', [
+            'services' => [['service_id' => $castle->id, 'quantity' => 2]],
+            'payment_method' => 'card',
+        ])->assertCreated();
+
+        $this->assertNull($response->json('reservation'));
+        $this->assertSame(['card' => 2000], PaymentSplit::amounts(Ticket::all()));
+
+        $this->postJson('/api/pos/sell-multi', [
+            'services' => [['service_id' => $castle->id, 'quantity' => 1]],
+            'payments' => [['method' => 'cash', 'amount' => 500]],
+        ])->assertStatus(422);
+        $this->assertSame(2, Ticket::count());
+
+        $this->postJson('/api/pos/sell-multi', ['payment_method' => 'cash'])->assertStatus(422);
     }
 
     public function test_same_program_twice_and_closed_programs_are_rejected(): void

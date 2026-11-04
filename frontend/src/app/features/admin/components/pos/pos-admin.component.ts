@@ -16,6 +16,8 @@ type SaleMode = 'seats' | 'reservations' | 'void';
 /** A kosár egy előadásra kiválasztott székei (a helyszíni eladás több előadásra is szólhat egy tranzakcióban). */
 interface CartSeat { key: string; price: number; category: TicketCategory }
 interface CartLine { showtimeId: number; title: string; startsAt: string; auditorium: string; seats: CartSeat[] }
+/** Egyéb szolgáltatás a kosárban (az árat a szerver az adatbázisból veszi, itt csak megjelenítésre szolgál). */
+interface ServiceCartLine { serviceId: number; name: string; price: number; quantity: number }
 
 @Component({
   selector: 'app-pos-admin',
@@ -40,7 +42,7 @@ export class PosAdminComponent implements OnInit, OnDestroy {
   area: 'cinema' | 'services' = 'cinema';
   selectedSeats: Seat[] = [];
   cart: CartLine[] = [];
-
+  serviceCart: ServiceCartLine[] = [];
   readonly rowLabelOf = rowLabelOf;
   readonly seatNumberOf = seatNumberOf;
   readonly seatLabel = seatLabel;
@@ -423,6 +425,53 @@ export class PosAdminComponent implements OnInit, OnDestroy {
     return this.cart.reduce((sum, l) => sum + l.seats.filter(s => s.category !== 'experience_card').reduce((a, s) => a + s.price, 0), 0);
   }
 
+  // ---- Egyéb szolgáltatások a kosárban ----
+
+  get serviceCartCount(): number {
+    return this.serviceCart.reduce((sum, l) => sum + l.quantity, 0);
+  }
+
+  get serviceCartTotal(): number {
+    return this.serviceCart.reduce((sum, l) => sum + l.quantity * l.price, 0);
+  }
+
+  get cartHasItems(): boolean {
+    return this.cart.length > 0 || this.serviceCart.length > 0;
+  }
+
+  /** A kosár tételeinek száma (jegyek + szolgáltatás-nyugták) és összértéke, a fejléchez és a szolgáltatás-nézethez. */
+  get cartItemCount(): number {
+    return this.cartSeatCount + this.serviceCartCount;
+  }
+
+  get cartAmount(): number {
+    return this.cartTotal + this.serviceCartTotal;
+  }
+
+  addServicesToCart(rows: Array<{ id: number; name: string; price: number; quantity: number }>): void {
+    for (const row of rows) {
+      const existing = this.serviceCart.find(l => l.serviceId === row.id);
+      if (existing) {
+        existing.quantity = Math.min(20, existing.quantity + row.quantity);
+        existing.price = row.price;
+      } else {
+        this.serviceCart = [...this.serviceCart, { serviceId: row.id, name: row.name, price: row.price, quantity: Math.min(20, row.quantity) }];
+      }
+    }
+    this.error = null;
+    this.soldTickets = [];
+  }
+
+  removeServiceLine(line: ServiceCartLine): void {
+    this.serviceCart = this.serviceCart.filter(l => l !== line);
+    this.error = null;
+  }
+
+  openCartPayment(): void {
+    this.area = 'cinema';
+    this.mode = 'seats';
+  }
+
   /** A kiválasztott székek kosárba tétele: utána másik előadás is választható, és minden egyben fizethető. */
   addToCart(): void {
     if (!this.showtime || this.mode !== 'seats' || this.selectedSeats.length === 0) return;
@@ -461,6 +510,7 @@ export class PosAdminComponent implements OnInit, OnDestroy {
 
   clearCart(): void {
     this.cart = [];
+    this.serviceCart = [];
     this.error = null;
   }
 
@@ -713,7 +763,7 @@ export class PosAdminComponent implements OnInit, OnDestroy {
     if (this.mode === 'reservations') {
       return this.payItems.reduce((sum: number, i: any) => sum + Number(i.price_amount), 0);
     }
-    return this.selectedSeats.reduce((sum, seat) => sum + this.effectivePrice(seat), 0) + this.cartTotal;
+    return this.selectedSeats.reduce((sum, seat) => sum + this.effectivePrice(seat), 0) + this.cartTotal + this.serviceCartTotal;
   }
 
   /** A fizetendő összeg: az élménykártyás jegyek értéke nem készpénzzel/kártyával fizetendő (a kártya fedezi). */
@@ -725,7 +775,7 @@ export class PosAdminComponent implements OnInit, OnDestroy {
     }
     return this.selectedSeats
       .filter(seat => this.categoryOf(seat) !== 'experience_card')
-      .reduce((sum, seat) => sum + this.effectivePrice(seat), 0) + this.cartPayable;
+      .reduce((sum, seat) => sum + this.effectivePrice(seat), 0) + this.cartPayable + this.serviceCartTotal;
   }
 
   get cardCoveredAmount(): number {
@@ -733,7 +783,7 @@ export class PosAdminComponent implements OnInit, OnDestroy {
   }
 
   get hasSelection(): boolean {
-    return this.mode === 'seats' ? this.selectedSeats.length > 0 || this.cart.length > 0 : !!this.selectedReservation;
+    return this.mode === 'seats' ? this.selectedSeats.length > 0 || this.cartHasItems : !!this.selectedReservation;
   }
 
   get change(): number | null {
@@ -743,6 +793,8 @@ export class PosAdminComponent implements OnInit, OnDestroy {
 
   get canConfirm(): boolean {
     if (!this.hasSelection || this.processing) return false;
+    // A kosaras (több tételes) eladás szerveroldali korlátja
+    if (this.mode === 'seats' && this.cartHasItems && this.cartItemCount + this.selectedSeats.length > 50) return false;
     // Ha nincs fizetendő összeg (csak Dolgozó jegy / Élménykártya), a fizetési mód nem kötelező
     if (this.payable > 0 && this.splitMode) {
       if (this.splitRemaining !== 0) return false;
@@ -758,7 +810,8 @@ export class PosAdminComponent implements OnInit, OnDestroy {
 
   /** Számla csak fizetendő összeg esetén kérhető. */
   get invoiceActive(): boolean {
-    return this.invoicingEnabled && this.invoiceRequested && this.payable > 0;
+    // A számla csak a jegyekre készül (a szolgáltatás-nyugták nem kerülnek rá)
+    return this.invoicingEnabled && this.invoiceRequested && this.invoiceLineAmounts.length > 0;
   }
 
   setPayment(method: PaymentMethod): void {
@@ -929,7 +982,8 @@ export class PosAdminComponent implements OnInit, OnDestroy {
   }
 
   private executeSale(): void {
-    if (!this.canConfirm || !this.showtime) return;
+    const multi = this.mode === 'seats' && this.cartHasItems;
+    if (!this.canConfirm || (!multi && !this.showtime)) return;
 
     // 0 Ft-os eladásnál nincs fizetési mód választás: a nyugta készpénzesként kerül rögzítésre
     const method: PaymentMethod = this.paymentMethod ?? 'cash';
@@ -940,20 +994,21 @@ export class PosAdminComponent implements OnInit, OnDestroy {
     const remaining = this.reservationItems.length - this.payCountValue;
     const reservationId = this.selectedReservation?.id;
     const payments = this.splitMode && this.payable > 0 ? this.splitParts : undefined;
-    const multi = this.mode === 'seats' && this.cart.length > 0;
     const paymentPart = payments ? { payments } : { payment_method: method };
-    let request$: Observable<{ reservation: any; reservations?: any[]; tickets: Ticket[] }>;
+    let request$: Observable<{ reservation: any | null; reservations?: any[]; tickets: Ticket[] }>;
     if (this.mode === 'reservations' && this.selectedReservation) {
       request$ = this.admin.posPayReservation(this.selectedReservation.id, payments ? null : method, partial ? this.payItems.map((i: any) => i.seat_key) : undefined, payments);
     } else if (multi) {
+      const items = this.saleItems();
       request$ = this.admin.posSellMulti({
-        items: this.saleItems(),
+        items: items.length > 0 ? items : undefined,
+        services: this.serviceCart.length > 0 ? this.serviceCart.map(l => ({ service_id: l.serviceId, quantity: l.quantity })) : undefined,
         ...paymentPart,
         customer_name: this.customerName.trim() || undefined
       });
     } else {
       request$ = this.admin.posSell({
-        showtime_id: this.showtime.id,
+        showtime_id: this.showtime!.id,
         seatKeys: this.selectedSeats.map(s => s.key),
         ...paymentPart,
         customer_name: this.customerName.trim() || undefined,
@@ -973,6 +1028,7 @@ export class PosAdminComponent implements OnInit, OnDestroy {
         this.selectedSeats = [];
         this.seatCategories = {};
         this.cart = [];
+        this.serviceCart = [];
         this.selectedReservation = null;
         this.payCount = null;
         this.customerName = '';
@@ -985,7 +1041,7 @@ export class PosAdminComponent implements OnInit, OnDestroy {
         this.heldNotice = partial ? `📌 A(z) #${reservationId} foglalásban még ${remaining} szék foglalt marad (kifizetetlen).` : null;
         this.refresh();
         if (buyer) {
-          const ids = (response.reservations ?? [response.reservation]).map((r: any) => r.id);
+          const ids = (response.reservations?.length ? response.reservations : [response.reservation]).filter(Boolean).map((r: any) => r.id);
           this.issueInvoices(ids, buyer);
         }
       },

@@ -542,6 +542,10 @@ h1 { margin: 0; color: #e8d5b7; }
   font-weight: 700; font-size: 15px; cursor: pointer;
 }
 .area-tabs button.active { background: #d4a574; border-color: #d4a574; color: #2c1810; }
+.area-tabs .cart-pill {
+  display: inline-flex; align-items: center; padding: 10px 14px; border-radius: 10px; margin-left: auto;
+  border: 1.5px solid #f59e0b; background: rgba(245, 158, 11, 0.12); color: #f5c46b; font-weight: 700; font-size: 14px;
+}
 .item-list li.seat-line { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; }
 .cat-select {
   padding: 5px 8px; border-radius: 6px; border: 1px solid #5c3d2e; background: #4a3425; color: #e8d5b7; font-size: 13px; min-width: 0;

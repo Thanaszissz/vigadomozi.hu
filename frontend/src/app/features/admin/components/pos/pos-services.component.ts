@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AdminService, PaymentMethod, Ticket } from '../../../../services/admin.service';
@@ -20,6 +20,12 @@ interface ServiceRow {
   styleUrls: ['./pos-services.component.css']
 })
 export class PosServicesComponent implements OnInit {
+  /** A jegyeladás kosarának tartalma (jegyek és szolgáltatások együtt), a kosár megjelenítéséhez. */
+  @Input() cartItemCount = 0;
+  @Input() cartAmount = 0;
+  @Output() addToCart = new EventEmitter<ServiceRow[]>();
+  @Output() openCart = new EventEmitter<void>();
+
   rows: ServiceRow[] = [];
   loading = false;
   error: string | null = null;
@@ -104,6 +110,19 @@ export class PosServicesComponent implements OnInit {
     this.paymentMethod = method;
     this.cashGiven = null;
     this.error = null;
+  }
+
+  /** A kiválasztott szolgáltatások a közös kosárba kerülnek (a jegyekkel együtt fizethetők). */
+  addSelectedToCart(): void {
+    if (this.count === 0 || this.processing) return;
+
+    this.addToCart.emit(this.selected.map(r => ({ ...r })));
+    this.rows.forEach(r => (r.quantity = 0));
+    this.paymentMethod = null;
+    this.cashGiven = null;
+    this.error = null;
+    this.soldTickets = [];
+    this.notice = '🛒 A kiválasztott szolgáltatások a kosárba kerültek.';
   }
 
   confirm(): void {

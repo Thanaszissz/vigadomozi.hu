@@ -1,3 +1,8 @@
+<div class="cart-banner" *ngIf="cartItemCount > 0">
+  <span>🛒 A kosárban <b>{{ cartItemCount }}</b> tétel van ({{ cartAmount | number:'1.0-0' }} Ft).</span>
+  <button type="button" class="btn-small primary" (click)="openCart.emit()">Tovább a fizetéshez →</button>
+</div>
+
 <div class="svc-grid">
   <section class="panel">
     <h2>🎫 Egyéb szolgáltatások</h2>
@@ -58,8 +63,12 @@
 
       <div *ngIf="error" class="alert">{{ error }}</div>
 
+      <button type="button" class="btn-cart" [disabled]="processing" (click)="addSelectedToCart()">
+        🛒 Kosárba <small>(mozijeggyel együtt fizethető)</small>
+      </button>
+
       <button type="button" class="btn-confirm" [disabled]="!canConfirm" (click)="confirm()">
-        {{ processing ? 'Feldolgozás...' : 'Eladás rögzítése és nyugták kiállítása' }}
+        {{ processing ? 'Feldolgozás...' : (cartItemCount > 0 ? 'Csak ezek eladása (a kosár nélkül)' : 'Eladás rögzítése és nyugták kiállítása') }}
       </button>
     </ng-container>
 

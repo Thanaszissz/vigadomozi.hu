@@ -115,6 +115,16 @@ final class PaymentSplit
     }
 
     /**
+     * A még ki nem osztott befizetések (az allocate() hívások után).
+     *
+     * @return array<int,array{method:string,amount:int}>
+     */
+    public function remaining(): array
+    {
+        return array_map(fn($q) => ['method' => $q['method'], 'amount' => $q['left']], $this->queue);
+    }
+
+    /**
      * Módonkénti összeg egy jegycsoportban (a vegyes jegyek a részösszegek szerint bontva).
      *
      * @param iterable<object> $tickets

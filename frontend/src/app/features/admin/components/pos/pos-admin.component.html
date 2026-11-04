@@ -12,9 +12,12 @@
   <div class="area-tabs">
     <button type="button" [class.active]="area === 'cinema'" (click)="area = 'cinema'">🎬 Mozijegyek</button>
     <button type="button" [class.active]="area === 'services'" (click)="area = 'services'">🎫 Egyéb szolgáltatások</button>
+    <span class="cart-pill" *ngIf="cartItemCount > 0">🛒 {{ cartItemCount }} tétel • {{ cartAmount | number:'1.0-0' }} Ft</span>
   </div>
 
-  <app-pos-services *ngIf="area === 'services'"></app-pos-services>
+  <app-pos-services *ngIf="area === 'services'"
+                    [cartItemCount]="cartItemCount" [cartAmount]="cartAmount"
+                    (addToCart)="addServicesToCart($event)" (openCart)="openCartPayment()"></app-pos-services>
 
   <div *ngIf="isolatedSeatKeys.length > 0" class="gap-toast" role="alert">
     <span>⚠️ Úgy válasszon helyet, hogy ne maradjon egyedül üres hely.</span>
@@ -45,9 +48,9 @@
 
   <div *ngIf="loadingShowtime" class="muted">Előadás betöltése...</div>
 
-  <div *ngIf="showtime" class="sale-grid" [class.single]="mode === 'void'">
+  <div *ngIf="showtime || (mode === 'seats' && (cartHasItems || soldTickets.length > 0))" class="sale-grid" [class.single]="mode === 'void' || !showtime">
     <!-- 2. lépés: székek / foglalások -->
-    <section class="panel">
+    <section class="panel" *ngIf="showtime">
       <div class="panel-head">
         <h2><span class="step">2</span> {{ showtime.movie.title }}
           <small>{{ showtime.starts_at | date:'yyyy.MM.dd. HH:mm' }} • {{ showtime.auditorium.name }}</small>
@@ -142,10 +145,14 @@
       </div>
 
       <ng-container *ngIf="hasSelection">
-        <div class="cart-box" *ngIf="mode === 'seats' && cart.length > 0">
+        <div class="cart-box" *ngIf="mode === 'seats' && cartHasItems">
           <div class="cart-head">
             <b>🛒 Kosár</b>
-            <small>{{ cartSeatCount }} jegy, {{ cart.length }} program</small>
+            <small>
+              <ng-container *ngIf="cartSeatCount > 0">{{ cartSeatCount }} jegy, {{ cart.length }} program</ng-container>
+              <ng-container *ngIf="cartSeatCount > 0 && serviceCartCount > 0"> + </ng-container>
+              <ng-container *ngIf="serviceCartCount > 0">{{ serviceCartCount }} szolgáltatás</ng-container>
+            </small>
             <button type="button" class="btn-small" [disabled]="processing" (click)="clearCart()">Kosár ürítése</button>
           </div>
           <div class="cart-line" *ngFor="let l of cart">
@@ -161,7 +168,17 @@
               </li>
             </ul>
           </div>
-          <div class="muted" *ngIf="selectedSeats.length === 0">Válasszon másik előadást és további székeket, vagy fizesse ki a kosarat.</div>
+          <div class="cart-line" *ngIf="serviceCart.length > 0">
+            <div class="cart-title"><span><b>🎫 Egyéb szolgáltatások</b> <small>darabonként külön nyugta</small></span></div>
+            <ul class="item-list">
+              <li *ngFor="let s of serviceCart" class="seat-line">
+                <span>{{ s.quantity }} × {{ s.name }}</span>
+                <b>{{ s.quantity * s.price | number:'1.0-0' }} Ft</b>
+                <button type="button" class="cart-remove" title="A szolgáltatás törlése a kosárból" [disabled]="processing" (click)="removeServiceLine(s)">✕</button>
+              </li>
+            </ul>
+          </div>
+          <div class="muted" *ngIf="selectedSeats.length === 0">Válasszon másik előadást és további székeket, adjon hozzá egyéb szolgáltatást, vagy fizesse ki a kosarat.</div>
         </div>
 
         <ul class="item-list">
@@ -293,13 +310,14 @@
           Kérje a SZÉP kártyás terminálon <b>{{ payable | number:'1.0-0' }} Ft</b> fizetését, és a sikeres terminálos fizetés után rögzítse az eladást.
         </div>
 
-        <button type="button" class="btn-invoice" *ngIf="invoicingEnabled && payable > 0" [class.active]="invoiceRequested" [disabled]="processing" (click)="toggleInvoice()">
+        <button type="button" class="btn-invoice" *ngIf="invoicingEnabled && invoiceLineAmounts.length > 0" [class.active]="invoiceRequested" [disabled]="processing" (click)="toggleInvoice()">
           🧾 ÁFÁS számlát kér {{ invoiceRequested ? '✓' : '' }}
         </button>
 
         <div *ngIf="invoiceActive" class="hold-box invoice-box">
           <h3>🧾 Számlázási adatok</h3>
           <p class="muted">A számla a vevő alábbi adataival, {{ invoiceVatLabel }} ÁFÁ-val, kifizetettként készül.</p>
+          <p class="muted" *ngIf="mode === 'seats' && serviceCartCount > 0">A számla csak a jegyeket tartalmazza, az egyéb szolgáltatások nyugtái nem kerülnek rá.</p>
           <label class="field">
             <span>Vevő neve / cégnév *</span>
             <input type="text" [(ngModel)]="invoiceBuyer.name" maxlength="200" />
@@ -337,7 +355,7 @@
         </ng-container>
 
         <ng-container *ngIf="mode === 'seats'">
-          <button type="button" class="btn-hold" *ngIf="!reserveOpen" [disabled]="processing" (click)="openReserve()">
+          <button type="button" class="btn-hold" *ngIf="!reserveOpen && selectedSeats.length > 0" [disabled]="processing" (click)="openReserve()">
             📌 Foglalás (fizetés nélkül)
           </button>
 
@@ -423,7 +441,7 @@
         <li *ngIf="invoiceBuyer.tax_number"><span>Adószám</span><b>{{ invoiceBuyer.tax_number }}</b></li>
         <li *ngIf="invoiceBuyer.email"><span>E-mail</span><b>{{ invoiceBuyer.email }}</b></li>
         <li><span>Tételek</span><b>{{ invoiceLineAmounts.length }} db jegy</b></li>
-        <li *ngIf="mode === 'seats' && cart.length > 0"><span>Számlák</span><b>programonként külön ({{ saleProgramCount }} db)</b></li>
+        <li *ngIf="mode === 'seats' && saleProgramCount > 1"><span>Számlák</span><b>programonként külön ({{ saleProgramCount }} db)</b></li>
         <li><span>Fizetés módja</span><b>{{ splitMode ? 'Vegyes fizetés' : paymentMethod === 'cash' ? 'Készpénz' : paymentMethod === 'szep_card' ? 'SZÉP kártya' : 'Bankkártya' }}</b></li>
         <li *ngFor="let p of (splitMode ? splitParts : [])"><span>&nbsp;&nbsp;{{ splitLabel(p.method) }}</span><b>{{ p.amount | number:'1.0-0' }} Ft</b></li>
         <li><span>Nettó</span><b>{{ invoiceTotals.net | number:'1.0-0' }} Ft</b></li>

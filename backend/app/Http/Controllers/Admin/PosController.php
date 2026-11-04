@@ -87,19 +87,22 @@ class PosController extends Controller
     }
 
     /**
-     * Egy tranzakcióban több különböző előadásra szóló jegyeladás: előadásonként külön foglalás készül,
-     * a fizetés (akár részfizetés) az egész kosárra egyben történik, és a jegyek sorszáma folyamatos.
-     * Bármelyik előadás ütközésekor semmi nem kerül rögzítésre.
+     * Egy tranzakcióban több különböző előadásra szóló jegyeladás, és/vagy egyéb szolgáltatások értékesítése:
+     * előadásonként külön foglalás készül, a szolgáltatásokból darabonként nyugta, a fizetés (akár részfizetés)
+     * az egész kosárra egyben történik, és a sorszámozás folyamatos. Bármelyik tétel ütközésekor semmi nem kerül rögzítésre.
      */
     public function sellMulti(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'items' => ['required', 'array', 'min:1', 'max:10'],
+            'items' => ['required_without:services', 'array', 'max:10'],
             'items.*.showtime_id' => ['required', 'integer', 'distinct', 'exists:showtimes,id'],
             'items.*.seatKeys' => ['required', 'array', 'min:1', 'max:20'],
             'items.*.seatKeys.*' => ['string', 'max:120', 'distinct'],
             'items.*.seat_categories' => ['nullable', 'array'],
             'items.*.seat_categories.*' => ['string', Rule::in(TicketCategory::SEAT)],
+            'services' => ['required_without:items', 'array', 'max:20'],
+            'services.*.service_id' => ['required', 'integer', 'distinct', 'exists:extra_services,id'],
+            'services.*.quantity' => ['required', 'integer', 'min:1', 'max:20'],
             'payment_method' => ['required_without:payments', 'nullable', 'string', 'in:cash,card,szep_card'],
             'payments' => ['sometimes', 'array', 'min:1', 'max:5'],
             'payments.*.method' => ['required', 'string', Rule::in(PaymentSplit::METHODS)],
@@ -108,12 +111,29 @@ class PosController extends Controller
             'customer_phone' => ['nullable', 'string', 'max:20'],
         ]);
 
-        if (array_sum(array_map(fn($item) => count($item['seatKeys']), $data['items'])) > 50) {
-            return response()->json(['message' => 'Egyszerre legfeljebb 50 jegy adható el.'], 422);
+        $items = $data['items'] ?? [];
+
+        $serviceLines = [];
+        if (!empty($data['services'])) {
+            $services = ExtraService::whereIn('id', array_column($data['services'], 'service_id'))->get()->keyBy('id');
+            foreach ($data['services'] as $row) {
+                $service = $services[$row['service_id']];
+                if ($service->kind !== ExtraService::KIND_SERVICE) {
+                    return response()->json(['message' => "A(z) {$service->name} székhez kötött, a székválasztásnál adható el."], 422);
+                }
+                for ($i = 0; $i < $row['quantity']; $i++) {
+                    $serviceLines[] = ['name' => $service->name, 'price' => $service->price];
+                }
+            }
         }
 
-        $showtimes = Showtime::with(['movie', 'auditorium'])->findMany(array_column($data['items'], 'showtime_id'))->keyBy('id');
-        foreach ($data['items'] as $item) {
+        $seatCount = array_sum(array_map(fn($item) => count($item['seatKeys']), $items));
+        if ($seatCount + count($serviceLines) > 50) {
+            return response()->json(['message' => 'Egyszerre legfeljebb 50 tétel adható el.'], 422);
+        }
+
+        $showtimes = Showtime::with(['movie', 'auditorium'])->findMany(array_column($items, 'showtime_id'))->keyBy('id');
+        foreach ($items as $item) {
             $this->assertCategoriesMatchSeats($item);
 
             $showtime = $showtimes[$item['showtime_id']];
@@ -123,9 +143,9 @@ class PosController extends Controller
         }
 
         try {
-            $reservations = DB::transaction(function () use ($showtimes, $data, $request) {
+            $result = DB::transaction(function () use ($showtimes, $items, $serviceLines, $data, $request) {
                 $created = [];
-                foreach ($data['items'] as $item) {
+                foreach ($items as $item) {
                     $showtime = $showtimes[$item['showtime_id']];
                     $reservation = Reservation::create([
                         'showtime_id' => $showtime->id,
@@ -150,17 +170,18 @@ class PosController extends Controller
                     fn(Reservation $r) => (int) $r->items()->get()->reject(fn($i) => $i->category === TicketCategory::EXPERIENCE_CARD)->sum('price_amount'),
                     $created
                 );
+                $payable = array_sum($payables) + (int) array_sum(array_column($serviceLines, 'price'));
 
                 $splitter = null;
                 $payments = isset($data['payments']) ? PaymentSplit::normalize($data['payments']) : null;
-                if ($payments && array_sum($payables) > 0) {
+                if ($payments && $payable > 0) {
                     $entered = array_sum(array_column($payments, 'amount'));
-                    if ($entered !== array_sum($payables)) {
+                    if ($entered !== $payable) {
                         throw ValidationException::withMessages([
                             'payments' => sprintf(
                                 'A részfizetés összege (%s Ft) nem egyezik a fizetendő összeggel (%s Ft).',
                                 number_format($entered, 0, ',', ' '),
-                                number_format(array_sum($payables), 0, ',', ' ')
+                                number_format($payable, 0, ',', ' ')
                             ),
                         ]);
                     }
@@ -173,18 +194,25 @@ class PosController extends Controller
                     $this->markPaid($reservation, $method, $request, $parts ?: null);
                 }
 
-                return $created;
+                $serviceTickets = collect();
+                if ($serviceLines) {
+                    $rest = $splitter ? $splitter->remaining() : [];
+                    $method = count($rest) > 1 ? PaymentSplit::MIXED : ($rest[0]['method'] ?? $data['payment_method'] ?? $payments[0]['method'] ?? 'cash');
+                    $serviceTickets = $this->tickets->issueForServices($serviceLines, $method, $request->user(), $rest ?: null);
+                }
+
+                return ['reservations' => $created, 'serviceTickets' => $serviceTickets];
             });
         } catch (SeatUnavailableException $e) {
             return response()->json(['message' => $e->getMessage()], $e->status);
         }
 
-        $payloads = array_map(fn(Reservation $r) => $this->payload($r), $reservations);
+        $payloads = array_map(fn(Reservation $r) => $this->payload($r), $result['reservations']);
 
         return response()->json([
-            'reservation' => $payloads[0]['reservation'],
+            'reservation' => $payloads[0]['reservation'] ?? null,
             'reservations' => array_column($payloads, 'reservation'),
-            'tickets' => collect($payloads)->pluck('tickets')->flatten(1)->values(),
+            'tickets' => collect($payloads)->pluck('tickets')->flatten(1)->concat($result['serviceTickets'])->values(),
         ], 201);
     }
 

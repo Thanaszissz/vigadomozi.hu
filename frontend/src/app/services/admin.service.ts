@@ -643,12 +643,13 @@ export class AdminService {
 
   // Egy tranzakcióban több különböző előadásra szóló eladás (kosár)
   posSellMulti(payload: {
-    items: Array<{ showtime_id: number; seatKeys: string[]; seat_categories?: Record<string, TicketCategory> }>;
+    items?: Array<{ showtime_id: number; seatKeys: string[]; seat_categories?: Record<string, TicketCategory> }>;
+    services?: Array<{ service_id: number; quantity: number }>;
     payment_method?: PaymentMethod;
     payments?: PaymentPart[];
     customer_name?: string;
-  }): Observable<{ reservation: any; reservations: any[]; tickets: Ticket[] }> {
-    return this.http.post<{ reservation: any; reservations: any[]; tickets: Ticket[] }>(`${this.apiUrl}/pos/sell-multi`, payload);
+  }): Observable<{ reservation: any | null; reservations: any[]; tickets: Ticket[] }> {
+    return this.http.post<{ reservation: any | null; reservations: any[]; tickets: Ticket[] }>(`${this.apiUrl}/pos/sell-multi`, payload);
   }
 
   // Egyéb szolgáltatások értékesítése (nyugtával)

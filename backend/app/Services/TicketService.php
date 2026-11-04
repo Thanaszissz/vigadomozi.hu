@@ -98,17 +98,25 @@ class TicketService
      * sorszámozással. A nyugtán a szolgáltatás neve és az akkori ára szerepel (később sem változik).
      *
      * @param array<int,array{name:string,price:int}> $lines egy sor = egy nyugta
+     * @param array<int,array{method:string,amount:int}>|null $payments részfizetés: a befizetések nyugtánként sorban "folynak" végig
      */
-    public function issueForServices(array $lines, string $paymentMethod, ?User $seller): Collection
+    public function issueForServices(array $lines, string $paymentMethod, ?User $seller, ?array $payments = null): Collection
     {
-        return DB::transaction(function () use ($lines, $paymentMethod, $seller) {
+        return DB::transaction(function () use ($lines, $paymentMethod, $seller, $payments) {
             $soldAt = now();
             $year = (int) $soldAt->copy()->timezone('Europe/Budapest')->year;
             $prefix = $this->numbering->currentPrefix();
+            $splitter = $payments ? new PaymentSplit($payments) : null;
 
             $tickets = collect();
             foreach ($lines as $line) {
                 $seq = $this->numbering->nextSequence($prefix);
+
+                $method = $paymentMethod;
+                $split = null;
+                if ($splitter) {
+                    [$method, $split] = $splitter->take((int) $line['price']);
+                }
 
                 $tickets->push(Ticket::create([
                     'ticket_year' => $year,
@@ -125,7 +133,8 @@ class TicketService
                     'seat_number' => null,
                     'price_amount' => (int) $line['price'],
                     'currency' => 'HUF',
-                    'payment_method' => $paymentMethod,
+                    'payment_method' => $method,
+                    'payment_split' => $split,
                     'channel' => 'pos',
                     'sold_by_user_id' => $seller?->id,
                     'sold_by_name' => $seller?->name,
@@ -155,7 +164,7 @@ class TicketService
             ]);
 
             if ($seller) {
-                $method = ['cash' => 'készpénz', 'card' => 'bankkártya', 'szep_card' => 'SZÉP kártya'][$paymentMethod] ?? $paymentMethod;
+                $method = ['cash' => 'készpénz', 'card' => 'bankkártya', 'szep_card' => 'SZÉP kártya'][$paymentMethod] ?? mb_strtolower(PaymentSplit::label($paymentMethod));
                 ActivityLogger::log(
                     'ticket.sale',
                     sprintf('Szolgáltatás eladás: %s, %s Ft, %s [%s]', $summary, number_format($total, 0, ',', ' '), $method, $numbers),
