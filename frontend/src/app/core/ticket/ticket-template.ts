@@ -32,9 +32,17 @@ export const TICKET_CSS = `
   .tk-facts { top: 232px; display: flex; width: 236px; }
   .tk-facts.left { left: 38px; }
   .tk-facts.right { left: 366px; }
+  .tk-facts.price { left: 466px; top: 192px; width: 134px; }
   .tk-fact { flex: 1; }
   .tk-fact span { display: block; font-family: Arial, Helvetica, sans-serif; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: #555; }
   .tk-fact b { display: block; font-size: 24px; line-height: 1.15; }
+
+  .tk-fact b.tk-num { font-family: 'Courier New', monospace; font-size: 14px; letter-spacing: 0.3px; line-height: 1.2; }
+  .tk-fact span.tk-num-label { margin-top: 6px; }
+  .tk-seatinfo { left: 40px; top: 192px; width: 130px; text-align: left; }
+  .tk-seatinfo div + div { margin-top: 2px; }
+  .tk-seatinfo span { display: inline; font-family: Arial, Helvetica, sans-serif; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: #555; margin-right: 5px; }
+  .tk-seatinfo b { display: inline; font-size: 17px; line-height: 1.2; }
 
   .tk-stub { left: 626px; top: 190px; width: 204px; }
   .tk-stub-title { font-weight: 700; font-size: 14px; line-height: 1.15; max-height: 33px; overflow: hidden; }
@@ -94,13 +102,13 @@ export function ticketMarkup(t: TicketView, scale = 1, withBackground = true): s
         <div class="tk-fact"><span>Kategória</span><b style="font-size:19px;">Szolgáltatás</b></div>
         <div class="tk-fact"><span>Ár</span><b>${esc(formatMoney(t.price_amount))}</b></div>
       </div>`
-    : `<div class="tk-abs tk-facts left">
-        <div class="tk-fact"><span>${hallLabel}</span><b>${esc(hall)}</b></div>
-        <div class="tk-fact"><span>Sor</span><b>${esc(t.row_label)}</b></div>
+    : `<div class="tk-abs tk-seatinfo">
+        <div><span>${hallLabel}</span><b>${esc(hall)}</b></div>
+        <div><span>Sor</span><b>${esc(t.row_label)}</b></div>
+        <div><span>Szék</span><b>${esc(seat)}</b></div>
       </div>
-      <div class="tk-abs tk-facts right">
-        <div class="tk-fact"><span>Szék</span><b>${esc(seat)}</b></div>
-        <div class="tk-fact"><span>Ár</span><b>${esc(formatMoney(t.price_amount))}</b></div>
+      <div class="tk-abs tk-facts price">
+        <div class="tk-fact"><span>Ár</span><b>${esc(formatMoney(t.price_amount))}</b><span class="tk-num-label">Nyugtaszám</span><b class="tk-num">${esc(t.ticket_number)}</b></div>
       </div>`;
 
   const stubSeat = service
