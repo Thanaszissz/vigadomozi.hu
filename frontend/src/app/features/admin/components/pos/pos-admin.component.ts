@@ -876,11 +876,34 @@ export class PosAdminComponent implements OnInit, OnDestroy {
     }
   }
 
+  /** Az adószámot 12345678-1-42 alakra hozza (11 számjegy kötőjel nélkül, szóközökkel is elfogadott). */
+  private normalizeTaxNumber(value: string): string {
+    const raw = (value || '').trim();
+    const digits = raw.replace(/\D/g, '');
+    return digits.length === 11 ? `${digits.slice(0, 8)}-${digits[8]}-${digits.slice(9)}` : raw;
+  }
+
+  onTaxNumberChange(value: string): void {
+    this.invoiceBuyer.tax_number = this.normalizeTaxNumber(value);
+  }
+
   get invoiceFormValid(): boolean {
+    return this.invoiceFormProblems.length === 0;
+  }
+
+  /** A számlázási űrlap hiányosságai, hogy a felhasználó lássa, miért nem aktív a gomb. */
+  get invoiceFormProblems(): string[] {
     const b = this.invoiceBuyer;
-    const taxOk = !b.tax_number.trim() || /^\d{8}-\d-\d{2}$/.test(b.tax_number.trim());
-    const emailOk = !b.email.trim() || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(b.email.trim());
-    return !!b.name.trim() && b.zip.trim().length >= 3 && !!b.city.trim() && !!b.address.trim() && taxOk && emailOk;
+    const problems: string[] = [];
+    if (!b.name.trim()) problems.push('Vevő neve');
+    if (b.zip.trim().length < 3) problems.push('Irányítószám');
+    if (!b.city.trim()) problems.push('Település');
+    if (!b.address.trim()) problems.push('Cím');
+    if (b.tax_number.trim() && !/^\d{8}-\d-\d{2}$/.test(this.normalizeTaxNumber(b.tax_number))) {
+      problems.push('Adószám (formátum: 12345678-1-42)');
+    }
+    if (b.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(b.email.trim())) problems.push('E-mail');
+    return problems;
   }
 
   get invoiceLineAmounts(): number[] {
@@ -934,7 +957,7 @@ export class PosAdminComponent implements OnInit, OnDestroy {
       zip: b.zip.trim(),
       city: b.city.trim(),
       address: b.address.trim(),
-      tax_number: b.tax_number.trim() || null,
+      tax_number: this.normalizeTaxNumber(b.tax_number) || null,
       email: b.email.trim() || null
     };
   }

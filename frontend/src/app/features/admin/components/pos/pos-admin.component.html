@@ -342,13 +342,14 @@
           </label>
           <label class="field">
             <span>Adószám (cég esetén)</span>
-            <input type="text" [(ngModel)]="invoiceBuyer.tax_number" maxlength="13" placeholder="12345678-1-42" />
+            <input type="text" [ngModel]="invoiceBuyer.tax_number" (ngModelChange)="onTaxNumberChange($event)" maxlength="20" placeholder="12345678-1-42" />
           </label>
           <label class="field">
             <span>E-mail (a számla elküldéséhez, nem kötelező)</span>
             <input type="email" [(ngModel)]="invoiceBuyer.email" maxlength="255" placeholder="vasarlo@example.com" />
           </label>
-          <div class="muted" *ngIf="!invoiceFormValid">A *-gal jelölt mezők kitöltése kötelező (az adószám formátuma: 12345678-1-42).</div>
+          <div class="muted" *ngIf="!invoiceFormValid">Hiányzó vagy hibás mező: {{ invoiceFormProblems.join(', ') }}.</div>
+          <div class="muted" *ngIf="invoiceFormValid && payable > 0 && !splitMode && !paymentMethod">Válasszon fizetési módot a gomb aktiválásához.</div>
         </div>
 
         <div *ngIf="error && !reserveOpen && !editing" class="alert">{{ error }}</div>
