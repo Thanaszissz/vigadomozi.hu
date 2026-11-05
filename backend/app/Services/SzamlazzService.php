@@ -163,7 +163,13 @@ class SzamlazzService
 
             $lines = $this->lines($reservation);
             $method = in_array($reservation->payment_provider, ['cash', 'szep_card', 'mixed', 'voucher', 'experience_card'], true) ? $reservation->payment_provider : 'card';
-            $response = $this->send($this->buildXml($c, $buyer, $lines, $method, 'vigado-res-' . $reservation->id, false, $reservation->id));
+            $externalId = 'vigado-res-' . $reservation->id;
+            $response = $this->send($this->buildXml($c, $buyer, $lines, $method, $externalId, false, $reservation->id));
+
+            // A rendelésszám mező csak bizonyos Számlázz.hu csomagokban érhető el; a nélkül is kiállítható a számla
+            if (!$response['ok'] && ($response['code'] === '8' || mb_stripos($response['message'], 'rendelésszám') !== false)) {
+                $response = $this->send($this->buildXml($c, $buyer, $lines, $method, $externalId, false, null));
+            }
 
             if (!$response['ok']) {
                 throw new \RuntimeException($response['message']);
@@ -320,7 +326,7 @@ class SzamlazzService
         return $xml . '</tetelek></xmlszamla>';
     }
 
-    /** @return array{ok:bool,message:string,number:?string,pdf:?string,customer_url:?string} */
+    /** @return array{ok:bool,message:string,code:?string,number:?string,pdf:?string,customer_url:?string} */
     private function send(string $xml): array
     {
         try {
@@ -347,6 +353,7 @@ class SzamlazzService
         return [
             'ok' => $ok,
             'message' => $ok ? '' : trim(($node('hibauzenet') ?: 'Ismeretlen hiba a számla kiállításakor.') . ($node('hibakod') ? ' (hibakód: ' . $node('hibakod') . ')' : '')),
+            'code' => $node('hibakod'),
             'number' => $node('szamlaszam'),
             'pdf' => $pdf ? (base64_decode($pdf, true) ?: null) : null,
             'customer_url' => $node('vevoifiokurl'),
