@@ -643,6 +643,19 @@
   align-content: center;
 }
 
+.pay-logo {
+  padding: 10px 16px;
+  background: #fff;
+  border-radius: 8px;
+}
+
+.pay-logo img {
+  display: block;
+  width: 100%;
+  max-width: 240px;
+  height: auto;
+}
+
 .footer {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
