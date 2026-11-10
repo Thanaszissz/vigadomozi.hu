@@ -438,6 +438,22 @@
   cursor: not-allowed;
 }
 
+.pay-logo {
+  margin-top: 14px;
+  padding: 8px 12px;
+  background: #fff;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.pay-logo img {
+  display: block;
+  margin: 0 auto;
+  max-width: 220px;
+  width: 100%;
+  height: auto;
+}
+
 .gap-toast {
   position: fixed;
   left: 50%;
