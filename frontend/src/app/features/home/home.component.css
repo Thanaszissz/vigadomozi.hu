@@ -656,6 +656,17 @@
   height: auto;
 }
 
+.city-logo {
+  display: block;
+  margin-left: 24px;
+}
+
+.city-logo img {
+  display: block;
+  height: 90px;
+  width: auto;
+}
+
 .footer {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
