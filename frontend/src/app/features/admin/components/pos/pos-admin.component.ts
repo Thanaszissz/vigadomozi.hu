@@ -9,7 +9,7 @@ import { AdminService, InvoiceBuyer, PaymentMethod, PaymentPart, PosInvoice, SPL
 import { TicketPrintComponent, preloadTicketBackground, printTickets, ticketPaymentLabel } from '../ticket-print/ticket-print.component';
 import { AuthService } from '../../../../services/auth.service';
 import { PosServicesComponent } from './pos-services.component';
-import { rowLabelOf, seatNumberOf, seatLabel, sectionBlocks, newlyIsolatedSeats } from '../../../../core/util/seat';
+import { rowLabelOf, seatNumberOf, seatLabel, seatPlaceLabel, sectionBlocks, newlyIsolatedSeats } from '../../../../core/util/seat';
 
 type SaleMode = 'seats' | 'reservations' | 'void';
 
@@ -46,6 +46,7 @@ export class PosAdminComponent implements OnInit, OnDestroy {
   readonly rowLabelOf = rowLabelOf;
   readonly seatNumberOf = seatNumberOf;
   readonly seatLabel = seatLabel;
+  readonly seatPlaceLabel = seatPlaceLabel;
 
   private gapCacheKey = '';
   private gapMapRef: unknown = null;

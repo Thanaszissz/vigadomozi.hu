@@ -34,6 +34,17 @@ export function seatLabel(key: string | null | undefined): string {
   return (sep >= 0 ? rowPart.slice(0, sep) + ' ' : '') + row + '-' + (Number.isNaN(number) ? key.slice(i + 1) : number);
 }
 
+/** Kosárban / kiválasztásnál mutatott hely: "Földszinti emelvény · 3.sor 07.szék" (a székszám a kulcs szerinti kitöltéssel). */
+export function seatPlaceLabel(key: string | null | undefined): string {
+  if (!key || key === '-') return key ?? '';
+  const i = key.lastIndexOf('-');
+  if (i < 0) return key;
+  const rowPart = key.slice(0, i);
+  const sep = rowPart.indexOf('|');
+  const row = sep >= 0 ? rowPart.slice(sep + 1) : rowPart;
+  return (sep >= 0 ? rowPart.slice(0, sep) + ' · ' : '') + `${row}.sor ${key.slice(i + 1)}.szék`;
+}
+
 /** A jegyen / foglalási tételen szereplő hely: "Emelet · 1. sor 5. szék". */
 export function placeLabel(item: { section?: string | null; row_label?: string | null; seat_number?: number | null }): string {
   return (item.section ? item.section + ' · ' : '') + `${item.row_label ?? ''}. sor ${item.seat_number ?? '—'}. szék`;

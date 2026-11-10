@@ -188,7 +188,7 @@
         <ul class="item-list">
           <ng-container *ngIf="mode === 'seats'">
             <li *ngFor="let s of selectedSeats" class="seat-line">
-              <span>{{ s.key }}</span>
+              <span>{{ seatPlaceLabel(s.key) }}</span>
               <select class="cat-select" [ngModel]="categoryOf(s)" (ngModelChange)="setSeatCategory(s, $event)" [disabled]="processing" title="Jegykategória">
                 <option value="standard">Normál jegy</option>
                 <option value="staff">Dolgozó jegy</option>
