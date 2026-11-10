@@ -3,7 +3,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService, ShowtimeDetail, Seat } from '../../core/api/api.service';
-import { rowLabelOf, seatNumberOf, seatLabel, sectionBlocks, newlyIsolatedSeats } from '../../core/util/seat';
+import { rowLabelOf, seatNumberOf, seatLabel, seatPlaceLabel, sectionBlocks, newlyIsolatedSeats } from '../../core/util/seat';
 
 @Component({
   selector: 'app-seat-select',
@@ -28,6 +28,7 @@ export class SeatSelectComponent implements OnInit {
   readonly rowLabelOf = rowLabelOf;
   readonly seatNumberOf = seatNumberOf;
   readonly seatLabel = seatLabel;
+  readonly seatPlaceLabel = seatPlaceLabel;
 
   // a székek mérete a kijelzőhöz igazodik, hogy a legszélesebb sor is elférjen
   seatSize = 28;
@@ -168,7 +169,7 @@ export class SeatSelectComponent implements OnInit {
   }
 
   getSeatTitle(seat: Seat): string {
-    return `${seatLabel(seat.key)} - ${seat.price} Ft`;
+    return `${seatPlaceLabel(seat.key)} - ${seat.price} Ft`;
   }
 
   /** A különböző árú (szektoros) székek színjelölése; egyetlen ár esetén nincs rá szükség. */

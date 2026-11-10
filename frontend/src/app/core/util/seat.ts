@@ -34,7 +34,7 @@ export function seatLabel(key: string | null | undefined): string {
   return (sep >= 0 ? rowPart.slice(0, sep) + ' ' : '') + row + '-' + (Number.isNaN(number) ? key.slice(i + 1) : number);
 }
 
-/** Kosárban / kiválasztásnál mutatott hely: "Földszinti emelvény · 3.sor 07.szék" (a székszám a kulcs szerinti kitöltéssel). */
+/** Kosárban / kiválasztásnál mutatott hely: "Földszinti emelvény · 3.sor 07.szék". */
 export function seatPlaceLabel(key: string | null | undefined): string {
   if (!key || key === '-') return key ?? '';
   const i = key.lastIndexOf('-');

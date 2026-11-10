@@ -89,7 +89,7 @@
 
             <div *ngIf="selectedSeats.length > 0" class="selected-seats-list">
               <div *ngFor="let seat of selectedSeats" class="seat-item">
-                <span>{{ seatLabel(seat.key) }} - {{ seat.price }} Ft</span>
+                <span>{{ seatPlaceLabel(seat.key) }} - {{ seat.price }} Ft</span>
               </div>
 
               <div class="total">
