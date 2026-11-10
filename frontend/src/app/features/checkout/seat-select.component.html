@@ -144,7 +144,7 @@
               (click)="reserve()"
               [disabled]="selectedSeats.length === 0 || !email || !name || !phone || !zipValid || isolatedSeatKeys.length > 0 || isProcessing"
               class="btn btn-primary">
-              <span *ngIf="!isProcessing">Kifizetem kártyával (10 perc)</span>
+              <span *ngIf="!isProcessing">Kifizetem kártyával</span>
               <span *ngIf="isProcessing">Feldolgozás...</span>
             </button>
 
