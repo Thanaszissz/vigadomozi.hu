@@ -24,9 +24,16 @@ const PRINT_CSS = `
   td.num { font-family: 'Courier New', monospace; font-weight: 700; }
   tr.sub td { font-weight: 700; border-top: 1px solid #111; background: #f7f7f7; }
   tr { page-break-inside: avoid; }
-  .grand { margin-top: 16px; border: 2px solid #111; padding: 8px 10px; page-break-inside: avoid; }
+  .summary { margin: 8px 0 18px; border: 1px solid #111; page-break-inside: avoid; }
+  .summary h3 { margin: 0; padding: 4px 10px; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; background: #eee; border-bottom: 1px solid #111; }
+  .summary table { margin: 0; }
+  .summary td { border-bottom: 1px solid #ddd; padding: 3px 10px; font-size: 12px; }
+  .summary tr.total td { border-top: 2px solid #111; border-bottom: none; font-size: 13px; font-weight: 700; background: #f3f3f3; }
+  .grand { margin-top: 26px; border: 4px double #000; page-break-inside: avoid; }
+  .grand h3 { margin: 0; padding: 8px 12px; font-size: 16px; letter-spacing: 1px; text-align: center; text-transform: uppercase; background: #000; color: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .grand table { margin: 0; }
-  .grand td { border: none; font-size: 12px; }
+  .grand td { border-bottom: 1px solid #bbb; padding: 5px 12px; font-size: 14px; }
+  .grand tr.total td { border-top: 3px solid #000; border-bottom: none; padding: 10px 12px; font-size: 20px; font-weight: 700; background: #e4e4e4; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .sign { display: flex; gap: 40px; margin-top: 50px; page-break-inside: avoid; }
   .sign div { flex: 1; border-top: 1px solid #111; text-align: center; padding-top: 3px; }
 `;
@@ -318,6 +325,21 @@ export class DailyCloseAdminComponent implements OnInit {
     const totals = this.visibleTotals;
     const filterNote = this.sellerFilter === 'all' ? 'Minden eladó' : `Eladó: ${sellers[0]?.user_name ?? ''}`;
 
+    // Eladónkénti és teljes összefoglaló azonos felépítésű: fizetési módok, kategóriák, mindösszesen
+    const summaryRows = (
+      x: { tickets: number; cash: number; card: number; szep: number; voucher: number; experience: number; other: number; amount: number },
+      cats: Array<{ label: string; tickets: number; amount: number }>
+    ) => `
+      <tr><td>Eladott jegyek / nyugták száma</td><td class="r"><b>${x.tickets} db</b></td></tr>
+      <tr><td>Készpénz</td><td class="r">${esc(ft(x.cash))}</td></tr>
+      <tr><td>Bankkártya</td><td class="r">${esc(ft(x.card))}</td></tr>
+      ${x.szep ? `<tr><td>SZÉP kártya</td><td class="r">${esc(ft(x.szep))}</td></tr>` : ''}
+      ${x.voucher ? `<tr><td>Utalvány</td><td class="r">${esc(ft(x.voucher))}</td></tr>` : ''}
+      ${x.experience ? `<tr><td>Élménykártya (érték)</td><td class="r">${esc(ft(x.experience))}</td></tr>` : ''}
+      ${x.other ? `<tr><td>Egyéb (online)</td><td class="r">${esc(ft(x.other))}</td></tr>` : ''}
+      ${cats.map(c => `<tr><td>Ebből: ${esc(c.label)}</td><td class="r">${c.tickets} db${c.amount ? ' • ' + esc(ft(c.amount)) : ''}</td></tr>`).join('')}
+      <tr class="total"><td>Mindösszesen</td><td class="r">${esc(ft(x.amount))}</td></tr>`;
+
     const sections = sellers.map(seller => {
       const sums = this.sellerSums(seller.tickets);
       const rows = seller.tickets.map(t => `
@@ -331,9 +353,6 @@ export class DailyCloseAdminComponent implements OnInit {
           <td class="r">${esc(ft(t.price_amount))}</td>
         </tr>`).join('');
 
-      const catRow = this.categorySums(seller.tickets)
-        .map(c => `${esc(c.label)}: ${c.tickets} db${c.amount ? ' (' + esc(ft(c.amount)) + ')' : ''}`).join(' • ');
-
       return `
         <div>
           <h2>${esc(seller.user_name)}</h2>
@@ -343,13 +362,12 @@ export class DailyCloseAdminComponent implements OnInit {
             </tr></thead>
             <tbody>
               ${rows}
-              <tr class="sub">
-                <td colspan="4">Összesen: ${seller.tickets.length} jegy / nyugta${catRow ? '<br>' + catRow : ''}</td>
-                <td colspan="2">Készpénz: ${esc(ft(sums.cash))} • Kártya: ${esc(ft(sums.card))}${sums.szep ? ' • SZÉP kártya: ' + esc(ft(sums.szep)) : ''}${sums.voucher ? ' • Utalvány: ' + esc(ft(sums.voucher)) : ''}${sums.experience ? ' • Élménykártya: ' + esc(ft(sums.experience)) : ''}${sums.other ? ' • Egyéb: ' + esc(ft(sums.other)) : ''}</td>
-                <td class="r">${esc(ft(sums.amount))}</td>
-              </tr>
             </tbody>
           </table>
+          <div class="summary">
+            <h3>${esc(seller.user_name)} – összefoglaló</h3>
+            <table>${summaryRows({ tickets: seller.tickets.length, ...sums }, this.categorySums(seller.tickets))}</table>
+          </div>
         </div>`;
     }).join('');
 
@@ -362,17 +380,8 @@ export class DailyCloseAdminComponent implements OnInit {
       </div>
       ${sections || '<p>Ezen a napon nem volt jegyeladás.</p>'}
       <div class="grand">
-        <table>
-          <tr><td>Eladott jegyek / nyugták száma</td><td class="r"><b>${totals.tickets} db</b></td></tr>
-          <tr><td>Készpénz</td><td class="r">${esc(ft(totals.cash))}</td></tr>
-          <tr><td>Bankkártya</td><td class="r">${esc(ft(totals.card))}</td></tr>
-          ${totals.szep ? `<tr><td>SZÉP kártya</td><td class="r">${esc(ft(totals.szep))}</td></tr>` : ''}
-          ${totals.voucher ? `<tr><td>Utalvány</td><td class="r">${esc(ft(totals.voucher))}</td></tr>` : ''}
-          ${totals.experience ? `<tr><td>Élménykártya (érték)</td><td class="r">${esc(ft(totals.experience))}</td></tr>` : ''}
-          ${totals.other ? `<tr><td>Egyéb (online)</td><td class="r">${esc(ft(totals.other))}</td></tr>` : ''}
-          ${this.visibleCategorySums.map(c => `<tr><td>Ebből: ${esc(c.label)}</td><td class="r">${c.tickets} db${c.amount ? ' • ' + esc(ft(c.amount)) : ''}</td></tr>`).join('')}
-          <tr><td><b>Mindösszesen</b></td><td class="r"><b>${esc(ft(totals.amount))}</b></td></tr>
-        </table>
+        <h3>Teljes összefoglaló</h3>
+        <table>${summaryRows(totals, this.visibleCategorySums)}</table>
       </div>
       <div class="sign"><div>Pénztáros</div><div>Átvette</div></div>
     </body></html>`;
