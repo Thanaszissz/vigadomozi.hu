@@ -649,7 +649,8 @@
 
 .city-logo img {
   display: block;
-  height: 90px;
+  height: 200px;
+  max-width: 100%;
   width: auto;
 }
 
