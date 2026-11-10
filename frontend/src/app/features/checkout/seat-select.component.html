@@ -16,7 +16,8 @@
     <div *ngIf="!loading && showtime" class="seat-select-container">
       <div class="header">
         <h1>Szék kiválasztás</h1>
-        <p>{{ showtime.movie.title }} - {{ showtime.starts_at | date: 'yyyy.MM.dd. HH:mm' }}</p>
+        <p class="show-title">{{ showtime.movie.title }}</p>
+        <p class="show-date">{{ showtime.starts_at | date: 'yyyy.MM.dd. HH:mm' }}</p>
         <p class="auditorium">{{ showtime.auditorium.name }}</p>
       </div>
 
