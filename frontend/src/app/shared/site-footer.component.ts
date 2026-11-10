@@ -28,7 +28,10 @@ import { RouterLink } from '@angular/router';
           <section class="footer-col">
             <h4>Impresszum</h4>
             <p>Kisújszállási Művelődési Központ és Könyvtár</p>
-          </section>
+                        <div class="pay-logo">
+                          <img src="assets/simplepay.webp" alt="OTP SimplePay" width="640" height="214" loading="lazy" />
+                        </div>
+                      </section>
         </div>
 
         <div class="footer-bottom">© {{ year }} Vigadó Jegy, Kisújszállás. Minden jog fenntartva.</div>
@@ -106,6 +109,21 @@ import { RouterLink } from '@angular/router';
 
     .footer-col > a:hover {
       transform: translateX(4px);
+    }
+
+    .pay-logo {
+      display: inline-block;
+      margin-top: 10px;
+      padding: 8px 12px;
+      background: #fff;
+      border-radius: 8px;
+    }
+
+    .pay-logo img {
+      display: block;
+      width: 100%;
+      max-width: 200px;
+      height: auto;
     }
 
     .footer-bottom {
