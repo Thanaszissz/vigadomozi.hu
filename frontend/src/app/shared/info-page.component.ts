@@ -54,6 +54,7 @@ import { SIMPLEPAY_INFO_PDF_URL, SIMPLEPAY_PRIVACY_URL } from './simplepay-conse
             <p>
               Kisújszállási Művelődési Központ és Könyvtár<br>
               5310 Kisújszállás, Szabadság tér 7.<br>
+              Adószám: 15576976-2-16<br>
               Telefon: <a href="tel:+3659328083">+36-59-328-083</a><br>
               E-mail: <a href="mailto:info&#64;vigadokisuj.hu">info&#64;vigadokisuj.hu</a>
             </p>
@@ -69,7 +70,7 @@ import { SIMPLEPAY_INFO_PDF_URL, SIMPLEPAY_PRIVACY_URL } from './simplepay-conse
           <article *ngSwitchCase="'adatkezelesi-tajekoztato'" class="doc">
             <h2>Adatkezelő</h2>
             <p>
-              Kisújszállási Művelődési Központ és Könyvtár, 5310 Kisújszállás, Szabadság tér 7.,
+              Kisújszállási Művelődési Központ és Könyvtár, 5310 Kisújszállás, Szabadság tér 7., adószám: 15576976-2-16,
               e-mail: <a href="mailto:info&#64;vigadokisuj.hu">info&#64;vigadokisuj.hu</a>, telefon: <a href="tel:+3659328083">+36-59-328-083</a>.
             </p>
 

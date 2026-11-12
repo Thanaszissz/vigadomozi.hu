@@ -19,7 +19,7 @@ import { RouterLink } from '@angular/router';
 
           <section class="footer-col">
             <h4>Kapcsolat</h4>
-            <p class="name">Vigadó Jegy • Film és Színház</p>
+            <p class="name">Vigadó Online Jegyértékesítő - Élményt adunk!</p>
             <p><span class="ico">📍</span>5310 Kisújszállás, Szabadság tér 7.</p>
             <p><span class="ico">📞</span><a href="tel:+3659328083">+36-59-328-083</a></p>
             <p><span class="ico">✉️</span><a href="mailto:info&#64;vigadokisuj.hu">info&#64;vigadokisuj.hu</a></p>
@@ -28,7 +28,9 @@ import { RouterLink } from '@angular/router';
           <section class="footer-col">
             <h4>Impresszum</h4>
             <p>Kisújszállási Művelődési Központ és Könyvtár</p>
-                        <div class="pay-logo">
+            <p>5310 Kisújszállás, Szabadság tér 7.</p>
+            <p>Adószám: 15576976-2-16</p>
+            <div class="pay-logo">
                           <img src="assets/simplepay.webp" alt="SimplePay" width="690" height="205" loading="lazy" />
                         </div>
                       </section>
