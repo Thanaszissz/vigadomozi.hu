@@ -63,7 +63,7 @@ import { SIMPLEPAY_INFO_PDF_URL, SIMPLEPAY_PRIVACY_URL } from './simplepay-conse
               A SimplePay bankkártyás fizetési szolgáltatásának részletes ismertetője:
               <a [href]="infoPdf" target="_blank" rel="noopener">SimplePay fizetési tájékoztató (PDF)</a>.
             </p>
-            <div class="logo"><img src="assets/simplepay.webp" alt="SimplePay" width="640" height="214" loading="lazy"></div>
+            <div class="logo"><img src="assets/simplepay.webp" alt="SimplePay" width="690" height="205" loading="lazy"></div>
           </article>
 
           <article *ngSwitchCase="'adatkezelesi-tajekoztato'" class="doc">
