@@ -22,7 +22,7 @@ import { RouterLink } from '@angular/router';
             <p class="name">Vigadó Jegy • Film és Színház</p>
             <p><span class="ico">📍</span>5310 Kisújszállás, Szabadság tér 7.</p>
             <p><span class="ico">📞</span><a href="tel:+3659328083">+36-59-328-083</a></p>
-            <p><span class="ico">✉️</span><a href="mailto:info&#64;vigadojegy.hu">info&#64;vigadojegy.hu</a></p>
+            <p><span class="ico">✉️</span><a href="mailto:info&#64;vigadokisuj.hu">info&#64;vigadokisuj.hu</a></p>
           </section>
 
           <section class="footer-col">

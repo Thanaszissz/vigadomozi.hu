@@ -169,7 +169,7 @@ export function buildReceiptHtml(d: ReceiptData): string {
 
   <footer>
     <div><b>Kisújszállási Művelődési Központ és Könyvtár</b> – Vigadó Jegy<br>5310 Kisújszállás, Szabadság tér 7.</div>
-    <div>+36-59-328-083<br>info@vigadojegy.hu</div>
+    <div>+36-59-328-083<br>info@vigadokisuj.hu</div>
   </footer>
 </div>
 <div class="no-print"><button onclick="window.print()">Nyomtatás / PDF</button></div>

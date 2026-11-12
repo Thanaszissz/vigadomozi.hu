@@ -46,7 +46,7 @@ import { SIMPLEPAY_INFO_PDF_URL, SIMPLEPAY_PRIVACY_URL } from './simplepay-conse
             <p>
               Elmaradt előadás esetén a jegy árát az eredeti fizetési móddal visszatérítjük. Visszatérítéssel, lemondással vagy a jegyekkel kapcsolatos
               egyéb kérdésben írj nekünk az
-              <a href="mailto:info&#64;vigadojegy.hu">info&#64;vigadojegy.hu</a> címre, vagy hívj a
+              <a href="mailto:info&#64;vigadokisuj.hu">info&#64;vigadokisuj.hu</a> címre, vagy hívj a
               <a href="tel:+3659328083">+36-59-328-083</a> telefonszámon. A jegyvásárlásra a <a routerLink="/hazirend">Házirend</a> is vonatkozik.
             </p>
 
@@ -55,7 +55,7 @@ import { SIMPLEPAY_INFO_PDF_URL, SIMPLEPAY_PRIVACY_URL } from './simplepay-conse
               Kisújszállási Művelődési Központ és Könyvtár<br>
               5310 Kisújszállás, Szabadság tér 7.<br>
               Telefon: <a href="tel:+3659328083">+36-59-328-083</a><br>
-              E-mail: <a href="mailto:info&#64;vigadojegy.hu">info&#64;vigadojegy.hu</a>
+              E-mail: <a href="mailto:info&#64;vigadokisuj.hu">info&#64;vigadokisuj.hu</a>
             </p>
 
             <h2>A SimplePay fizetési tájékoztatója</h2>
@@ -70,7 +70,7 @@ import { SIMPLEPAY_INFO_PDF_URL, SIMPLEPAY_PRIVACY_URL } from './simplepay-conse
             <h2>Adatkezelő</h2>
             <p>
               Kisújszállási Művelődési Központ és Könyvtár, 5310 Kisújszállás, Szabadság tér 7.,
-              e-mail: <a href="mailto:info&#64;vigadojegy.hu">info&#64;vigadojegy.hu</a>, telefon: <a href="tel:+3659328083">+36-59-328-083</a>.
+              e-mail: <a href="mailto:info&#64;vigadokisuj.hu">info&#64;vigadokisuj.hu</a>, telefon: <a href="tel:+3659328083">+36-59-328-083</a>.
             </p>
 
             <h2>Kezelt adatok és az adatkezelés célja</h2>
@@ -102,7 +102,7 @@ import { SIMPLEPAY_INFO_PDF_URL, SIMPLEPAY_PRIVACY_URL } from './simplepay-conse
               Kérhetsz tájékoztatást a kezelt adataidról, kérheted azok helyesbítését, törlését vagy kezelésének korlátozását, tiltakozhatsz az
               adatkezelés ellen, és panasszal fordulhatsz a Nemzeti Adatvédelmi és Információszabadság Hatósághoz (NAIH, 1055 Budapest, Falk Miksa u. 9-11.,
               <a href="https://www.naih.hu" target="_blank" rel="noopener">www.naih.hu</a>). Kérésedet az
-              <a href="mailto:info&#64;vigadojegy.hu">info&#64;vigadojegy.hu</a> címen add le.
+              <a href="mailto:info&#64;vigadokisuj.hu">info&#64;vigadokisuj.hu</a> címen add le.
             </p>
 
             <h2>Sütik</h2>

@@ -179,7 +179,7 @@ export function buildDailyReportHtml(d: DailyReportData): string {
   </section>` : ''}
 
   <footer>
-    <div><b>Kisújszállási Művelődési Központ és Könyvtár</b> – Vigadó Jegy<br>5310 Kisújszállás, Szabadság tér 7. • +36-59-328-083 • info@vigadojegy.hu</div>
+    <div><b>Kisújszállási Művelődési Központ és Könyvtár</b> – Vigadó Jegy<br>5310 Kisújszállás, Szabadság tér 7. • +36-59-328-083 • info@vigadokisuj.hu</div>
     <div style="text-align:right">Nyomtatta: <b>${e(d.issuedBy || '—')}</b><br>${e(fullTime(new Date().toISOString()))}</div>
   </footer>
   <div class="no-print"><button onclick="window.print()">Nyomtatás / PDF</button></div>

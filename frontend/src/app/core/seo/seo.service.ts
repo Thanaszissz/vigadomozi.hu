@@ -23,7 +23,7 @@ const THEATER = {
   '@type': 'MovieTheater',
   name: 'Vigadó Jegy',
   telephone: '+36-59-328-083',
-  email: 'info@vigadojegy.hu',
+  email: 'info@vigadokisuj.hu',
   address: {
     '@type': 'PostalAddress',
     streetAddress: 'Szabadság tér 7.',

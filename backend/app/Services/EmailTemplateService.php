@@ -18,7 +18,7 @@ class EmailTemplateService
         'mozi_neve' => 'Vigadó Jegy',
         'mozi_cim' => '5310 Kisújszállás, Szabadság tér 7.',
         'mozi_telefon' => '+36-59-328-083',
-        'mozi_email' => 'info@vigadojegy.hu',
+        'mozi_email' => 'info@vigadokisuj.hu',
     ];
 
     public const PLACEHOLDERS = [
