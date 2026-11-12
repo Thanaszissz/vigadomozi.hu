@@ -118,7 +118,7 @@ return [
     // A válaszok címe: az ügyfél válasza a mozi valódi postafiókjába érkezzen (MAIL_REPLY_TO_ADDRESS, alapból info@vigadokisuj.hu)
     'reply_to' => [
         'address' => env('MAIL_REPLY_TO_ADDRESS', 'info@vigadokisuj.hu'),
-        'name' => env('MAIL_REPLY_TO_NAME', 'Vigadó Jegy'),
+        'name' => env('MAIL_REPLY_TO_NAME', 'Vigadó Online Jegyértékesítő'),
     ],
 
     /*

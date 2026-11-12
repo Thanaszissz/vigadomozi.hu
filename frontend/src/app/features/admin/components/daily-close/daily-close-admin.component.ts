@@ -221,7 +221,7 @@ export class DailyCloseAdminComponent implements OnInit {
     const lines: Array<Array<string | number>> = [];
     const blank = () => lines.push([]);
 
-    lines.push(['Napi zárás – Vigadó Jegy']);
+    lines.push(['Napi zárás – Vigadó Online Jegyértékesítő']);
     lines.push(['Nap', day]);
     lines.push(['Eladó', filterNote]);
     lines.push(['Készítette', current?.name ?? '']);
@@ -372,7 +372,7 @@ export class DailyCloseAdminComponent implements OnInit {
     }).join('');
 
     return `<!doctype html><html><head><meta charset="utf-8"><title>Napi zárás ${esc(this.date)}</title><style>${PRINT_CSS}</style></head><body>
-      <h1>Napi zárás – Vigadó Jegy</h1>
+      <h1>Napi zárás – Vigadó Online Jegyértékesítő</h1>
       <div class="sub">${esc(this.date.replace(/-/g, '.'))}. • ${esc(filterNote)}</div>
       <div class="meta">
         <span>Nyomtatta: ${esc(current?.name ?? '-')}</span>

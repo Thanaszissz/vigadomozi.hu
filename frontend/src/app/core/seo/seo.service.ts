@@ -13,15 +13,15 @@ export interface SeoData {
   type?: 'website' | 'video.movie';
 }
 
-export const SITE_NAME = 'Vigadó Jegy';
-const DEFAULT_TITLE = 'Vigadó Jegy Kisújszállás – műsor, jegyvásárlás online';
+export const SITE_NAME = 'Vigadó Online Jegyértékesítő';
+const DEFAULT_TITLE = 'Vigadó Online Jegyértékesítő Kisújszállás – műsor, jegyvásárlás online';
 const DEFAULT_DESCRIPTION =
-  'A kisújszállási Vigadó Jegy műsora, vetítési időpontok, jegyárak és online jegyfoglalás. Foglalj helyet kedvenc filmedre percek alatt!';
+  'A kisújszállási Vigadó Online Jegyértékesítő műsora, vetítési időpontok, jegyárak és online jegyfoglalás. Foglalj helyet kedvenc filmedre percek alatt!';
 const DEFAULT_IMAGE = '/assets/og-default.jpg';
 
 const THEATER = {
   '@type': 'MovieTheater',
-  name: 'Vigadó Jegy',
+  name: 'Vigadó Online Jegyértékesítő',
   telephone: '+36-59-328-083',
   email: 'info@vigadokisuj.hu',
   address: {

@@ -15,7 +15,7 @@ use Illuminate\Support\HtmlString;
 class EmailTemplateService
 {
     public const CINEMA = [
-        'mozi_neve' => 'Vigadó Jegy',
+        'mozi_neve' => 'Vigadó Online Jegyértékesítő',
         'mozi_cim' => '5310 Kisújszállás, Szabadság tér 7.',
         'mozi_telefon' => '+36-59-328-083',
         'mozi_email' => 'info@vigadokisuj.hu',

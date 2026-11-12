@@ -8,7 +8,7 @@ import { CommonModule } from '@angular/common';
   imports: [CommonModule],
   template: `
     <div class="maintenance" role="alert">
-      <img src="assets/vigado_logo_beige.png" alt="Vigadó Jegy" class="logo" />
+      <img src="assets/vigado_logo_beige.png" alt="Vigadó Online Jegyértékesítő" class="logo" />
       <h1>🛠️ Karbantartás alatt vagyunk</h1>
       <p class="message">{{ message }}</p>
       <p class="hint">Az oldal automatikusan újratöltődik, amint a karbantartás véget ér.</p>

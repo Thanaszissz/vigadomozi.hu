@@ -36,7 +36,7 @@ import { RouterLink } from '@angular/router';
                       </section>
         </div>
 
-        <div class="footer-bottom">© {{ year }} Vigadó Jegy, Kisújszállás. Minden jog fenntartva.</div>
+        <div class="footer-bottom">© {{ year }} Vigadó Online Jegyértékesítő, Kisújszállás. Minden jog fenntartva.</div>
       </div>
     </footer>
   `,

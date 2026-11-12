@@ -106,9 +106,9 @@ export function buildReceiptHtml(d: ReceiptData): string {
 <html lang="hu"><head><meta charset="utf-8"><title>Befizetési igazolás – #${e(r.id)}</title><style>${CSS}</style></head>
 <body><div class="page">
   <div class="band">
-    <img src="${e(d.logoUrl)}" alt="Vigadó Jegy">
+    <img src="${e(d.logoUrl)}" alt="Vigadó Online Jegyértékesítő">
     <div class="doc">
-      <div class="kind">Vigadó Jegy • Kisújszállás</div>
+      <div class="kind">Vigadó Online Jegyértékesítő • Kisújszállás</div>
       <h1>Befizetési igazolás</h1>
       <div class="no">Foglalás #${e(r.id)} • Kiállítva: ${e(when(new Date().toISOString(), { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }))}</div>
     </div>
@@ -168,7 +168,7 @@ export function buildReceiptHtml(d: ReceiptData): string {
   </div>
 
   <footer>
-    <div><b>Kisújszállási Művelődési Központ és Könyvtár</b> – Vigadó Jegy<br>5310 Kisújszállás, Szabadság tér 7.</div>
+    <div><b>Kisújszállási Művelődési Központ és Könyvtár</b> – Vigadó Online Jegyértékesítő<br>5310 Kisújszállás, Szabadság tér 7.</div>
     <div>+36-59-328-083<br>info@vigadokisuj.hu</div>
   </footer>
 </div>

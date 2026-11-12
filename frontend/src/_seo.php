@@ -6,9 +6,9 @@
  * Beállítás környezeti változókkal (opcionális): SEO_SITE_URL, SEO_API_URL.
  */
 
-const SEO_SITE_NAME = 'Vigadó Jegy';
-const SEO_DEFAULT_TITLE = 'Vigadó Jegy Kisújszállás – műsor, jegyvásárlás online';
-const SEO_DEFAULT_DESCRIPTION = 'A kisújszállási Vigadó Jegy műsora, vetítési időpontok, jegyárak és online jegyfoglalás. Foglalj helyet kedvenc filmedre percek alatt!';
+const SEO_SITE_NAME = 'Vigadó Online Jegyértékesítő';
+const SEO_DEFAULT_TITLE = 'Vigadó Online Jegyértékesítő Kisújszállás – műsor, jegyvásárlás online';
+const SEO_DEFAULT_DESCRIPTION = 'A kisújszállási Vigadó Online Jegyértékesítő műsora, vetítési időpontok, jegyárak és online jegyfoglalás. Foglalj helyet kedvenc filmedre percek alatt!';
 
 function seo_site_url(): string
 {
@@ -30,13 +30,13 @@ function seo_static_pages(): array
 {
     return [
         '/' => [null, SEO_DEFAULT_DESCRIPTION],
-        '/movies' => ['Filmek', 'Aktuális filmek a kisújszállási Vigadó Jegyen: plakátok, leírások, előzetesek és vetítési időpontok egy helyen.'],
-        '/schedule' => ['Műsor és vetítési időpontok', 'A Vigadó Jegy teljes műsora napokra bontva: mikor és mit játszunk Kisújszálláson. Jegyfoglalás online.'],
-        '/prices' => ['Jegyárak', 'A Vigadó Jegy jegyárai Kisújszálláson: emeleti, földszinti emelvényes és 3D jegyek.'],
-        '/mediaajanlat' => ['Médiaajánlat', 'Hirdetési és médiaajánlat a Vigadó Jegy vásznán és felületein, Kisújszálláson.'],
-        '/hazirend' => ['Házirend', 'A Vigadó Jegy házirendje: látogatási szabályok, korhatár-besorolások és tudnivalók a mozilátogatáshoz.'],
-        '/fizetesi-tajekoztato' => ['Fizetési tájékoztató', 'Fizetési tájékoztató a Vigadó Jegy online jegyvásárlásához: elfogadott fizetési módok és a vásárlás menete.'],
-        '/adatkezelesi-tajekoztato' => ['Adatkezelési tájékoztató', 'A Vigadó Jegy adatkezelési tájékoztatója: hogyan kezeljük a jegyfoglalás és vásárlás során megadott adataidat.'],
+        '/movies' => ['Filmek', 'Aktuális filmek a kisújszállási Vigadó Online Jegyértékesítőn: plakátok, leírások, előzetesek és vetítési időpontok egy helyen.'],
+        '/schedule' => ['Műsor és vetítési időpontok', 'A Vigadó Online Jegyértékesítő teljes műsora napokra bontva: mikor és mit játszunk Kisújszálláson. Jegyfoglalás online.'],
+        '/prices' => ['Jegyárak', 'A Vigadó Online Jegyértékesítő jegyárai Kisújszálláson: emeleti, földszinti emelvényes és 3D jegyek.'],
+        '/mediaajanlat' => ['Médiaajánlat', 'Hirdetési és médiaajánlat a Vigadó Online Jegyértékesítő felületein, Kisújszálláson.'],
+        '/hazirend' => ['Házirend', 'A Vigadó Online Jegyértékesítő házirendje: látogatási szabályok, korhatár-besorolások és tudnivalók a mozilátogatáshoz.'],
+        '/fizetesi-tajekoztato' => ['Fizetési tájékoztató', 'Fizetési tájékoztató a Vigadó Online Jegyértékesítő online jegyvásárlásához: elfogadott fizetési módok és a vásárlás menete.'],
+        '/adatkezelesi-tajekoztato' => ['Adatkezelési tájékoztató', 'A Vigadó Online Jegyértékesítő adatkezelési tájékoztatója: hogyan kezeljük a jegyfoglalás és vásárlás során megadott adataidat.'],
     ];
 }
 
@@ -214,7 +214,7 @@ function seo_resolve(string $path): array
                 $when = seo_format_datetime($showtime['starts_at']);
                 $room = $showtime['auditorium']['name'] ?? '';
                 $page['title'] = 'Jegyfoglalás: ' . $movie['title'] . ' – ' . $when . ' | ' . SEO_SITE_NAME;
-                $page['description'] = 'Foglalj helyet a(z) ' . $movie['title'] . ' vetítésére a kisújszállási Vigadó Jegyen: ' . $when . ($room ? ', ' . $room : '') . '.';
+                $page['description'] = 'Foglalj helyet a(z) ' . $movie['title'] . ' vetítésére a kisújszállási Vigadó Online Jegyértékesítőn: ' . $when . ($room ? ', ' . $room : '') . '.';
                 $page['image'] = seo_movie_image($movie);
                 $page['type'] = 'video.movie';
                 $page['body'] = '<h1>' . seo_h($page['title']) . '</h1><p>' . seo_h($page['description']) . '</p>';
@@ -254,7 +254,7 @@ function seo_movie_page(array $page, array $movie): array
 
     $theater = [
         '@type' => 'MovieTheater',
-        'name' => 'Vigadó Jegy',
+        'name' => 'Vigadó Online Jegyértékesítő',
         'address' => ['@type' => 'PostalAddress', 'streetAddress' => 'Szabadság tér 7.', 'addressLocality' => 'Kisújszállás', 'postalCode' => '5310', 'addressCountry' => 'HU'],
     ];
 

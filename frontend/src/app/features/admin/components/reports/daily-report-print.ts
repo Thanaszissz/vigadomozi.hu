@@ -117,9 +117,9 @@ export function buildDailyReportHtml(d: DailyReportData): string {
 <html lang="hu"><head><meta charset="utf-8"><title>Napi riport – ${e(d.date)}</title><style>${CSS}</style></head>
 <body>
   <div class="band">
-    <img src="${e(d.logoUrl)}" alt="Vigadó Jegy">
+    <img src="${e(d.logoUrl)}" alt="Vigadó Online Jegyértékesítő">
     <div class="doc">
-      <div class="kind">Vigadó Jegy • Kisújszállás</div>
+      <div class="kind">Vigadó Online Jegyértékesítő • Kisújszállás</div>
       <h1>Napi riport</h1>
       <div class="day">${e(dayLabel)}</div>
     </div>
@@ -179,7 +179,7 @@ export function buildDailyReportHtml(d: DailyReportData): string {
   </section>` : ''}
 
   <footer>
-    <div><b>Kisújszállási Művelődési Központ és Könyvtár</b> – Vigadó Jegy<br>5310 Kisújszállás, Szabadság tér 7. • +36-59-328-083 • info@vigadokisuj.hu</div>
+    <div><b>Kisújszállási Művelődési Központ és Könyvtár</b> – Vigadó Online Jegyértékesítő<br>5310 Kisújszállás, Szabadság tér 7. • +36-59-328-083 • info@vigadokisuj.hu</div>
     <div style="text-align:right">Nyomtatta: <b>${e(d.issuedBy || '—')}</b><br>${e(fullTime(new Date().toISOString()))}</div>
   </footer>
   <div class="no-print"><button onclick="window.print()">Nyomtatás / PDF</button></div>
