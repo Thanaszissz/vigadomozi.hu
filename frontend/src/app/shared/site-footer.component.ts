@@ -14,7 +14,7 @@ import { RouterLink } from '@angular/router';
             <a routerLink="/hazirend">Házirend</a>
             <a routerLink="/fizetesi-tajekoztato">Fizetési tájékoztató</a>
             <a routerLink="/adatkezelesi-tajekoztato">Adatkezelési tájékoztató</a>
-            <a routerLink="/mediaajanlat">Médiaajánlat</a>
+            <!-- <a routerLink="/mediaajanlat">Médiaajánlat</a> -->
           </section>
 
           <section class="footer-col">
