@@ -248,6 +248,11 @@
   word-break: break-all;
 }
 
+.mono {
+  font-family: Consolas, 'Courier New', monospace;
+  letter-spacing: 0.3px;
+}
+
 .reservation-id {
   padding: 2px 12px;
   border-radius: 999px;

@@ -29,7 +29,7 @@ import { RouterLink } from '@angular/router';
             <h4>Impresszum</h4>
             <p>Kisújszállási Művelődési Központ és Könyvtár</p>
                         <div class="pay-logo">
-                          <img src="assets/simplepay.webp" alt="OTP SimplePay" width="640" height="214" loading="lazy" />
+                          <img src="assets/simplepay.webp" alt="SimplePay" width="640" height="214" loading="lazy" />
                         </div>
                       </section>
         </div>

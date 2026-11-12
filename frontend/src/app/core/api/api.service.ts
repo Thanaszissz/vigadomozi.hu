@@ -100,6 +100,16 @@ export interface Reservation {
   expires_at: string;
   items: ReservationItem[];
   showtime?: ShowtimeDetail;
+  payment?: ReservationPayment | null;
+}
+
+export interface ReservationPayment {
+  order_ref: string;
+  transaction_id: string;
+  status: string;
+  amount: number;
+  currency: string;
+  date: string | null;
 }
 
 @Injectable({
@@ -160,8 +170,8 @@ export class ApiService {
     );
   }
 
-  getReservation(reservationId: number): Observable<Reservation> {
-    return this.http.get<Reservation>(`${API_URL}/reservations/${reservationId}`);
+  getReservation(reservationId: number, key?: string): Observable<Reservation> {
+    return this.http.get<Reservation>(`${API_URL}/reservations/${reservationId}`, key ? { params: { k: key } } : {});
   }
 
   getPaidTickets(reservationId: number, key: string): Observable<PaidTicket[]> {

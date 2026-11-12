@@ -2,11 +2,13 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ApiService, Reservation } from '../../core/api/api.service';
+import { placeLabel } from '../../core/util/seat';
+import { SimplePayConsentComponent } from '../../shared/simplepay-consent.component';
 
 @Component({
   selector: 'app-checkout',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, SimplePayConsentComponent],
   templateUrl: './checkout.component.html',
   styleUrls: ['./checkout.component.css']
 })
@@ -15,6 +17,9 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   loading = false;
   error: string | null = null;
   reservationId: number = 0;
+  accessKey = '';
+  consentAccepted = false;
+  readonly placeLabel = placeLabel;
   isProcessing = false;
   isProcessingPayment = false;
   paymentError: string | null = null;
@@ -51,19 +56,21 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
+    // Visszatérés a fizetési oldalról: a sikertelen fizetésről tájékoztatjuk a vásárlót (először, hogy a kulcs már megvan a betöltéskor)
+    this.route.queryParams.subscribe(params => {
+      this.accessKey = params['k'] ?? '';
+      this.paymentNotice = ({
+        fail: 'Sikertelen tranzakció. A bankkártyás fizetés nem sikerült. Kérjük, próbálja meg újra, vagy használjon másik kártyát.',
+        cancel: 'Megszakított tranzakció. A fizetést megszakította. A foglalása még él, a fizetést bármikor újra elindíthatja.',
+        timeout: 'Időtúllépés. A fizetési idő lejárt. Kérjük, indítsa újra a fizetést.',
+        unknown: 'A fizetés eredménye nem állapítható meg. Kérjük, ellenőrizze a bankkártya-egyenlegét, és szükség esetén vegye fel velünk a kapcsolatot.',
+        conflict: 'A fizetés megtörtént, de a kiválasztott székek időközben mások számára lettek lefoglalva, ezért a foglalás nem véglegesíthető. A kifizetett összeget visszatérítjük, kérjük, vegye fel velünk a kapcsolatot.'
+      } as Record<string, string>)[params['payment']] ?? null;
+    });
+
     this.route.params.subscribe(params => {
       this.reservationId = parseInt(params['reservationId'], 10);
       this.loadReservation();
-    });
-
-    // Visszatérés a fizetési oldalról: a sikertelen fizetésről tájékoztatjuk a vásárlót
-    this.route.queryParams.subscribe(params => {
-      this.paymentNotice = ({
-        fail: 'A bankkártyás fizetés nem sikerült. Kérjük, próbálja meg újra, vagy használjon másik kártyát.',
-        cancel: 'A fizetést megszakította. A foglalása még él, a fizetést bármikor újra elindíthatja.',
-        timeout: 'A fizetési idő lejárt. Kérjük, indítsa újra a fizetést.',
-        conflict: 'A fizetés megtörtént, de a kiválasztott székek időközben mások számára lettek lefoglalva, ezért a foglalás nem véglegesíthető. A kifizetett összeget visszatérítjük, kérjük, vegye fel velünk a kapcsolatot.'
-      } as Record<string, string>)[params['payment']] ?? null;
     });
   }
 
@@ -71,7 +78,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     this.loading = true;
     this.error = null;
 
-    this.apiService.getReservation(this.reservationId).subscribe({
+    this.apiService.getReservation(this.reservationId, this.accessKey).subscribe({
       next: (data) => {
         this.reservation = data;
         this.loading = false;

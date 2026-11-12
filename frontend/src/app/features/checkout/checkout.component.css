@@ -336,6 +336,29 @@
 
 .payment-note .ico { font-size: 18px; }
 
+.payment-note a { color: inherit; font-weight: 700; }
+
+.payment-ids {
+  margin-top: 8px;
+  font-weight: 400;
+  font-size: 13px;
+}
+
+.simplepay-logo {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+}
+
+.simplepay-logo img {
+  width: 100%;
+  max-width: 180px;
+  height: auto;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: #fff;
+}
+
 .error-message {
   margin-top: 14px;
   padding: 12px 14px;

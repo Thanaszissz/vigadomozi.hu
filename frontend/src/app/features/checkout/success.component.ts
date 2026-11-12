@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { firstValueFrom } from 'rxjs';
 import { ApiService, Reservation } from '../../core/api/api.service';
 import { TICKET_CSS, ticketMarkup, waitForImages } from '../../core/ticket/ticket-template';
+import { placeLabel } from '../../core/util/seat';
 
 @Component({
   selector: 'app-success',
@@ -20,7 +21,17 @@ export class SuccessComponent implements OnInit {
   accessKey = '';
   downloading = false;
   downloadError: string | null = null;
+  readonly placeLabel = placeLabel;
 
+  paymentResult(status: string): string {
+    return ({
+      SUCCESS: 'Sikeres tranzakció',
+      INIT: 'Feldolgozás alatt',
+      CANCEL: 'Megszakított tranzakció',
+      TIMEOUT: 'Időtúllépés',
+      FAIL: 'Sikertelen tranzakció'
+    } as Record<string, string>)[status] ?? 'Ismeretlen állapot';
+  }
   constructor(
     private apiService: ApiService,
     private route: ActivatedRoute
@@ -38,7 +49,7 @@ export class SuccessComponent implements OnInit {
     this.loading = true;
     this.error = null;
 
-    this.apiService.getReservation(this.reservationId).subscribe({
+    this.apiService.getReservation(this.reservationId, this.accessKey).subscribe({
       next: (data) => {
         this.reservation = data;
         this.loading = false;

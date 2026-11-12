@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Exceptions\SeatUnavailableException;
 use App\Exceptions\SimplePayException;
 use App\Http\Controllers\Controller;
+use App\Models\Payment;
 use App\Models\Reservation;
 use App\Models\Ticket;
 use App\Services\SeatClaimService;
@@ -20,7 +21,7 @@ class ReservationController extends Controller
      * A foglalás nyilvános adatai a fizetési és visszaigazoló oldalakhoz. Az azonosító sorszámszerű (kitalálható),
      * ezért a vásárló személyes adatai csak elmaszkolva szerepelnek, így a végigpróbálgatás nem gyűjt be adatot.
      */
-    public function show(Reservation $reservation)
+    public function show(Reservation $reservation, Request $request)
     {
         $reservation->load('items', 'showtime.movie', 'showtime.auditorium');
         $data = $reservation->toArray();
@@ -29,6 +30,24 @@ class ReservationController extends Controller
         $data['customer_email'] = self::maskEmail($reservation->customer_email);
         $data['customer_phone'] = self::maskPhone($reservation->customer_phone);
         unset($data['payment_ref'], $data['handled_by_admin_id']);
+
+        // A SimplePay azonosítók (a fizetés utáni átirányításban kapott kulccsal) a vásárlónak megjeleníthetők
+        if (TicketAccess::check($reservation->id, $request->query('k'))) {
+            $payment = Payment::where('reservation_id', $reservation->id)
+                ->where('provider', SimplePayService::PROVIDER)
+                ->whereNotNull('transaction_id')
+                ->latest('id')
+                ->first();
+
+            $data['payment'] = $payment ? [
+                'order_ref' => $payment->order_ref,
+                'transaction_id' => $payment->transaction_id,
+                'status' => $payment->status,
+                'amount' => (int) $payment->amount,
+                'currency' => $payment->currency,
+                'date' => ($payment->completed_at ?? $payment->updated_at)?->toIso8601String(),
+            ] : null;
+        }
 
         return response()->json($data, 200);
     }

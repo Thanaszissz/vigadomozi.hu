@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Payment;
 use App\Models\Reservation;
 use App\Support\SeatKey;
 use Illuminate\Support\Collection;
@@ -31,7 +32,9 @@ class EmailTemplateService
         'osszeg' => 'A végösszeg (pl. 4 000 Ft)',
         'foglalas_azonosito' => 'A foglalás azonosítója (pl. #123)',
         'fizetesi_mod' => 'A fizetés módja',
-        'foglalas_tabla' => 'A foglalás adatai táblázatban (film, időpont, terem, székek, összeg)',
+        'rendelesszam' => 'A SimplePay rendelésszám (online fizetés esetén)',
+        'simplepay_tranzakcio' => 'A SimplePay tranzakcióazonosító (online fizetés esetén)',
+        'foglalas_tabla' => 'A foglalás adatai táblázatban (film, időpont, terem, székek, összeg; online fizetésnél a SimplePay azonosítók is)',
         'jegyek' => 'A megvásárolt jegyek, jegyszámmal (a sikeres fizetés levelében)',
         'mozi_neve' => 'A mozi neve',
         'mozi_cim' => 'A mozi címe',
@@ -99,7 +102,19 @@ HTML,
             'osszeg' => $this->money((int) $reservation->total_amount),
             'foglalas_azonosito' => '#' . $reservation->id,
             'fizetesi_mod' => $providers[$reservation->payment_provider] ?? 'Fizetés a pénztárban',
+            'rendelesszam' => '',
+            'simplepay_tranzakcio' => '',
         ] + self::CINEMA;
+
+        $payment = Payment::where('reservation_id', $reservation->id)
+            ->where('provider', SimplePayService::PROVIDER)
+            ->where('status', 'SUCCESS')
+            ->latest('id')
+            ->first();
+        if ($payment) {
+            $vars['rendelesszam'] = (string) $payment->order_ref;
+            $vars['simplepay_tranzakcio'] = (string) $payment->transaction_id;
+        }
 
         $vars['foglalas_tabla'] = $this->reservationTable($vars);
         $vars['jegyek'] = new HtmlString($tickets ? $this->ticketCards($tickets) : '');
@@ -122,6 +137,8 @@ HTML,
             'osszeg' => $this->money(4000),
             'foglalas_azonosito' => '#123',
             'fizetesi_mod' => 'Bankkártya (online)',
+            'rendelesszam' => 'VIG-123-ABCD1234',
+            'simplepay_tranzakcio' => '501234567',
         ] + self::CINEMA;
 
         $vars['foglalas_tabla'] = $this->reservationTable($vars);
@@ -283,6 +300,12 @@ HTML;
             'Székek' => $v['szekek'],
             'Összeg' => $v['osszeg'],
         ];
+        if (!empty($v['rendelesszam'])) {
+            $rows['Rendelésszám'] = $v['rendelesszam'];
+        }
+        if (!empty($v['simplepay_tranzakcio'])) {
+            $rows['SimplePay tranzakció'] = $v['simplepay_tranzakcio'];
+        }
 
         $html = '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;margin:6px 0 22px;border:1px solid #eadfce;border-left:5px solid #d4a574;border-radius:8px;background:#fbf7f0;border-collapse:separate;font-family:Arial,Helvetica,sans-serif;">';
         $last = array_key_last($rows);

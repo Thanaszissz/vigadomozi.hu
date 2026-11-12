@@ -42,16 +42,19 @@ class SimplePayController extends Controller
         }
 
         $id = $payment->reservation_id;
+        $k = TicketAccess::key($id);
 
         if ($info['e'] === 'SUCCESS') {
             $outcome = $this->payments->markPaid($payment, $info['t'], ['return' => $info]);
 
-            return redirect($site . ($outcome === OnlinePaymentService::STATUS_CONFLICT ? "/checkout/{$id}?payment=conflict" : "/success/{$id}?k=" . TicketAccess::key($id)));
+            return redirect($site . ($outcome === OnlinePaymentService::STATUS_CONFLICT ? "/checkout/{$id}?payment=conflict&k={$k}" : "/success/{$id}?k={$k}"));
         }
 
         $this->payments->markFailed($payment, $info['e'], $info['t'], ['return' => $info]);
 
-        return redirect($site . "/checkout/{$id}?payment=" . strtolower($info['e']));
+        $event = in_array($info['e'], ['FAIL', 'CANCEL', 'TIMEOUT'], true) ? strtolower($info['e']) : 'unknown';
+
+        return redirect($site . "/checkout/{$id}?payment={$event}&k={$k}");
     }
 
     /** IPN: a SimplePay szerver-szerver értesítése (aláírt JSON). A válasz az értesítés aláírt nyugtázása. */

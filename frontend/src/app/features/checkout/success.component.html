@@ -52,10 +52,33 @@
             <strong>{{ reservation.customer_email }}</strong>
           </div>
 
+          <ng-container *ngIf="reservation.payment as pay">
+            <div class="detail-row">
+              <span>Fizetés eredménye</span>
+              <strong>{{ paymentResult(pay.status) }}</strong>
+            </div>
+            <div class="detail-row">
+              <span>SimplePay tranzakcióazonosító</span>
+              <strong class="mono">{{ pay.transaction_id }}</strong>
+            </div>
+            <div class="detail-row">
+              <span>Rendelésszám</span>
+              <strong class="mono">{{ pay.order_ref }}</strong>
+            </div>
+            <div class="detail-row" *ngIf="pay.date">
+              <span>Fizetés időpontja</span>
+              <strong>{{ pay.date | date: 'yyyy.MM.dd. HH:mm' }}</strong>
+            </div>
+            <div class="detail-row">
+              <span>Fizetett összeg</span>
+              <strong>{{ pay.amount | number:'1.0-0' }} Ft</strong>
+            </div>
+          </ng-container>
+
           <h3>Kiválasztott székek</h3>
           <div class="seats-list">
             <div *ngFor="let item of reservation.items" class="seat-item">
-              <span class="seat-key">💺 {{ item.section ? item.section + ' · ' : '' }}{{ item.row_label }}-{{ item.seat_number }}</span>
+              <span class="seat-key">💺 {{ placeLabel(item) }}</span>
               <span class="price">{{ item.price_amount | number:'1.0-0' }} Ft</span>
             </div>
           </div>
