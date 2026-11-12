@@ -91,9 +91,7 @@
                   <small>{{ r.customer_email && !r.customer_email.endsWith('@vigadojegy.hu') ? r.customer_email : '' }}</small>
                 </td>
                 <td class="seats">
-                  <div *ngFor="let line of seatLines(r)">
-                    <small *ngIf="line.section">{{ line.section }}: </small>{{ line.seats }}
-                  </div>
+                  <div *ngFor="let line of seatLines(r)">{{ line }}</div>
                 </td>
                 <td class="r price">{{ ft(r.total_amount) }}</td>
                 <td>

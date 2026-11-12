@@ -8,6 +8,7 @@ import { AdminService, Ticket } from '../../../../services/admin.service';
 import { AuthService } from '../../../../services/auth.service';
 import { paymentLabel, printTickets } from '../ticket-print/ticket-print.component';
 import { buildReceiptHtml } from './reservation-receipt';
+import { placeLabel } from '../../../../core/util/seat';
 
 type StatusFilter = 'all' | 'PENDING' | 'PAID' | 'CLOSED';
 
@@ -225,18 +226,13 @@ export class ReservationsAdminComponent implements OnInit {
     return r.payment_provider === 'stripe' || r.payment_provider === 'simplepay' ? 'Online' : '';
   }
 
-  /** A foglalt székek szintenként csoportosítva, pl. „Földszinti emelvény: 1/6, 1/7”. */
-  seatLines(r: any): Array<{ section: string; seats: string }> {
+  /** A foglalt székek soronként, pl. „Földszinti emelvény · 1.sor 06.szék”. */
+  seatLines(r: any): string[] {
     const items = [...(r.items ?? [])].sort((a: any, b: any) =>
       String(a.section ?? '').localeCompare(String(b.section ?? ''), 'hu') ||
       String(a.row_label).localeCompare(String(b.row_label), 'hu', { numeric: true }) ||
       Number(a.seat_number) - Number(b.seat_number));
-    const bySection = new Map<string, string[]>();
-    for (const i of items) {
-      const key = i.section ?? '';
-      bySection.set(key, [...(bySection.get(key) ?? []), `${i.row_label}/${i.seat_number}`]);
-    }
-    return [...bySection.entries()].map(([section, seats]) => ({ section, seats: seats.join(', ') }));
+    return items.map((i: any) => placeLabel(i));
   }
 
   ft(n: number | string): string {

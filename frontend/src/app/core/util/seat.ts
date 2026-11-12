@@ -22,16 +22,9 @@ export function seatNumberOf(key: string): string {
   return i >= 0 ? key.slice(i + 1) : key;
 }
 
-/** Emberi olvasatú megjelölés: "Emelet 1-5" / "E-5". */
+/** Emberi olvasatú megjelölés: "Emelet · 1.sor 05.szék". */
 export function seatLabel(key: string | null | undefined): string {
-  if (!key || key === '-') return key ?? '';
-  const i = key.lastIndexOf('-');
-  if (i < 0) return key;
-  const rowPart = key.slice(0, i);
-  const number = parseInt(key.slice(i + 1), 10);
-  const sep = rowPart.indexOf('|');
-  const row = sep >= 0 ? rowPart.slice(sep + 1) : rowPart;
-  return (sep >= 0 ? rowPart.slice(0, sep) + ' ' : '') + row + '-' + (Number.isNaN(number) ? key.slice(i + 1) : number);
+  return seatPlaceLabel(key);
 }
 
 /** Kosárban / kiválasztásnál mutatott hely: "Földszinti emelvény · 3.sor 07.szék". */
@@ -42,12 +35,14 @@ export function seatPlaceLabel(key: string | null | undefined): string {
   const rowPart = key.slice(0, i);
   const sep = rowPart.indexOf('|');
   const row = sep >= 0 ? rowPart.slice(sep + 1) : rowPart;
-  return (sep >= 0 ? rowPart.slice(0, sep) + ' · ' : '') + `${row}.sor ${key.slice(i + 1)}.szék`;
+  const number = key.slice(i + 1);
+  return (sep >= 0 ? rowPart.slice(0, sep) + ' · ' : '') + `${row}.sor ${/^\d+$/.test(number) ? number.padStart(2, '0') : number}.szék`;
 }
 
-/** A jegyen / foglalási tételen szereplő hely: "Emelet · 1. sor 5. szék". */
-export function placeLabel(item: { section?: string | null; row_label?: string | null; seat_number?: number | null }): string {
-  return (item.section ? item.section + ' · ' : '') + `${item.row_label ?? ''}. sor ${item.seat_number ?? '—'}. szék`;
+/** A jegyen / foglalási tételen szereplő hely: "Emelet · 1.sor 05.szék". */
+export function placeLabel(item: { section?: string | null; row_label?: string | null; seat_number?: number | string | null }): string {
+  const number = item.seat_number == null ? '—' : String(item.seat_number).padStart(2, '0');
+  return (item.section ? item.section + ' · ' : '') + `${item.row_label ?? ''}.sor ${number}.szék`;
 }
 
 /** Ennél kevesebb székes sorokból álló (keskeny) szintek kerülhetnek egymás mellé, egy sorba a megjelenítésben. */

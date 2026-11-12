@@ -1,6 +1,7 @@
 import { escapeHtml } from '../../../../core/util/html';
 import { categoryLabel } from '../../../../services/admin.service';
 import { paymentLabel } from '../ticket-print/ticket-print.component';
+import { placeLabel } from '../../../../core/util/seat';
 
 export interface ReceiptData {
   reservation: any;
@@ -89,7 +90,7 @@ export function buildReceiptHtml(d: ReceiptData): string {
   const methodText = byMethod.size > 1 ? 'Vegyes fizetés' : (r.payment_provider ? paymentLabel(r.payment_provider) : '—');
 
   const rows = items.map((i, idx) => {
-    const place = `${i.section ? i.section + ' · ' : ''}${i.row_label} / ${i.seat_number ?? '—'}`;
+    const place = placeLabel(i);
     const cat = i.category && i.category !== 'standard' ? `<span class="tag">${e(categoryLabel(i.category))}</span>` : '';
     return `<tr>
       <td>${idx + 1}.</td>
