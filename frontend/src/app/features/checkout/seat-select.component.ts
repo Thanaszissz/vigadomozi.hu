@@ -267,7 +267,6 @@ export class SeatSelectComponent implements OnInit {
            this.name.trim().length > 0 && 
            this.phone.trim().length > 0 && 
            this.zipValid &&
-           this.isolatedSeatKeys.length === 0 &&
            !this.isProcessing;
   }
 
