@@ -115,6 +115,39 @@ h1 { margin: 0; color: #e8d5b7; }
   border-color: #d4a574;
 }
 
+.res-search {
+  position: relative;
+  margin-left: auto;
+  flex: 0 1 320px;
+  min-width: 200px;
+}
+
+.res-search input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 34px 8px 14px;
+  border-radius: 999px;
+  border: 1px solid #d4a574;
+  background: #3d2817;
+  color: #e8d5b7;
+  font-size: 14px;
+}
+
+.res-search input:focus { outline: none; box-shadow: 0 0 0 2px rgba(212, 165, 116, 0.45); }
+
+.mode-tabs .res-search button.res-search-clear {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #d4a574;
+}
+
 .showtime-list {
   display: flex;
   flex-direction: column;

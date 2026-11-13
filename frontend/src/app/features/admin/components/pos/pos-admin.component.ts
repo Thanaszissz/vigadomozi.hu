@@ -74,6 +74,7 @@ export class PosAdminComponent implements OnInit, OnDestroy {
   staffPrice = 0;
   categoryLabel = categoryLabel;
   pendingReservations: any[] = [];
+  reservationQuery = '';
   selectedReservation: any | null = null;
   payCount: number | null = null;
   paymentMethod: PaymentMethod | null = null;
@@ -215,6 +216,7 @@ export class PosAdminComponent implements OnInit, OnDestroy {
     // A korábbi előadás termét és székeit azonnal eltávolítjuk, hogy ne maradjon félrevezető adat
     this.showtime = null;
     this.pendingReservations = [];
+    this.reservationQuery = '';
     this.soldList = [];
     this.requestedShowtimeId = showtime.id;
     this.loadShowtime(showtime.id);
@@ -543,6 +545,32 @@ export class PosAdminComponent implements OnInit, OnDestroy {
   }
 
   // ---- Foglalások ----
+
+  private fold(text: string | null | undefined): string {
+    return (text ?? '').toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  }
+
+  /** Gépelés közben szűkülő lista: a szavak bármilyen sorrendben, ékezet nélkül is egyeznek a névre, telefonra, e-mailre vagy székre. */
+  get filteredReservations(): any[] {
+    const words = this.fold(this.reservationQuery).split(/\s+/).filter(Boolean);
+    if (words.length === 0) return this.pendingReservations;
+
+    return this.pendingReservations.filter(r => {
+      const haystack = this.fold([
+        r.customer_name, r.customer_phone, r.customer_email,
+        ...(r.items ?? []).map((i: any) => seatLabel(i.seat_key))
+      ].join(' '));
+      return words.every(w => haystack.includes(w));
+    });
+  }
+
+  trackReservation(_: number, r: any): number {
+    return r.id;
+  }
+
+  get reservationNameSuggestions(): string[] {
+    return Array.from(new Set(this.pendingReservations.map(r => r.customer_name).filter(Boolean)));
+  }
 
   setMode(mode: SaleMode): void {
     if (this.mode === mode) return;

@@ -70,6 +70,14 @@
         <button type="button" [class.active]="mode === 'void'" (click)="setMode('void')">
           Sztornó ({{ soldList.length }})
         </button>
+        <div class="res-search" *ngIf="mode === 'reservations' && pendingReservations.length > 0">
+          <input type="search" [(ngModel)]="reservationQuery" list="reservation-names" autocomplete="off"
+                 placeholder="🔍 Keresés névre, telefonra, székre…" aria-label="Foglalás keresése">
+          <datalist id="reservation-names">
+            <option *ngFor="let n of reservationNameSuggestions" [value]="n"></option>
+          </datalist>
+          <button *ngIf="reservationQuery" type="button" class="res-search-clear" title="Keresés törlése" (click)="reservationQuery = ''">✕</button>
+        </div>
       </div>
 
       <div *ngIf="mode === 'void'" class="void-list">
@@ -99,7 +107,9 @@
 
       <div *ngIf="mode === 'reservations'" class="reservation-list">
         <div *ngIf="pendingReservations.length === 0" class="muted">Erre az előadásra nincs függő foglalás.</div>
-        <button *ngFor="let r of pendingReservations" type="button" class="reservation-card"
+        <div *ngIf="pendingReservations.length > 0 && filteredReservations.length === 0" class="muted">Nincs találat: „{{ reservationQuery }}”</div>
+        <div *ngIf="reservationQuery && filteredReservations.length > 0" class="muted">{{ filteredReservations.length }} találat / {{ pendingReservations.length }} foglalás</div>
+        <button *ngFor="let r of filteredReservations; trackBy: trackReservation" type="button" class="reservation-card"
                 [class.active]="selectedReservation?.id === r.id" (click)="selectReservation(r)">
           <span class="r-name">{{ r.customer_name || 'Névtelen' }}</span>
           <span class="r-phone">{{ r.customer_phone || '—' }}</span>
