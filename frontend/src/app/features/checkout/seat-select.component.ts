@@ -32,6 +32,7 @@ export class SeatSelectComponent implements OnInit {
 
   // a székek mérete a kijelzőhöz igazodik, hogy a legszélesebb sor is elférjen
   seatSize = 28;
+  seatHeight = 28;
   seatGap = 6;
   seatAisle = 26;
   seatFont = 10;
@@ -79,7 +80,11 @@ export class SeatSelectComponent implements OnInit {
     if (!section || !this.showtime?.seatMap.seats) return;
 
     const available = section.clientWidth;
-    const pad = window.innerWidth <= 640 ? 26 : 34;
+    const mobile = window.innerWidth <= 640;
+    // Telefonon a székek szorosabban állnak, és magasabbak, mint szélesek
+    const pad = mobile ? 22 : 34;
+    const gapRatio = mobile ? 0.12 : 0.22;
+    const aisleRatio = mobile ? 0.8 : 0.9;
     const aisles = this.showtime.seatMap.layout?.aisles ?? {};
     const blockGap = 18;
     const blocks = this.getSectionBlocks().map(block => block.map(group => ({
@@ -87,9 +92,9 @@ export class SeatSelectComponent implements OnInit {
     })));
 
     let size = 10;
-    for (let s = 28; s >= 10; s--) {
-      const gap = Math.max(2, Math.round(s * 0.22));
-      const aisle = Math.round(s * 0.9);
+    for (let s = mobile ? 34 : 28; s >= 10; s--) {
+      const gap = Math.max(2, Math.round(s * gapRatio));
+      const aisle = Math.round(s * aisleRatio);
       const groupWidth = (g: { rows: Array<{ count: number; aisle: boolean }> }) =>
         Math.max(0, ...g.rows.map(r => r.count * s + Math.max(0, r.count - 1) * gap + (r.aisle ? aisle : 0))) + 2 * pad;
       // az egymás mellé kerülő szintek szélessége összeadódik
@@ -101,9 +106,10 @@ export class SeatSelectComponent implements OnInit {
     }
 
     this.seatSize = size;
-    this.seatGap = Math.max(2, Math.round(size * 0.22));
-    this.seatAisle = Math.round(size * 0.9);
-    this.seatFont = Math.max(7, Math.round(size * 0.36));
+    this.seatHeight = mobile ? Math.round(size * 1.4) : size;
+    this.seatGap = Math.max(2, Math.round(size * gapRatio));
+    this.seatAisle = Math.round(size * aisleRatio);
+    this.seatFont = mobile ? Math.max(8, Math.round(size * 0.42)) : Math.max(7, Math.round(size * 0.36));
   }
 
   getRowsArray(): string[] {

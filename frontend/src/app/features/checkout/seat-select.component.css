@@ -294,7 +294,7 @@
 
 .seat {
   width: var(--seat, 28px);
-  height: var(--seat, 28px);
+  height: var(--seat-h, var(--seat, 28px));
   flex-shrink: 0;
   border-radius: 6px 6px 2px 2px;
   display: flex;
@@ -714,11 +714,11 @@
 }
 
 @media (max-width: 640px) {
-  .page { padding: 10px; }
-  .content-grid { padding: 8px; gap: 14px; }
+  .page { padding: 10px 4px; }
+  .content-grid { padding: 8px 0; gap: 14px; }
   .seat-row { gap: 6px; }
-  .seats-container { padding: 0 26px; }
-  .row-label { width: 20px; font-size: 12px; }
+  .seats-container { padding: 0 22px; }
+  .row-label { width: 18px; margin-right: 4px; font-size: 12px; }
   .section-title { margin: 0 auto; }
 }
 
