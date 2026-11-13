@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, DoCheck, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -9,6 +9,7 @@ import { AdminService, InvoiceBuyer, PaymentMethod, PaymentPart, PosInvoice, Pos
 import { TicketPrintComponent, preloadTicketBackground, printTickets, ticketPaymentLabel } from '../ticket-print/ticket-print.component';
 import { AuthService } from '../../../../services/auth.service';
 import { PosServicesComponent } from './pos-services.component';
+import { DisplayLine, DisplayState, EMPTY_DISPLAY_STATE, PosDisplayService } from './pos-display.service';
 import { rowLabelOf, seatNumberOf, seatLabel, seatPlaceLabel, sectionBlocks, newlyIsolatedSeats } from '../../../../core/util/seat';
 
 type SaleMode = 'seats' | 'reservations' | 'void';
@@ -26,7 +27,7 @@ interface ServiceCartLine { serviceId: number; name: string; price: number; quan
   templateUrl: './pos-admin.component.html',
   styleUrls: ['./pos-admin.component.css']
 })
-export class PosAdminComponent implements OnInit, OnDestroy {
+export class PosAdminComponent implements OnInit, OnDestroy, DoCheck {
   // A kezdés után ennyi percig még lehet jegyet adni (a szerver is ezt érvényesíti)
   private readonly graceMinutes = 30;
 
@@ -123,8 +124,94 @@ export class PosAdminComponent implements OnInit, OnDestroy {
     private api: ApiService,
     private admin: AdminService,
     private auth: AuthService,
-    private router: Router
+    private router: Router,
+    private display: PosDisplayService
   ) {}
+
+  displayBlocked = false;
+
+  /** Megnyitja a vevői kijelzőt (második ablak); a gombnyomás idején kell lefutnia, különben a böngésző letiltja. */
+  async openCustomerDisplay(): Promise<void> {
+    this.displayBlocked = !(await this.display.open());
+  }
+
+  ngDoCheck(): void {
+    this.display.publishMap(this.showtime?.seatMap ?? null);
+    this.display.publishState(this.buildDisplayState());
+  }
+
+  /** A vevő számára látszó tételek: kizárólag helyek, árak és összegek, személyes adat nélkül. */
+  private buildDisplayState(): DisplayState {
+    if (this.mode === 'void') return EMPTY_DISPLAY_STATE;
+
+    const when = (iso: string) => new Date(iso).toLocaleString('hu-HU', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+    const current = this.showtime;
+    const lines: DisplayLine[] = [];
+    const selectedKeys: string[] = [];
+
+    if (this.mode === 'reservations') {
+      for (const item of this.payItems) {
+        selectedKeys.push(item.seat_key);
+        lines.push({
+          label: seatPlaceLabel(item.seat_key),
+          tag: item.category && item.category !== 'standard' ? categoryLabel(item.category) : undefined,
+          price: Number(item.price_amount)
+        });
+      }
+    } else {
+      for (const line of this.cart) {
+        if (line.showtimeId === current?.id) selectedKeys.push(...line.seats.map(s => s.key));
+        for (const seat of line.seats) {
+          lines.push({
+            label: seatPlaceLabel(seat.key),
+            detail: `${line.title} · ${when(line.startsAt)}`,
+            tag: seat.category !== 'standard' ? categoryLabel(seat.category) : undefined,
+            price: seat.price
+          });
+        }
+      }
+      for (const seat of this.selectedSeats) {
+        selectedKeys.push(seat.key);
+        const category = this.categoryOf(seat);
+        lines.push({
+          label: seatPlaceLabel(seat.key),
+          detail: this.cart.length > 0 && current ? `${current.movie.title} · ${when(current.starts_at)}` : undefined,
+          tag: category !== 'standard' ? categoryLabel(category) : undefined,
+          price: this.effectivePrice(seat)
+        });
+      }
+      for (const service of this.serviceCart) {
+        lines.push({ label: service.name, detail: `${service.quantity} db`, price: service.quantity * service.price });
+      }
+    }
+
+    const payable = this.payable;
+    const cash = this.paymentMethod === 'cash' && this.cashGiven !== null && this.cashGiven !== undefined && lines.length > 0;
+    return {
+      title: current ? current.movie.title : null,
+      startsAt: current ? current.starts_at : null,
+      auditorium: current ? current.auditorium.name : null,
+      selectedKeys,
+      lines,
+      total: this.total,
+      covered: this.cardCoveredAmount,
+      payable,
+      paymentLabel: this.displayPaymentLabel(payable),
+      cashGiven: cash ? this.cashGiven : null,
+      change: cash ? this.change : null
+    };
+  }
+
+  private displayPaymentLabel(payable: number): string | null {
+    if (payable <= 0) return null;
+    if (this.splitMode) return 'Vegyes fizetés';
+    switch (this.paymentMethod) {
+      case 'cash': return 'Készpénz';
+      case 'card': return 'Bankkártya';
+      case 'szep_card': return 'SZÉP kártya';
+      default: return null;
+    }
+  }
 
   /** Az előadások napi eladása (minden eladó jegyei) a vezetőknek és az adminisztrátoroknak érhető el. */
   get canSeeShowtimeDay(): boolean {
@@ -166,6 +253,8 @@ export class PosAdminComponent implements OnInit, OnDestroy {
     this.nameSearchSub?.unsubscribe();
     this.resNumberSub?.unsubscribe();
     clearInterval(this.seatMapTimer);
+    this.display.publishState(EMPTY_DISPLAY_STATE);
+    this.display.publishMap(null);
   }
 
   private seatMapTimer?: ReturnType<typeof setInterval>;
@@ -1192,6 +1281,7 @@ export class PosAdminComponent implements OnInit, OnDestroy {
     const reservationId = this.selectedReservation?.id;
     const payments = this.splitMode && this.payable > 0 ? this.splitParts : undefined;
     const paymentPart = payments ? { payments } : { payment_method: method };
+    const displaySnapshot = this.buildDisplayState();
     let request$: Observable<{ reservation: any | null; reservations?: any[]; tickets: Ticket[] }>;
     if (this.mode === 'reservations' && this.selectedReservation) {
       request$ = this.admin.posPayReservation(this.selectedReservation.id, payments ? null : method, partial ? this.payItems.map((i: any) => i.seat_key) : undefined, payments);
@@ -1215,6 +1305,13 @@ export class PosAdminComponent implements OnInit, OnDestroy {
 
     request$.subscribe({
       next: (response) => {
+        this.display.publishSale({
+          total: displaySnapshot.total,
+          payable: displaySnapshot.payable,
+          paymentLabel: displaySnapshot.paymentLabel,
+          cashGiven: displaySnapshot.cashGiven,
+          change: displaySnapshot.change
+        });
         this.soldTickets = response.tickets;
         if (this.autoPrint) {
           this.printSold();

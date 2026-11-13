@@ -1,0 +1,89 @@
+<div class="display">
+  <header class="brand">
+    <span class="brand-name">Vigadó</span>
+    <button type="button" class="fs-btn" *ngIf="!fullscreen" (click)="toggleFullscreen(); $event.stopPropagation()" (dblclick)="$event.stopPropagation()">⛶ Teljes képernyő</button>
+  </header>
+
+  <!-- Eladás után -->
+  <div class="thanks" *ngIf="sale">
+    <div class="thanks-icon">✓</div>
+    <h1>Köszönjük a vásárlást!</h1>
+    <div class="thanks-rows">
+      <div *ngIf="sale.total > 0"><span>Összesen</span><b>{{ sale.total | number:'1.0-0' }} Ft</b></div>
+      <div *ngIf="sale.paymentLabel"><span>Fizetési mód</span><b>{{ sale.paymentLabel }}</b></div>
+      <div *ngIf="sale.cashGiven !== null"><span>Átvett összeg</span><b>{{ sale.cashGiven | number:'1.0-0' }} Ft</b></div>
+      <div class="change" *ngIf="sale.change !== null && sale.change >= 0"><span>Visszajáró</span><b>{{ sale.change | number:'1.0-0' }} Ft</b></div>
+    </div>
+    <p>Jó szórakozást kívánunk!</p>
+  </div>
+
+  <ng-container *ngIf="!sale">
+    <!-- Várakozás -->
+    <div class="idle" *ngIf="!hasLines && !seatMap">
+      <h1>Üdvözöljük a Vigadóban!</h1>
+      <p>{{ connected ? 'Kérjük, várjon, amíg a pénztáros kiválasztja az előadást.' : 'Várakozás a pénztárra…' }}</p>
+    </div>
+
+    <div class="layout" *ngIf="hasLines || seatMap">
+      <section class="hall">
+        <div class="show" *ngIf="state.title">
+          <h1>{{ state.title }}</h1>
+          <p *ngIf="state.startsAt || state.auditorium">
+            <ng-container *ngIf="state.startsAt">{{ state.startsAt | date:'yyyy. MM. dd. HH:mm' }}</ng-container>
+            <ng-container *ngIf="state.startsAt && state.auditorium"> · </ng-container>
+            <ng-container *ngIf="state.auditorium">{{ state.auditorium }}</ng-container>
+          </p>
+        </div>
+
+        <div class="map" *ngIf="seatMap" [style.--s]="seatSize + 'px'">
+          <div class="screen">VÁSZON</div>
+          <div class="section-block" *ngFor="let block of getBlocks()">
+            <div class="section-group" *ngFor="let group of block">
+              <div class="section-title" *ngIf="multipleSections">{{ group.name }}</div>
+              <div class="seats-container">
+                <div *ngFor="let row of group.rows" class="seat-row">
+                  <div class="row-label">{{ rowLabelOf(row) }}</div>
+                  <div class="seats-line">
+                    <div *ngFor="let seat of getSeatsInRow(row); let i = index" class="seat"
+                         [class.aisle-gap]="hasAisleBefore(row, i)" [ngClass]="seatClass(seat)">
+                      <span *ngIf="seat.type !== 'aisle'">{{ seatNumberOf(seat.key) }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="legend">
+            <span><i class="sq free"></i> Szabad</span>
+            <span><i class="sq taken"></i> Foglalt</span>
+            <span><i class="sq selected"></i> Az Ön helye</span>
+          </div>
+        </div>
+      </section>
+
+      <aside class="summary">
+        <h2>Az Ön jegyei</h2>
+        <div class="empty" *ngIf="!hasLines">Még nincs kiválasztott hely.</div>
+        <ul class="lines" *ngIf="hasLines">
+          <li *ngFor="let line of state.lines; trackBy: trackLine">
+            <div class="l-main">
+              <span class="l-label">{{ line.label }}</span>
+              <span class="l-tag" *ngIf="line.tag">{{ line.tag }}</span>
+              <span class="l-detail" *ngIf="line.detail">{{ line.detail }}</span>
+            </div>
+            <b class="l-price">{{ line.price | number:'1.0-0' }} Ft</b>
+          </li>
+        </ul>
+
+        <div class="totals" *ngIf="hasLines">
+          <div class="covered" *ngIf="state.covered > 0"><span>Élménykártyával fedezve</span><b>−{{ state.covered | number:'1.0-0' }} Ft</b></div>
+          <div class="grand"><span>Fizetendő</span><b>{{ state.payable | number:'1.0-0' }} Ft</b></div>
+          <div class="pay-row" *ngIf="state.paymentLabel"><span>Fizetési mód</span><b>{{ state.paymentLabel }}</b></div>
+          <div class="pay-row" *ngIf="state.cashGiven !== null"><span>Átvett összeg</span><b>{{ state.cashGiven | number:'1.0-0' }} Ft</b></div>
+          <div class="pay-row change" *ngIf="state.change !== null && state.change >= 0"><span>Visszajáró</span><b>{{ state.change | number:'1.0-0' }} Ft</b></div>
+          <div class="pay-row short" *ngIf="state.change !== null && state.change < 0"><span>Még hiányzik</span><b>{{ -state.change | number:'1.0-0' }} Ft</b></div>
+        </div>
+      </aside>
+    </div>
+  </ng-container>
+</div>

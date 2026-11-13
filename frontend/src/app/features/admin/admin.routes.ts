@@ -11,6 +11,7 @@ import { AuditoriaAdminComponent } from './components/auditoria/auditoria-admin.
 import { UsersAdminComponent } from './components/users/users-admin.component';
 import { CustomersAdminComponent } from './components/customers/customers-admin.component';
 import { PosAdminComponent } from './components/pos/pos-admin.component';
+import { PosDisplayComponent } from './components/pos/pos-display.component';
 import { TicketsAdminComponent } from './components/tickets/tickets-admin.component';
 import { DailyCloseAdminComponent } from './components/daily-close/daily-close-admin.component';
 import { ShowtimeDayAdminComponent } from './components/showtime-day/showtime-day-admin.component';
@@ -32,6 +33,12 @@ export const ADMIN_ROUTES: Routes = [
   {
     path: 'pos',
     component: PosAdminComponent,
+    canActivate: [AuthGuard],
+    data: { permission: 'pos.sell' }
+  },
+  {
+    path: 'pos-display',
+    component: PosDisplayComponent,
     canActivate: [AuthGuard],
     data: { permission: 'pos.sell' }
   },

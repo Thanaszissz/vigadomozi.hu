@@ -35,6 +35,8 @@
         Nincs ilyen függő foglalás.
       </div>
     </div>
+    <button type="button" class="display-btn" (click)="openCustomerDisplay()" title="A vevő felé forduló második képernyő megnyitása (nézőtér, kiválasztott székek, összeg, visszajáró)">🖥️ Vevői kijelző</button>
+    <span class="display-warn" style="color:#f87171;font-weight:600" *ngIf="displayBlocked">A böngésző letiltotta az ablakot: engedélyezze a felugró ablakokat.</span>
     <label class="preprint-toggle" title="Előnyomott jegyalapra nyomtatáshoz: a jegyalap (háttér) nem nyomtatódik, csak a szöveg">
       <input type="checkbox" [(ngModel)]="preprintedStock" (ngModelChange)="savePreprintedStock()">
       Előnyomott jegyalap (csak a szöveg nyomtatása)
