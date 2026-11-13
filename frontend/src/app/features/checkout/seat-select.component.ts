@@ -1,4 +1,4 @@
-import { Component, ElementRef, HostListener, OnInit } from '@angular/core';
+import { Component, ElementRef, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -15,7 +15,7 @@ import { BotGuardService } from '../../core/api/bot-guard.service';
   templateUrl: './seat-select.component.html',
   styleUrls: ['./seat-select.component.css']
 })
-export class SeatSelectComponent implements OnInit {
+export class SeatSelectComponent implements OnInit, OnDestroy {
   showtime: ShowtimeDetail | null = null;
   selectedSeats: Seat[] = [];
   email = '';
@@ -58,11 +58,22 @@ export class SeatSelectComponent implements OnInit {
       this.showtimeId = parseInt(params['id'], 10);
       this.loadShowtime();
     });
+    this.refreshTimer = setInterval(() => {
+      if (!document.hidden && this.showtime && !this.isProcessing) this.loadShowtime(true);
+    }, 15000);
   }
 
-  loadShowtime() {
-    this.loading = true;
-    this.error = null;
+  ngOnDestroy() {
+    clearInterval(this.refreshTimer);
+  }
+
+  private refreshTimer?: ReturnType<typeof setInterval>;
+
+  loadShowtime(silent = false) {
+    if (!silent) {
+      this.loading = true;
+      this.error = null;
+    }
 
     this.apiService.getShowtimeById(this.showtimeId).subscribe({
       next: (data) => {
@@ -71,23 +82,46 @@ export class SeatSelectComponent implements OnInit {
           window.location.replace(data.external_url);
           return;
         }
+        if (silent && this.isProcessing) return;
+
         this.showtime = data;
         this.loading = false;
+        this.dropUnavailableSelection();
         if (this.trackedShowtime !== data.id) {
           this.trackedShowtime = data.id;
           this.analytics.selectShowtime(data);
         }
-        setTimeout(() => {
-          this.fitSeats();
-          this.scrollToTitle();
-        });
+        if (!silent) {
+          setTimeout(() => {
+            this.fitSeats();
+            this.scrollToTitle();
+          });
+        }
       },
       error: (err) => {
+        if (silent) return;
         this.error = 'Előadás betöltése sikertelen. Próbálja később.';
         console.error(err);
         this.loading = false;
       },
     });
+  }
+
+  /** A friss nézőtéren már nem szabad székeket kivesszük a kijelölésből, hogy más székét ne próbálhassa lefoglalni. */
+  private dropUnavailableSelection(): void {
+    const rows = this.showtime?.seatMap?.seats;
+    if (!rows || this.selectedSeats.length === 0) return;
+
+    const status = new Map<string, string>();
+    for (const rowSeats of Object.values(rows)) {
+      for (const [key, seat] of Object.entries(rowSeats as Record<string, Seat>)) status.set(key, seat.status);
+    }
+
+    const kept = this.selectedSeats.filter(s => status.get(s.key) === 'available');
+    if (kept.length < this.selectedSeats.length) {
+      this.selectedSeats = kept;
+      this.lockError = 'A kijelölt székek közül néhányat időközben lefoglaltak, ezért kikerült a kijelölésből. Kérjük, válasszon másikat.';
+    }
   }
 
   /** Telefonon a székválasztó megnyitásakor az előadás címére ugrik az oldal (ne a lap alján, a láblécnél maradjon). */

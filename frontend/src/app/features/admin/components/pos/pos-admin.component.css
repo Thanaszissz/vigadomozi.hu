@@ -269,9 +269,19 @@ h1 { margin: 0; color: #e8d5b7; }
   flex-direction: column;
   gap: 8px;
   margin-bottom: 14px;
-  max-height: 260px;
-  overflow-y: auto;
 }
+
+.res-pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 4px 2px;
+  color: #e8d5b7;
+  font-size: 13px;
+}
+
+.res-pager small { color: #a08060; margin-left: 4px; }
 
 .reservation-card {
   display: grid;

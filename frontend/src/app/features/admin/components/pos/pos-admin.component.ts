@@ -150,10 +150,35 @@ export class PosAdminComponent implements OnInit, OnDestroy {
       distinctUntilChanged(),
       switchMap(q => q.length < 2 ? of([]) : this.admin.posSearchCustomers(q).pipe(catchError(() => of([]))))
     ).subscribe(list => (this.customerSuggestions = list));
+    this.seatMapTimer = setInterval(() => this.silentRefresh(), 10000);
   }
 
   ngOnDestroy(): void {
     this.nameSearchSub?.unsubscribe();
+    clearInterval(this.seatMapTimer);
+  }
+
+  private seatMapTimer?: ReturnType<typeof setInterval>;
+
+  /** Háttérfrissítés: az online foglalások és más pénztárak eladásai a nézőtéren (és a foglalási listában) időben megjelennek. */
+  private silentRefresh(): void {
+    const current = this.showtime;
+    if (!current || this.processing || this.loadingShowtime || this.editing || document.hidden) return;
+
+    this.api.getShowtimeById(current.id).subscribe({
+      next: (detail) => {
+        if (this.showtime?.id !== current.id || this.processing || this.editing) return;
+
+        this.showtime = detail;
+        const before = this.selectedSeats.length;
+        this.selectedSeats = this.selectedSeats.filter(sel => this.findSeat(sel.key)?.status === 'available');
+        if (this.selectedSeats.length < before) {
+          this.error = 'A kijelölt székek közül néhányat időközben lefoglaltak vagy eladtak, ezért kikerült a kijelölésből.';
+        }
+        this.loadPendingReservations();
+      },
+      error: () => { /* a következő ciklus újra próbálja */ }
+    });
   }
 
   onHoldNameChange(value: string): void {
@@ -217,6 +242,7 @@ export class PosAdminComponent implements OnInit, OnDestroy {
     this.showtime = null;
     this.pendingReservations = [];
     this.reservationQuery = '';
+    this.reservationPage = 0;
     this.soldList = [];
     this.requestedShowtimeId = showtime.id;
     this.loadShowtime(showtime.id);
@@ -566,6 +592,30 @@ export class PosAdminComponent implements OnInit, OnDestroy {
 
   trackReservation(_: number, r: any): number {
     return r.id;
+  }
+
+  readonly reservationPageSize = 10;
+  readonly Math = Math;
+  reservationPage = 0;
+
+  get reservationPageCount(): number {
+    return Math.max(1, Math.ceil(this.filteredReservations.length / this.reservationPageSize));
+  }
+
+  /** A lista 10 foglalás fölött lapozható; a keresés mindig a teljes listában szűr. */
+  get pagedReservations(): any[] {
+    const page = Math.min(this.reservationPage, this.reservationPageCount - 1);
+    const start = page * this.reservationPageSize;
+    return this.filteredReservations.slice(start, start + this.reservationPageSize);
+  }
+
+  setReservationQuery(query: string): void {
+    this.reservationQuery = query;
+    this.reservationPage = 0;
+  }
+
+  goToReservationPage(page: number): void {
+    this.reservationPage = Math.min(Math.max(page, 0), this.reservationPageCount - 1);
   }
 
   get reservationNameSuggestions(): string[] {

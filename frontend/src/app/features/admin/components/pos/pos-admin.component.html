@@ -71,12 +71,12 @@
           Sztornó ({{ soldList.length }})
         </button>
         <div class="res-search" *ngIf="mode === 'reservations' && pendingReservations.length > 0">
-          <input type="search" [(ngModel)]="reservationQuery" list="reservation-names" autocomplete="off"
+          <input type="search" [ngModel]="reservationQuery" (ngModelChange)="setReservationQuery($event)" list="reservation-names" autocomplete="off"
                  placeholder="🔍 Keresés névre, telefonra, székre…" aria-label="Foglalás keresése">
           <datalist id="reservation-names">
             <option *ngFor="let n of reservationNameSuggestions" [value]="n"></option>
           </datalist>
-          <button *ngIf="reservationQuery" type="button" class="res-search-clear" title="Keresés törlése" (click)="reservationQuery = ''">✕</button>
+          <button *ngIf="reservationQuery" type="button" class="res-search-clear" title="Keresés törlése" (click)="setReservationQuery('')">✕</button>
         </div>
       </div>
 
@@ -109,7 +109,7 @@
         <div *ngIf="pendingReservations.length === 0" class="muted">Erre az előadásra nincs függő foglalás.</div>
         <div *ngIf="pendingReservations.length > 0 && filteredReservations.length === 0" class="muted">Nincs találat: „{{ reservationQuery }}”</div>
         <div *ngIf="reservationQuery && filteredReservations.length > 0" class="muted">{{ filteredReservations.length }} találat / {{ pendingReservations.length }} foglalás</div>
-        <button *ngFor="let r of filteredReservations; trackBy: trackReservation" type="button" class="reservation-card"
+        <button *ngFor="let r of pagedReservations; trackBy: trackReservation" type="button" class="reservation-card"
                 [class.active]="selectedReservation?.id === r.id" (click)="selectReservation(r)">
           <span class="r-name">{{ r.customer_name || 'Névtelen' }}</span>
           <span class="r-phone">{{ r.customer_phone || '—' }}</span>
@@ -118,6 +118,15 @@
           </span>
           <span class="r-total">{{ r.total_amount | number:'1.0-0' }} Ft</span>
         </button>
+        <div class="res-pager" *ngIf="filteredReservations.length > reservationPageSize">
+          <button type="button" class="btn-small" [disabled]="reservationPage === 0" (click)="goToReservationPage(reservationPage - 1)">‹ Előző</button>
+          <span>
+            {{ reservationPage * reservationPageSize + 1 }}–{{ Math.min((reservationPage + 1) * reservationPageSize, filteredReservations.length) }}
+            / {{ filteredReservations.length }}
+            <small>({{ reservationPage + 1 }}/{{ reservationPageCount }}. oldal)</small>
+          </span>
+          <button type="button" class="btn-small" [disabled]="reservationPage >= reservationPageCount - 1" (click)="goToReservationPage(reservationPage + 1)">Következő ›</button>
+        </div>
       </div>
 
       <div class="screen" *ngIf="mode !== 'void'">VÁSZON</div>
