@@ -60,7 +60,19 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     this.timer = setInterval(tick, 1000);
   }
 
+  /** A fizetési oldal kapcsolatát előre felépíti (DNS + TLS), így az átirányítás után gyorsabban betölt. */
+  private preconnectToPaymentPage(): void {
+    const href = 'https://secure.simplepay.hu';
+    if (document.head.querySelector(`link[rel="preconnect"][href="${href}"]`)) return;
+
+    const link = document.createElement('link');
+    link.rel = 'preconnect';
+    link.href = href;
+    document.head.appendChild(link);
+  }
+
   ngOnInit() {
+    this.preconnectToPaymentPage();
     // Visszatérés a fizetési oldalról: a sikertelen fizetésről tájékoztatjuk a vásárlót (először, hogy a kulcs már megvan a betöltéskor)
     this.route.queryParams.subscribe(params => {
       this.accessKey = params['k'] ?? '';

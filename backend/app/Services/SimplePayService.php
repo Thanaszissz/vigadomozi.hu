@@ -9,6 +9,7 @@ use App\Models\Setting;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 /**
@@ -351,13 +352,25 @@ class SimplePayService
         $json = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         $url = self::API[$c['environment']] . '/v2/' . $endpoint;
 
+        $startedAt = microtime(true);
+
         try {
+            // IPv4-en kapcsolódunk: a tárhelyeken az IPv6 próbálkozás másodperceket késleltethet; a kapcsolódásra rövid határidő van
             $response = Http::timeout(25)
+                ->connectTimeout(8)
+                ->withOptions(['curl' => [CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4]])
                 ->withHeaders(['Signature' => $this->sign($json), 'Accept' => 'application/json'])
                 ->withBody($json, 'application/json')
                 ->post($url);
         } catch (\Throwable $e) {
+            Log::warning('SimplePay hívás sikertelen', ['endpoint' => $endpoint, 'ms' => (int) round((microtime(true) - $startedAt) * 1000), 'error' => $e->getMessage()]);
+
             throw new SimplePayException('A SimplePay szerver nem érhető el: ' . $e->getMessage());
+        }
+
+        $elapsedMs = (int) round((microtime(true) - $startedAt) * 1000);
+        if ($elapsedMs > 3000) {
+            Log::warning('SimplePay hívás lassú', ['endpoint' => $endpoint, 'ms' => $elapsedMs, 'status' => $response->status()]);
         }
 
         $raw = $response->body();
