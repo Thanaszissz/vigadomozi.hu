@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ApiService, Reservation } from '../../core/api/api.service';
+import { KioskService } from '../../core/kiosk/kiosk.service';
 
 @Component({
   selector: 'app-hold-summary',
@@ -19,7 +20,8 @@ export class HoldSummaryComponent implements OnInit {
   constructor(
     private apiService: ApiService,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    public kiosk: KioskService
   ) {}
 
   ngOnInit() {

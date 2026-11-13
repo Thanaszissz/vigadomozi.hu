@@ -67,9 +67,9 @@
             <span *ngIf="isProcessingPayment">⏳ Átirányítás a fizetési oldalra...</span>
           </button>
 
-          <a routerLink="/movies" class="back-link">← Vissza a filmekhez</a>
+          <a [routerLink]="kiosk.homeLink" class="back-link">{{ kiosk.active ? '← Vissza a műsorhoz' : '← Vissza a filmekhez' }}</a>
 
-          <p class="payment-note"><span class="ico">🔒</span><span>A bankkártyás fizetés biztonságos fizetési oldalon történik (SimplePay). A kártyaadatokat az oldalunk nem látja és nem tárolja. A fizetés részleteiről a <a routerLink="/fizetesi-tajekoztato">Fizetési tájékoztatóban</a> és az <a routerLink="/adatkezelesi-tajekoztato">Adatkezelési tájékoztatóban</a> olvashat.</span></p>
+          <p class="payment-note"><span class="ico">🔒</span><span>A bankkártyás fizetés biztonságos fizetési oldalon történik (SimplePay). A kártyaadatokat az oldalunk nem látja és nem tárolja.<ng-container *ngIf="!kiosk.active"> A fizetés részleteiről a <a routerLink="/fizetesi-tajekoztato">Fizetési tájékoztatóban</a> és az <a routerLink="/adatkezelesi-tajekoztato">Adatkezelési tájékoztatóban</a> olvashat.</ng-container></span></p>
 
           <div class="simplepay-logo">
             <img src="assets/simplepay.webp" alt="SimplePay" width="690" height="205" loading="lazy">

@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService, ShowtimeDetail, Seat } from '../../core/api/api.service';
 import { rowLabelOf, seatNumberOf, seatLabel, seatPlaceLabel, sectionBlocks, newlyIsolatedSeats } from '../../core/util/seat';
+import { KioskService } from '../../core/kiosk/kiosk.service';
 
 @Component({
   selector: 'app-seat-select',
@@ -42,7 +43,8 @@ export class SeatSelectComponent implements OnInit {
     private apiService: ApiService,
     private route: ActivatedRoute,
     private router: Router,
-    private host: ElementRef<HTMLElement>
+    private host: ElementRef<HTMLElement>,
+    private kiosk: KioskService
   ) {}
 
   ngOnInit() {
@@ -105,7 +107,7 @@ export class SeatSelectComponent implements OnInit {
     })));
 
     let size = 10;
-    for (let s = mobile ? 34 : 28; s >= 10; s--) {
+    for (let s = mobile ? 34 : this.kiosk.active ? 44 : 28; s >= 10; s--) {
       const gap = Math.max(2, Math.round(s * gapRatio));
       const aisle = Math.round(s * aisleRatio);
       const groupWidth = (g: { rows: Array<{ count: number; aisle: boolean }> }) =>

@@ -1,5 +1,6 @@
 User-agent: *
 Disallow: /admin
+Disallow: /kiosk
 Disallow: /checkout/
 Disallow: /hold-summary/
 Disallow: /success/

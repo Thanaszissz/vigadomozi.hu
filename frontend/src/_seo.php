@@ -225,7 +225,7 @@ function seo_resolve(string $path): array
         return $page;
     }
 
-    if (preg_match('#^/(admin|checkout|hold-summary|success)(/|$)#', $clean)) {
+    if (preg_match('#^/(admin|checkout|hold-summary|success|kiosk)(/|$)#', $clean)) {
         $page['noindex'] = true;
     }
 

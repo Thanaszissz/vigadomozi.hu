@@ -1,4 +1,6 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
+import { NgIf } from '@angular/common';
+import { KioskService } from '../core/kiosk/kiosk.service';
 
 export const SIMPLEPAY_PRIVACY_URL = 'https://simplepay.hu/adatkezelesi-tajekoztatok/';
 export const SIMPLEPAY_INFO_PDF_URL = 'https://simplepartner.hu/PaymentService/Fizetesi_tajekoztato.pdf';
@@ -7,6 +9,7 @@ export const SIMPLEPAY_INFO_PDF_URL = 'https://simplepartner.hu/PaymentService/F
 @Component({
   selector: 'app-simplepay-consent',
   standalone: true,
+  imports: [NgIf],
   template: `
     <label class="consent">
       <input type="checkbox" [checked]="accepted" (change)="accepted = $any($event.target).checked; acceptedChange.emit(accepted)">
@@ -17,7 +20,8 @@ export const SIMPLEPAY_INFO_PDF_URL = 'https://simplepartner.hu/PaymentService/F
         Az adatkezelő által továbbított adatok köre: név, e-mail cím, telefonszám, irányítószám.
         Az adatfeldolgozó által végzett adatfeldolgozási tevékenység jellege és célja a SimplePay Zrt. Adatkezelési tájékoztatójában,
         az alábbi linken tekinthető meg:
-        <a [href]="privacyUrl" target="_blank" rel="noopener">{{ privacyUrl }}</a>
+        <a *ngIf="!kioskMode" [href]="privacyUrl" target="_blank" rel="noopener">{{ privacyUrl }}</a>
+        <b *ngIf="kioskMode">{{ privacyUrl }}</b>
       </span>
     </label>
   `,
@@ -58,4 +62,6 @@ export class SimplePayConsentComponent {
   @Output() acceptedChange = new EventEmitter<boolean>();
 
   readonly privacyUrl = SIMPLEPAY_PRIVACY_URL;
+  // A kiosk böngészőjében nincs címsor és visszalépés, ezért a hivatkozás ott csak szövegként jelenik meg
+  readonly kioskMode = inject(KioskService).active;
 }

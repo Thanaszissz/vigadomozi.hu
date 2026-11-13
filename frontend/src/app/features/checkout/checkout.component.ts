@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { ApiService, Reservation } from '../../core/api/api.service';
 import { placeLabel } from '../../core/util/seat';
 import { SimplePayConsentComponent } from '../../shared/simplepay-consent.component';
+import { KioskService } from '../../core/kiosk/kiosk.service';
 
 @Component({
   selector: 'app-checkout',
@@ -31,7 +32,8 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   constructor(
     private apiService: ApiService,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    public kiosk: KioskService
   ) {}
 
   ngOnDestroy() {

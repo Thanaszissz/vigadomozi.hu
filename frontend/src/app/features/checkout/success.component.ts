@@ -5,6 +5,7 @@ import { firstValueFrom } from 'rxjs';
 import { ApiService, Reservation } from '../../core/api/api.service';
 import { TICKET_CSS, ticketMarkup, waitForImages } from '../../core/ticket/ticket-template';
 import { placeLabel } from '../../core/util/seat';
+import { KioskService } from '../../core/kiosk/kiosk.service';
 
 @Component({
   selector: 'app-success',
@@ -34,7 +35,8 @@ export class SuccessComponent implements OnInit {
   }
   constructor(
     private apiService: ApiService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    public kiosk: KioskService
   ) {}
 
   ngOnInit() {

@@ -62,6 +62,10 @@ export const routes: Routes = [
     loadComponent: () => import('./shared/info-page.component').then(m => m.InfoPageComponent)
   },
   {
+    path: 'kiosk',
+    loadComponent: () => import('./features/kiosk/kiosk.component').then(m => m.KioskComponent)
+  },
+  {
     path: 'admin',
     loadChildren: () => import('./features/admin/admin.routes').then(m => m.ADMIN_ROUTES)
   },

@@ -36,7 +36,7 @@ const PAGES: Record<string, SeoData> = {
 };
 
 /** Ezek az oldalak személyes vagy tranzakciós tartalmat mutatnak, ezért nem kerülhetnek a keresőkbe. */
-const NOINDEX_PREFIXES = ['/admin', '/checkout', '/hold-summary', '/success', '/showtimes'];
+const NOINDEX_PREFIXES = ['/admin', '/checkout', '/hold-summary', '/success', '/showtimes', '/kiosk'];
 
 export function seoForPath(path: string): SeoData {
   const clean = (path || '/').split(/[?#]/)[0].replace(/\/+$/, '') || '/';
