@@ -42,7 +42,7 @@ const REFRESH_MS = 5 * 60_000;
       </div>
 
       <div class="grid" *ngIf="programs.length > 0">
-        <button type="button" class="poster-card" *ngFor="let p of programs" (click)="open(p)">
+        <button type="button" class="poster-card" *ngFor="let p of programs; trackBy: trackProgram" (click)="open(p)">
           <div class="poster">
             <img *ngIf="p.movie.poster_path" [src]="p.movie.poster_path" [alt]="p.movie.title" loading="lazy">
             <div *ngIf="!p.movie.poster_path" class="no-poster">{{ p.movie.title }}</div>
@@ -55,9 +55,8 @@ const REFRESH_MS = 5 * 60_000;
       </div>
 
       <div class="overlay" *ngIf="selected" (click)="close()">
+        <button type="button" class="close" (click)="close()" aria-label="Bezárás">✕</button>
         <div class="detail" (click)="$event.stopPropagation()">
-          <button type="button" class="close" (click)="close()" aria-label="Bezárás">✕</button>
-
           <div class="detail-poster">
             <img *ngIf="selected.movie.poster_path" [src]="selected.movie.poster_path" [alt]="selected.movie.title">
           </div>
@@ -73,13 +72,15 @@ const REFRESH_MS = 5 * 60_000;
             <p class="desc" *ngIf="selected.movie.description">{{ selected.movie.description }}</p>
 
             <h3>Válasszon időpontot</h3>
-            <div class="day" *ngFor="let day of days(selected)">
-              <div class="day-label">{{ day.label }}</div>
-              <div class="times">
-                <button type="button" class="time" *ngFor="let st of day.showtimes" (click)="book(st)">
-                  <b>{{ time(st) }}</b>
-                  <small *ngIf="st.auditorium?.name">{{ st.auditorium.name }}</small>
-                </button>
+            <div class="slots">
+              <div class="day" *ngFor="let day of selectedDays; trackBy: trackDay">
+                <div class="day-label">{{ day.label }}</div>
+                <div class="times">
+                  <button type="button" class="time" *ngFor="let st of day.showtimes; trackBy: trackShowtime" (click)="book(st)">
+                    <b>{{ time(st) }}</b>
+                    <small *ngIf="st.auditorium?.name">{{ st.auditorium.name }}</small>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -164,13 +165,14 @@ const REFRESH_MS = 5 * 60_000;
       align-items: center;
       justify-content: center;
       padding: 24px;
-      background: rgba(20, 12, 6, 0.85);
+      background: rgba(20, 12, 6, 0.95);
     }
 
     .detail {
       position: relative;
       display: flex;
-      gap: 32px;
+      gap: 36px;
+      align-items: flex-start;
       width: 100%;
       max-width: 1250px;
       max-height: 100%;
@@ -183,28 +185,30 @@ const REFRESH_MS = 5 * 60_000;
 
     .close {
       position: absolute;
-      top: 14px;
-      right: 14px;
-      width: 64px;
-      height: 64px;
+      top: 18px;
+      right: 18px;
+      z-index: 1;
+      width: 60px;
+      height: 60px;
       padding: 0;
-      font-size: 30px;
+      font-size: 28px;
       color: #fff;
       background: #8b3a2e;
+      border: 2px solid #f0d9b5;
       border-radius: 50%;
     }
 
-    .detail-poster { flex: 0 0 36%; max-width: 420px; }
-    .detail-poster img { width: 100%; border-radius: 12px; display: block; }
+    .detail-poster { flex: 0 0 34%; max-width: 400px; }
+    .detail-poster img { width: 100%; border-radius: 12px; display: block; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5); }
 
-    .detail-body { flex: 1; min-width: 0; padding-right: 60px; }
-    .detail-body h2 { margin: 0 0 12px; font-size: 40px; color: #f0d9b5; line-height: 1.15; }
+    .detail-body { flex: 1; min-width: 0; padding-right: 70px; }
+    .detail-body h2 { margin: 0 0 12px; font-size: 38px; color: #f0d9b5; line-height: 1.15; }
 
-    .meta { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; margin-bottom: 14px; font-size: 20px; color: #cdb596; }
+    .meta { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin-bottom: 14px; font-size: 19px; color: #cdb596; }
 
     .desc {
-      margin: 0 0 18px;
-      font-size: 20px;
+      margin: 0 0 20px;
+      font-size: 19px;
       line-height: 1.5;
       display: -webkit-box;
       -webkit-line-clamp: 5;
@@ -212,19 +216,37 @@ const REFRESH_MS = 5 * 60_000;
       overflow: hidden;
     }
 
-    .detail-body h3 { margin: 10px 0 12px; font-size: 26px; color: #f0d9b5; }
+    .detail-body h3 {
+      margin: 0 0 14px;
+      padding-top: 18px;
+      font-size: 26px;
+      color: #f0d9b5;
+      border-top: 1px solid rgba(212, 165, 116, 0.35);
+    }
 
-    .day { margin-bottom: 16px; }
-    .day-label { margin-bottom: 8px; font-size: 22px; font-weight: 700; text-transform: capitalize; color: #cdb596; }
-    .times { display: flex; flex-wrap: wrap; gap: 12px; }
+    .slots {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 14px;
+    }
+
+    .day {
+      padding: 14px 16px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(212, 165, 116, 0.3);
+      border-radius: 14px;
+    }
+
+    .day-label { margin-bottom: 10px; font-size: 19px; font-weight: 700; text-transform: capitalize; color: #f0d9b5; }
+    .times { display: flex; flex-wrap: wrap; gap: 10px; }
 
     .time {
       display: flex;
       flex-direction: column;
       align-items: center;
-      min-width: 130px;
-      padding: 14px 22px;
-      color: #1b3a1b;
+      min-width: 112px;
+      padding: 10px 18px;
+      color: #123014;
       background: #4ade80;
       border-radius: 12px;
       font: inherit;
@@ -232,8 +254,8 @@ const REFRESH_MS = 5 * 60_000;
     }
     .time:hover { transform: none; opacity: 1; }
     .time:active { background: #22c55e; }
-    .time b { font-size: 32px; line-height: 1.1; }
-    .time small { font-size: 15px; font-weight: 600; }
+    .time b { font-size: 28px; line-height: 1.1; }
+    .time small { font-size: 14px; font-weight: 600; }
 
     .btn { margin-left: 14px; padding: 12px 22px; font-size: 20px; background: #d4a574; color: #2c1810; border-radius: 10px; }
 
@@ -242,16 +264,25 @@ const REFRESH_MS = 5 * 60_000;
       .intro h1 { font-size: 28px; }
       .intro p { font-size: 18px; }
       .grid { grid-template-columns: repeat(2, 1fr); gap: 14px; }
-      .detail { flex-direction: column; padding: 20px; gap: 18px; }
-      .detail-poster { flex: none; max-width: 260px; margin: 0 auto; }
+      .overlay { padding: 0; align-items: stretch; }
+      .detail { flex-direction: column; align-items: stretch; padding: 70px 16px 24px; gap: 18px; border-radius: 0; border: none; }
+      .close { top: 10px; right: 10px; width: 52px; height: 52px; }
+      .detail-poster { flex: none; max-width: 220px; margin: 0 auto; }
       .detail-body { padding-right: 0; }
-      .detail-body h2 { font-size: 30px; }
+      .detail-body h2 { font-size: 28px; text-align: center; }
+      .meta { justify-content: center; font-size: 17px; }
+      .slots { grid-template-columns: 1fr 1fr; gap: 10px; }
+      .day { padding: 10px 12px; }
+      .times { gap: 8px; }
+      .time { min-width: 0; flex: 1 1 90px; padding: 8px 10px; }
+      .time b { font-size: 24px; }
     }
   `]
 })
 export class KioskComponent implements OnInit, OnDestroy {
   programs: KioskProgram[] = [];
   selected: KioskProgram | null = null;
+  selectedDays: KioskDay[] = [];
   loading = false;
   error: string | null = null;
 
@@ -268,6 +299,7 @@ export class KioskComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     clearInterval(this.timer);
+    document.body.style.overflow = '';
   }
 
   @HostListener('document:pointerdown')
@@ -280,7 +312,7 @@ export class KioskComponent implements OnInit, OnDestroy {
   private tick(): void {
     const idle = Date.now() - this.lastActivity;
     if (this.selected && idle > DETAIL_IDLE_MS) {
-      this.selected = null;
+      this.close();
     }
     if (!this.selected && Date.now() - this.lastLoad > REFRESH_MS) {
       this.load(true);
@@ -332,10 +364,27 @@ export class KioskComponent implements OnInit, OnDestroy {
 
   open(program: KioskProgram): void {
     this.selected = program;
+    // egyszer számolt lista: ha minden változásdetektáláskor új objektumok jönnének, az időpont-gombok újraépülnének, és az érintés nem kattintásként érkezne meg
+    this.selectedDays = this.days(program);
+    document.body.style.overflow = 'hidden';
   }
 
   close(): void {
     this.selected = null;
+    this.selectedDays = [];
+    document.body.style.overflow = '';
+  }
+
+  trackProgram(_: number, program: KioskProgram): string {
+    return program.key;
+  }
+
+  trackDay(_: number, day: KioskDay): string {
+    return day.label;
+  }
+
+  trackShowtime(_: number, showtime: Showtime): number {
+    return showtime.id;
   }
 
   book(showtime: Showtime): void {
