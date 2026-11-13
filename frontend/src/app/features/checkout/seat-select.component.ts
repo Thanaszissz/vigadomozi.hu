@@ -54,6 +54,7 @@ export class SeatSelectComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
+    this.botGuard.prepare();
     this.route.params.subscribe(params => {
       this.showtimeId = parseInt(params['id'], 10);
       this.loadShowtime();

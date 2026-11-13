@@ -16,12 +16,12 @@ class BotGuard
         $payload = $this->b64(json_encode([
             'n' => bin2hex(random_bytes(12)),
             't' => time(),
-            'd' => (int) config('botguard.difficulty', 16),
+            'd' => (int) config('botguard.difficulty', 12),
         ]));
 
         return [
             'token' => $payload . '.' . $this->sign($payload),
-            'difficulty' => (int) config('botguard.difficulty', 16),
+            'difficulty' => (int) config('botguard.difficulty', 12),
         ];
     }
 
