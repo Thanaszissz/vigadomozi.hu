@@ -12,6 +12,29 @@
   <div class="area-tabs">
     <button type="button" [class.active]="area === 'cinema'" (click)="area = 'cinema'">🎬 Belépőjegyek</button>
     <button type="button" [class.active]="area === 'services'" (click)="area = 'services'">🎫 Egyéb szolgáltatások</button>
+    <div class="res-number-search">
+      <input type="text" inputmode="numeric" autocomplete="off" [ngModel]="resNumberQuery"
+             (ngModelChange)="onResNumberInput($event)" (keydown)="onResNumberKey($event)"
+             (focus)="resNumberOpen = true" (blur)="resNumberOpen = false"
+             placeholder="🔎 Foglalási szám (pl. 123)" aria-label="Ugrás foglalási szám alapján" role="combobox"
+             [attr.aria-expanded]="resNumberOpen && resNumberHits.length > 0">
+      <button *ngIf="resNumberQuery" type="button" class="res-number-clear" title="Törlés" (mousedown)="$event.preventDefault()" (click)="clearResNumber()">✕</button>
+      <ul class="res-number-list" role="listbox" *ngIf="resNumberOpen && resNumberHits.length > 0">
+        <li *ngFor="let h of resNumberHits; let i = index" role="option" [class.active]="i === resNumberActive"
+            (mousedown)="$event.preventDefault(); jumpToReservation(h)" (mouseenter)="resNumberActive = i">
+          <b>#{{ h.id }}</b>
+          <span class="rn-name">{{ h.customer_name || 'Névtelen' }}</span>
+          <span class="rn-show">{{ h.movie_title }} · {{ h.starts_at | date:'MM.dd. HH:mm' }}</span>
+          <span class="rn-seats">
+            <span class="chip" *ngFor="let k of h.seat_keys">{{ seatLabel(k) }}</span>
+          </span>
+          <span class="rn-total">{{ h.total_amount | number:'1.0-0' }} Ft</span>
+        </li>
+      </ul>
+      <div class="res-number-list res-number-empty" *ngIf="resNumberOpen && resNumberDone && resNumberHits.length === 0">
+        Nincs ilyen függő foglalás.
+      </div>
+    </div>
     <label class="preprint-toggle" title="Előnyomott jegyalapra nyomtatáshoz: a jegyalap (háttér) nem nyomtatódik, csak a szöveg">
       <input type="checkbox" [(ngModel)]="preprintedStock" (ngModelChange)="savePreprintedStock()">
       Előnyomott jegyalap (csak a szöveg nyomtatása)

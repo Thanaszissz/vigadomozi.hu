@@ -368,6 +368,42 @@ class PosController extends Controller
     }
 
     /**
+     * Függő (kifizetetlen) foglalások keresése foglalási szám alapján, minden még értékesíthető előadásban;
+     * a találat az előadás azonosítóját is tartalmazza, hogy a pénztár odaugorhasson.
+     */
+    public function searchReservations(Request $request): JsonResponse
+    {
+        $digits = preg_replace('/\D+/', '', (string) $request->query('q', ''));
+        if ($digits === '') {
+            return response()->json([]);
+        }
+
+        $reservations = Reservation::query()
+            ->where('status', 'PENDING')
+            ->where('id', 'like', $digits . '%')
+            ->whereHas('showtime', fn($q) => $q
+                ->where('status', 'active')
+                ->where('is_external', false)
+                ->where('starts_at', '>=', now()->subMinutes(self::SALES_GRACE_MINUTES)))
+            ->with(['items', 'showtime.movie'])
+            ->orderByRaw('id = ? desc', [(int) $digits])
+            ->orderBy('id')
+            ->limit(8)
+            ->get();
+
+        return response()->json($reservations->map(fn(Reservation $r) => [
+            'id' => $r->id,
+            'showtime_id' => $r->showtime_id,
+            'customer_name' => $r->customer_name,
+            'customer_phone' => $r->customer_phone,
+            'total_amount' => $r->total_amount,
+            'seat_keys' => $r->items->pluck('seat_key')->values(),
+            'movie_title' => $r->showtime?->movie?->title,
+            'starts_at' => $r->showtime?->starts_at,
+        ])->values());
+    }
+
+    /**
      * Függő foglalás módosítása: vásárlói adatok és/vagy a székek cseréje.
      * Kifizetett és online fizetés alatt álló foglalás nem módosítható.
      */

@@ -125,6 +125,18 @@ export function categoryLabel(category?: string | null): string {
   return CATEGORY_LABELS[(category ?? 'standard') as TicketCategory] ?? 'Normál jegy';
 }
 
+/** Függő foglalás keresési találata a helyszíni pénztárban (foglalási szám alapján). */
+export interface PosReservationHit {
+  id: number;
+  showtime_id: number;
+  customer_name: string | null;
+  customer_phone: string | null;
+  total_amount: number;
+  seat_keys: string[];
+  movie_title: string | null;
+  starts_at: string | null;
+}
+
 export interface TicketPage {
   year: number;
   summary: {
@@ -641,6 +653,11 @@ export class AdminService {
   // Helyszíni jegyeladás
   getShowtimeReservations(showtimeId: number): Observable<any[]> {
     return this.http.get<any[]>(`${this.apiUrl}/showtimes/${showtimeId}/reservations`);
+  }
+
+  /** Függő foglalások keresése foglalási szám alapján (minden értékesíthető előadásban). */
+  posSearchReservations(q: string): Observable<PosReservationHit[]> {
+    return this.http.get<PosReservationHit[]>(`${this.apiUrl}/pos/reservations/search`, { params: { q } });
   }
 
   posSell(payload: {

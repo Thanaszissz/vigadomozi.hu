@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 import { Observable, Subject, Subscription, of } from 'rxjs';
 import { catchError, debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import { ApiService, Seat, Showtime, ShowtimeDetail } from '../../../../core/api/api.service';
-import { AdminService, InvoiceBuyer, PaymentMethod, PaymentPart, PosInvoice, SPLIT_METHODS, SplitMethod, Ticket, TicketCategory, categoryLabel } from '../../../../services/admin.service';
+import { AdminService, InvoiceBuyer, PaymentMethod, PaymentPart, PosInvoice, PosReservationHit, SPLIT_METHODS, SplitMethod, Ticket, TicketCategory, categoryLabel } from '../../../../services/admin.service';
 import { TicketPrintComponent, preloadTicketBackground, printTickets, ticketPaymentLabel } from '../ticket-print/ticket-print.component';
 import { AuthService } from '../../../../services/auth.service';
 import { PosServicesComponent } from './pos-services.component';
@@ -150,11 +150,21 @@ export class PosAdminComponent implements OnInit, OnDestroy {
       distinctUntilChanged(),
       switchMap(q => q.length < 2 ? of([]) : this.admin.posSearchCustomers(q).pipe(catchError(() => of([]))))
     ).subscribe(list => (this.customerSuggestions = list));
+    this.resNumberSub = this.resNumberSearch$.pipe(
+      debounceTime(200),
+      distinctUntilChanged(),
+      switchMap(q => q === '' ? of([]) : this.admin.posSearchReservations(q).pipe(catchError(() => of([]))))
+    ).subscribe(hits => {
+      this.resNumberHits = hits;
+      this.resNumberActive = hits.length > 0 ? 0 : -1;
+      this.resNumberDone = this.resNumberQuery.replace(/\D+/g, '') !== '';
+    });
     this.seatMapTimer = setInterval(() => this.silentRefresh(), 10000);
   }
 
   ngOnDestroy(): void {
     this.nameSearchSub?.unsubscribe();
+    this.resNumberSub?.unsubscribe();
     clearInterval(this.seatMapTimer);
   }
 
@@ -288,13 +298,96 @@ export class PosAdminComponent implements OnInit, OnDestroy {
       next: (reservations) => {
         if (this.showtime?.id !== showtimeId) return;
         this.pendingReservations = reservations.filter(r => r.status === 'PENDING');
+        if (this.pendingJumpId !== null) this.applyReservationJump();
         if (this.selectedReservation) {
           this.selectedReservation = this.pendingReservations.find(r => r.id === this.selectedReservation.id) ?? null;
           if (!this.selectedReservation) this.editing = false;
         }
       },
-      error: () => { this.pendingReservations = []; }
+      error: () => { this.pendingReservations = []; this.pendingJumpId = null; }
     });
+  }
+
+  // ---- Ugrás foglalási szám alapján ----
+
+  resNumberQuery = '';
+  resNumberHits: PosReservationHit[] = [];
+  resNumberOpen = false;
+  resNumberActive = -1;
+  resNumberDone = false;
+  private resNumberSearch$ = new Subject<string>();
+  private resNumberSub?: Subscription;
+  private pendingJumpId: number | null = null;
+
+  onResNumberInput(value: string): void {
+    this.resNumberQuery = value;
+    this.resNumberOpen = true;
+    this.resNumberDone = false;
+    this.resNumberSearch$.next(value.replace(/\D+/g, ''));
+  }
+
+  onResNumberKey(event: KeyboardEvent): void {
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      event.preventDefault();
+      const count = this.resNumberHits.length;
+      if (count === 0) return;
+      const step = event.key === 'ArrowDown' ? 1 : -1;
+      this.resNumberActive = (this.resNumberActive + step + count) % count;
+    } else if (event.key === 'Enter') {
+      event.preventDefault();
+      const hit = this.resNumberHits[this.resNumberActive] ?? this.resNumberHits[0];
+      if (hit) this.jumpToReservation(hit);
+    } else if (event.key === 'Escape') {
+      this.resNumberOpen = false;
+    }
+  }
+
+  clearResNumber(): void {
+    this.resNumberQuery = '';
+    this.resNumberHits = [];
+    this.resNumberActive = -1;
+    this.resNumberDone = false;
+    this.resNumberOpen = false;
+    this.resNumberSearch$.next('');
+  }
+
+  /** A találat előadásának megnyitása, a foglalás kijelölése: a pénztáros innen azonnal fizettetni tud. */
+  jumpToReservation(hit: PosReservationHit): void {
+    this.clearResNumber();
+    this.area = 'cinema';
+    this.pendingJumpId = hit.id;
+
+    if (this.showtime?.id === hit.showtime_id && !this.loadingShowtime) {
+      this.loadPendingReservations();
+      return;
+    }
+
+    this.resetSale();
+    this.mode = 'seats';
+    this.showtime = null;
+    this.pendingReservations = [];
+    this.reservationQuery = '';
+    this.reservationPage = 0;
+    this.soldList = [];
+    this.loadShowtime(hit.showtime_id);
+  }
+
+  private applyReservationJump(): void {
+    const id = this.pendingJumpId;
+    this.pendingJumpId = null;
+
+    const index = this.pendingReservations.findIndex(r => r.id === id);
+    if (index < 0) {
+      this.error = `A #${id} foglalás már nem függő (időközben kifizették vagy törölték).`;
+      return;
+    }
+
+    if (this.mode !== 'reservations') this.setMode('reservations');
+    this.reservationQuery = '';
+    this.reservationPage = Math.floor(index / this.reservationPageSize);
+    if (this.selectedReservation?.id !== id) this.selectReservation(this.pendingReservations[index]);
+    this.error = null;
+    setTimeout(() => document.querySelector('.reservation-card.active')?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 100);
   }
 
   // ---- Székválasztó ----

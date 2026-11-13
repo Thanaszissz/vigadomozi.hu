@@ -85,6 +85,7 @@ Route::middleware('permission:pos.sell')->group(function () {
     Route::post('pos/sell-multi', [PosController::class, 'sellMulti']);
     Route::post('pos/hold', [PosController::class, 'hold']);
     Route::get('pos/customers', [PosController::class, 'searchCustomers']);
+    Route::get('pos/reservations/search', [PosController::class, 'searchReservations']);
 
     // Egyéb szolgáltatások (Sárkányvár, Néprajzi gyűjtemények, élménykártya stb.) értékesítése nyugtával
     Route::get('pos/services', [PosController::class, 'services']);
