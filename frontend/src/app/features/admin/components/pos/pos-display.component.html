@@ -20,6 +20,7 @@
   <ng-container *ngIf="!sale">
     <!-- Várakozás -->
     <div class="idle" *ngIf="!hasLines && !seatMap">
+      <img class="idle-logo" src="assets/vigado_logo_beige.png" alt="Vigadó" />
       <h1>Üdvözöljük a Vigadóban!</h1>
       <p>{{ connected ? 'Kérjük, várjon, amíg a pénztáros kiválasztja az előadást.' : 'Várakozás a pénztárra…' }}</p>
     </div>

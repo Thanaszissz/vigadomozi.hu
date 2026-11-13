@@ -23,6 +23,7 @@
 .idle, .thanks {
   flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 0 40px;
 }
+.idle-logo { width: min(420px, 50vw); height: auto; margin-bottom: 36px; }
 .idle h1 { font-size: 56px; margin: 0 0 12px; color: #e8d5b7; }
 .idle p { font-size: 24px; color: #a08060; margin: 0; }
 
