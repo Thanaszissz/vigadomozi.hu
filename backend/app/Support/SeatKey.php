@@ -45,15 +45,20 @@ class SeatKey
         return $key ? self::parse($key)['section'] : null;
     }
 
-    /** Emberi olvasatú megjelölés: "Emelet 1-5" / "E-5". */
+    /** Emberi olvasatú megjelölés: "Emelet · 1.sor 05.szék" (a felület seatLabel() függvényével egyező formátum). */
     public static function label(?string $key): string
     {
         if (!$key || $key === '-') {
             return (string) $key;
         }
 
-        $p = self::parse($key);
+        if (!str_contains($key, '-')) {
+            return $key;
+        }
 
-        return ($p['section'] ? $p['section'] . ' ' : '') . $p['row'] . '-' . ($p['number'] ?? '');
+        $p = self::parse($key);
+        $number = $p['number'] === null ? '' : str_pad((string) $p['number'], 2, '0', STR_PAD_LEFT);
+
+        return ($p['section'] ? $p['section'] . ' · ' : '') . $p['row'] . '.sor ' . $number . '.szék';
     }
 }

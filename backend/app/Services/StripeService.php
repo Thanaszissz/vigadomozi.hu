@@ -27,7 +27,7 @@ class StripeService
                 'price_data' => [
                     'currency' => 'huf',
                     'product_data' => [
-                        'name' => 'Szék ' . SeatKey::label($item->seat_key),
+                        'name' => SeatKey::label($item->seat_key),
                         'description' => "Sor: {$item->row_label}",
                     ],
                     'unit_amount' => $item->price_amount,
