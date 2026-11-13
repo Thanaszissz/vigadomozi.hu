@@ -61,13 +61,13 @@ HTML,
         'tickets_paid' => [
             'name' => 'Jegyek – sikeres kártyás fizetés',
             'description' => 'Sikeres online bankkártyás fizetés után megy ki, a megvásárolt jegyekkel.',
-            'subject' => 'Jegyei – {{film}} ({{idopont}})',
+            'subject' => 'Jegyek – {{film}} ({{idopont}})',
             'body' => <<<'HTML'
-<h2>Sikeres fizetés – itt vannak a jegyei</h2>
+<h2>Sikeres fizetés – Megérkeztek a jegyek</h2>
 <p>Kedves {{nev}}!</p>
-<p>Köszönjük a vásárlást! A bankkártyás fizetés sikeres volt. A jegyeit PDF-ben csatoltuk a levélhez: nyomtassa ki, vagy mutassa meg telefonon az előadás előtt.</p>
+<p>Köszönjük a vásárlást! A bankkártyás fizetés sikeres volt. A jegyeket PDF-ben csatoltuk a levélhez: nyomtassa ki, vagy mutassa meg telefonon az előadás előtt.</p>
 {{foglalas_tabla}}
-<h3>Jegyei</h3>
+<h3>Jegyek</h3>
 {{jegyek}}
 <p>Fizetett összeg: <b>{{osszeg}}</b> ({{fizetesi_mod}})</p>
 <div style="background:#fbf3e4;border-left:4px solid #d4a574;border-radius:4px;padding:14px 18px;margin:0 0 20px;font-size:15px;line-height:1.55;color:#4a3a2a;">Kérjük, érkezzen legalább <b>15 perccel</b> az előadás kezdete előtt, és a bejáratnál mutassa meg a jegyet (kinyomtatva vagy telefonon).</div>
