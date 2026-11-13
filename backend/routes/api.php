@@ -12,7 +12,9 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\TheaterShowController;
 use App\Http\Controllers\Api\SiteStatusController;
 use App\Http\Controllers\Api\AnalyticsConfigController;
+use App\Http\Controllers\Api\BotChallengeController;
 use App\Http\Middleware\BlockDuringMaintenance;
+use App\Http\Middleware\RequireHumanProof;
 use App\Http\Middleware\StorePublicListCache;
 
 // Auth routes (public)
@@ -31,8 +33,9 @@ Route::get('/showtimes', [ShowtimeController::class, 'index'])->middleware(Store
 Route::get('/showtimes/{showtime}', [ShowtimeController::class, 'show'])->middleware(StorePublicListCache::class);
 
 // Seat locking and reservation (a hold e-mailt is küld, ezért korlátozzuk a gyakoriságát)
-Route::post('/showtimes/{showtime}/lock', [SeatLockController::class, 'lock'])->middleware([BlockDuringMaintenance::class, 'throttle:20,1']);
-Route::post('/showtimes/{showtime}/hold', [SeatLockController::class, 'hold'])->middleware([BlockDuringMaintenance::class, 'throttle:10,1']);
+Route::get('/bot-challenge', [BotChallengeController::class, 'show'])->middleware('throttle:30,1');
+Route::post('/showtimes/{showtime}/lock', [SeatLockController::class, 'lock'])->middleware([BlockDuringMaintenance::class, 'throttle:20,1', 'throttle:60,60,lock_hour', RequireHumanProof::class]);
+Route::post('/showtimes/{showtime}/hold', [SeatLockController::class, 'hold'])->middleware([BlockDuringMaintenance::class, 'throttle:10,1', 'throttle:20,60,hold_hour', RequireHumanProof::class]);
 
 // Reservation management
 Route::get('/reservations/{reservation}', [ReservationController::class, 'show'])

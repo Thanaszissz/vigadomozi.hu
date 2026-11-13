@@ -6,6 +6,7 @@ import { ApiService, ShowtimeDetail, Seat } from '../../core/api/api.service';
 import { rowLabelOf, seatNumberOf, seatLabel, seatPlaceLabel, sectionBlocks, newlyIsolatedSeats } from '../../core/util/seat';
 import { KioskService } from '../../core/kiosk/kiosk.service';
 import { AnalyticsService } from '../../core/analytics/analytics.service';
+import { BotGuardService } from '../../core/api/bot-guard.service';
 
 @Component({
   selector: 'app-seat-select',
@@ -21,6 +22,7 @@ export class SeatSelectComponent implements OnInit {
   name = '';
   phone = '';
   zip = '';
+  website = '';
   loading = false;
   isProcessing = false;
   error: string | null = null;
@@ -47,7 +49,8 @@ export class SeatSelectComponent implements OnInit {
     private router: Router,
     private host: ElementRef<HTMLElement>,
     private kiosk: KioskService,
-    private analytics: AnalyticsService
+    private analytics: AnalyticsService,
+    private botGuard: BotGuardService
   ) {}
 
   ngOnInit() {
@@ -238,6 +241,8 @@ export class SeatSelectComponent implements OnInit {
       this.selectedSeats.splice(index, 1);
     } else {
       this.selectedSeats.push(seat);
+      // Az első kiválasztott hely után a háttérben elindul a láthatatlan ellenőrzés, mire a vásárló kitölti az adatait, kész
+      this.botGuard.prepare();
     }
   }
 
@@ -287,7 +292,7 @@ export class SeatSelectComponent implements OnInit {
 
     const seatKeys = this.selectedSeats.map(s => s.key);
 
-    this.apiService.lockSeats(this.showtimeId, this.email, this.name, this.phone, seatKeys, this.zip.trim()).subscribe({
+    this.apiService.lockSeats(this.showtimeId, this.email, this.name, this.phone, seatKeys, this.zip.trim(), this.website).subscribe({
       next: (response) => {
         if (this.showtime) {
           this.analytics.addToCart(this.showtime, this.selectedSeats);
@@ -300,7 +305,7 @@ export class SeatSelectComponent implements OnInit {
           this.lockError = 'Néhány ülés már foglalt. Frissítse az oldalt.';
           this.loadShowtime();
         } else {
-          this.lockError = 'Foglalás sikertelen. Próbálja újra.';
+          this.lockError = err.error?.code === 'captcha_failed' ? err.error.message : 'Foglalás sikertelen. Próbálja újra.';
         }
         console.error(err);
       },
@@ -315,7 +320,7 @@ export class SeatSelectComponent implements OnInit {
 
     const seatKeys = this.selectedSeats.map(s => s.key);
 
-    this.apiService.holdSeats(this.showtimeId, this.email, this.name, this.phone, seatKeys, this.zip.trim()).subscribe({
+    this.apiService.holdSeats(this.showtimeId, this.email, this.name, this.phone, seatKeys, this.zip.trim(), this.website).subscribe({
       next: (response) => {
         this.router.navigate(['/hold-summary', response.reservation.id]);
       },
@@ -325,7 +330,7 @@ export class SeatSelectComponent implements OnInit {
           this.lockError = 'Néhány ülés már foglalt. Frissítse az oldalt.';
           this.loadShowtime();
         } else {
-          this.lockError = 'Foglalás sikertelen. Próbálja újra.';
+          this.lockError = err.error?.code === 'captcha_failed' ? err.error.message : 'Foglalás sikertelen. Próbálja újra.';
         }
         console.error(err);
       },

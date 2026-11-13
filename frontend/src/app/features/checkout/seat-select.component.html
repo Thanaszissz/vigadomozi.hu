@@ -142,6 +142,12 @@
               <small *ngIf="!zipValid" style="color:#ff9d8a">Az irányítószám csak betűt, számot és kötőjelet tartalmazhat.</small>
             </div>
 
+            <!-- Rejtett csali mező a robotok ellen: emberi látogató sosem tölti ki -->
+            <div class="hp-field" aria-hidden="true">
+              <label for="website">Weboldal</label>
+              <input id="website" name="website" type="text" tabindex="-1" autocomplete="off" [(ngModel)]="website">
+            </div>
+
             <button
               (click)="reserve()"
               [disabled]="selectedSeats.length === 0 || !email || !name || !phone || !zipValid || isProcessing"
@@ -159,7 +165,7 @@
             </button>
 
             <div class="pay-logo">
-              <img src="assets/simplepay.webp" alt="SimplePay" width="690" height="205" loading="lazy">
+              <img src="assets/simplepay-logo.webp" alt="SimplePay" width="692" height="209" loading="lazy">
             </div>
 
             <div *ngIf="lockError" class="error-message">{{ lockError }}</div>

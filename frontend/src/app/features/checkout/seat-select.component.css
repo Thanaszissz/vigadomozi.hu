@@ -725,3 +725,5 @@
 @media (max-width: 640px) {
   .footer { grid-template-columns: 1fr; }
 }
+
+.hp-field { position: absolute; left: -10000px; top: auto; width: 1px; height: 1px; overflow: hidden; }

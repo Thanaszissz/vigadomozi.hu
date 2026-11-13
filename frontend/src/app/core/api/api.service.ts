@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable, defer, from, throwError } from 'rxjs';
+import { catchError, map, switchMap } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
+import { BotGuardService } from './bot-guard.service';
 
 const API_URL = environment.apiUrl;
 
@@ -135,7 +136,7 @@ export interface PurchaseEventData {
   providedIn: 'root'
 })
 export class ApiService {
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private botGuard: BotGuardService) {}
 
   // Movies
   // Public API methods
@@ -183,18 +184,28 @@ export class ApiService {
     );
   }
 
-  // Seat locking and reservations
-  lockSeats(showtimeId: number, email: string, name: string, phone: string, seatKeys: string[], zip?: string): Observable<{ reservation: Reservation }> {
-    return this.http.post<{ reservation: Reservation }>(
+  // Seat locking and reservations (a láthatatlan robotvédelem bizonyítékával és a rejtett csali mezővel)
+  lockSeats(showtimeId: number, email: string, name: string, phone: string, seatKeys: string[], zip?: string, website = ''): Observable<{ reservation: Reservation }> {
+    return this.guardedPost<{ reservation: Reservation }>(
       `${API_URL}/showtimes/${showtimeId}/lock`,
-      { email, name, phone, seatKeys, ...(zip ? { zip } : {}) }
+      { email, name, phone, seatKeys, website, ...(zip ? { zip } : {}) }
     );
   }
 
-  holdSeats(showtimeId: number, email: string, name: string, phone: string, seatKeys: string[], zip?: string): Observable<{ reservation: Reservation }> {
-    return this.http.post<{ reservation: Reservation }>(
+  holdSeats(showtimeId: number, email: string, name: string, phone: string, seatKeys: string[], zip?: string, website = ''): Observable<{ reservation: Reservation }> {
+    return this.guardedPost<{ reservation: Reservation }>(
       `${API_URL}/showtimes/${showtimeId}/hold`,
-      { email, name, phone, seatKeys, ...(zip ? { zip } : {}) }
+      { email, name, phone, seatKeys, website, ...(zip ? { zip } : {}) }
+    );
+  }
+
+  private guardedPost<T>(url: string, body: object): Observable<T> {
+    const attempt = () => defer(() => from(this.botGuard.proof())).pipe(
+      switchMap(captcha => this.http.post<T>(url, { ...body, captcha }))
+    );
+    // Ha a bizonyíték lejárt vagy elveszett, egyszer új feladattal újrapróbáljuk
+    return attempt().pipe(
+      catchError(err => err?.error?.code === 'captcha_failed' ? attempt() : throwError(() => err))
     );
   }
 

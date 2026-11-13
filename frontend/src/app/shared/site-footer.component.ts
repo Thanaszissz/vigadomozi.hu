@@ -31,7 +31,7 @@ import { RouterLink } from '@angular/router';
             <p>5310 Kisújszállás, Szabadság tér 7.</p>
             <p>Adószám: 15576976-2-16</p>
             <div class="pay-logo">
-                          <img src="assets/simplepay.webp" alt="SimplePay" width="690" height="205" loading="lazy" />
+                          <img src="assets/simplepay-logo.webp" alt="SimplePay" width="692" height="209" loading="lazy" />
                         </div>
                       </section>
         </div>
