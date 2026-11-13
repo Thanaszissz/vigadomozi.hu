@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { ApiService, ShowtimeDetail, Seat } from '../../core/api/api.service';
 import { rowLabelOf, seatNumberOf, seatLabel, seatPlaceLabel, sectionBlocks, newlyIsolatedSeats } from '../../core/util/seat';
 import { KioskService } from '../../core/kiosk/kiosk.service';
+import { AnalyticsService } from '../../core/analytics/analytics.service';
 
 @Component({
   selector: 'app-seat-select',
@@ -35,6 +36,7 @@ export class SeatSelectComponent implements OnInit {
   seatSize = 28;
   seatHeight = 28;
   private titleScrolled = false;
+  private trackedShowtime = 0;
   seatGap = 6;
   seatAisle = 26;
   seatFont = 10;
@@ -44,7 +46,8 @@ export class SeatSelectComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private host: ElementRef<HTMLElement>,
-    private kiosk: KioskService
+    private kiosk: KioskService,
+    private analytics: AnalyticsService
   ) {}
 
   ngOnInit() {
@@ -67,6 +70,10 @@ export class SeatSelectComponent implements OnInit {
         }
         this.showtime = data;
         this.loading = false;
+        if (this.trackedShowtime !== data.id) {
+          this.trackedShowtime = data.id;
+          this.analytics.selectShowtime(data);
+        }
         setTimeout(() => {
           this.fitSeats();
           this.scrollToTitle();
@@ -282,6 +289,9 @@ export class SeatSelectComponent implements OnInit {
 
     this.apiService.lockSeats(this.showtimeId, this.email, this.name, this.phone, seatKeys, this.zip.trim()).subscribe({
       next: (response) => {
+        if (this.showtime) {
+          this.analytics.addToCart(this.showtime, this.selectedSeats);
+        }
         this.router.navigate(['/checkout', response.reservation.id]);
       },
       error: (err) => {

@@ -5,6 +5,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ApiService, Movie, Showtime } from '../../core/api/api.service';
 import { MovieBadgesComponent, showCategoryLabel } from '../../shared/movie-badges.component';
 import { SeoService } from '../../core/seo/seo.service';
+import { AnalyticsService } from '../../core/analytics/analytics.service';
 import { youtubeId } from '../../core/util/html';
 
 /** Előadás / program (színház, koncert, tánc, kiállítás stb.) oldala az időpontokkal és a jegyfoglalás indításával. */
@@ -22,13 +23,27 @@ export class ProgramDetailComponent implements OnInit {
   error: string | null = null;
   trailerEmbedUrl: SafeResourceUrl | null = null;
   private showId = 0;
+  private viewTracked = 0;
 
   constructor(
     private apiService: ApiService,
     private route: ActivatedRoute,
     private sanitizer: DomSanitizer,
-    private seo: SeoService
+    private seo: SeoService,
+    private analytics: AnalyticsService
   ) {}
+
+  /** view_item: az előadás legközelebbi időpontjával (egy megnyitásra egyszer). */
+  private trackView(): void {
+    if (this.viewTracked === this.showId) return;
+    const next = this.showtimes
+      .filter(st => new Date(st.starts_at).getTime() > Date.now())
+      .sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime())[0];
+    if (next) {
+      this.viewTracked = this.showId;
+      this.analytics.viewItem(next);
+    }
+  }
 
   ngOnInit(): void {
     this.route.params.subscribe(params => {
@@ -65,7 +80,10 @@ export class ProgramDetailComponent implements OnInit {
     });
 
     this.apiService.getShowtimes({ theater_show_id: this.showId }).subscribe({
-      next: (data) => (this.showtimes = data),
+      next: (data) => {
+        this.showtimes = data;
+        this.trackView();
+      },
       error: () => (this.showtimes = [])
     });
   }

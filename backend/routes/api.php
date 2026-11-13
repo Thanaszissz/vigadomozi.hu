@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\SimplePayController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\TheaterShowController;
 use App\Http\Controllers\Api\SiteStatusController;
+use App\Http\Controllers\Api\AnalyticsConfigController;
 use App\Http\Middleware\BlockDuringMaintenance;
 use App\Http\Middleware\StorePublicListCache;
 
@@ -19,6 +20,7 @@ Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:30
 
 // Public routes
 Route::get('/site-status', [SiteStatusController::class, 'show'])->middleware('throttle:120,1');
+Route::get('/analytics-config', [AnalyticsConfigController::class, 'show'])->middleware('throttle:120,1');
 Route::get('/movies', [MovieController::class, 'index'])->middleware(StorePublicListCache::class);
 Route::get('/movies/{movie}', [MovieController::class, 'show']);
 
@@ -39,6 +41,8 @@ Route::get('/reservations/{reservation}/tickets', [ReservationController::class,
     ->whereNumber('reservation')->middleware('throttle:30,1');
 Route::post('/reservations/{reservation}/pay', [ReservationController::class, 'pay'])
     ->whereNumber('reservation')->middleware([BlockDuringMaintenance::class, 'throttle:20,1']);
+Route::post('/reservations/{reservation}/analytics-purchase', [ReservationController::class, 'analyticsPurchase'])
+    ->whereNumber('reservation')->middleware('throttle:30,1');
 
 // Protected routes (auth required)
 Route::middleware(['auth:sanctum', 'abilities:admin:access'])->group(function () {

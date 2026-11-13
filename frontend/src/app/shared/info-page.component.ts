@@ -107,7 +107,12 @@ import { SIMPLEPAY_INFO_PDF_URL, SIMPLEPAY_PRIVACY_URL } from './simplepay-conse
             </p>
 
             <h2>Sütik</h2>
-            <p>Az oldal a működéséhez szükséges technikai adatokat és sütiket használ.</p>
+            <p>
+              Az oldal a működéséhez szükséges technikai adatokat és sütiket használ. Hozzájárulásod esetén statisztikai és hirdetési célú sütiket is
+              (Google Analytics, Meta) a Google Tag Manageren keresztül, az oldal használatának méréséhez és a hirdetések hatékonyságának
+              méréséhez. A hozzájárulást az oldalon megjelenő süti-tájékoztatóban adhatod meg, vagy utasíthatod el; a döntésed a böngésződben
+              tárolódik. A mérési adatokba nem kerül név, e-mail cím vagy telefonszám.
+            </p>
           </article>
 
           <ng-container *ngSwitchDefault></ng-container>

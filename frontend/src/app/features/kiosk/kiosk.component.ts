@@ -2,6 +2,7 @@ import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ApiService, Movie, Showtime } from '../../core/api/api.service';
+import { AnalyticsService } from '../../core/analytics/analytics.service';
 import { MovieBadgesComponent, showCategoryLabel } from '../../shared/movie-badges.component';
 
 interface KioskDay {
@@ -288,9 +289,10 @@ export class KioskComponent implements OnInit, OnDestroy {
 
   private lastActivity = Date.now();
   private lastLoad = Date.now();
+  private listTracked = false;
   private timer?: ReturnType<typeof setInterval>;
 
-  constructor(private api: ApiService, private router: Router) {}
+  constructor(private api: ApiService, private router: Router, private analytics: AnalyticsService) {}
 
   ngOnInit(): void {
     this.load();
@@ -328,6 +330,10 @@ export class KioskComponent implements OnInit, OnDestroy {
     this.api.getShowtimes().subscribe({
       next: (showtimes) => {
         this.programs = this.group(showtimes);
+        if (!silent || !this.listTracked) {
+          this.listTracked = true;
+          this.analytics.viewItemList('kiosk', 'Kiosk műsor', this.programs.map(p => p.showtimes[0]));
+        }
         this.lastLoad = Date.now();
         this.loading = false;
       },
@@ -364,6 +370,7 @@ export class KioskComponent implements OnInit, OnDestroy {
 
   open(program: KioskProgram): void {
     this.selected = program;
+    this.analytics.selectItem('kiosk', 'Kiosk műsor', program.showtimes[0], this.programs.indexOf(program));
     // egyszer számolt lista: ha minden változásdetektáláskor új objektumok jönnének, az időpont-gombok újraépülnének, és az érintés nem kattintásként érkezne meg
     this.selectedDays = this.days(program);
     document.body.style.overflow = 'hidden';

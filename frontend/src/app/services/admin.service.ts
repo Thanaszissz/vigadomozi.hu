@@ -375,6 +375,19 @@ export interface NavTestResult {
   software_registered: boolean | null;
 }
 
+export interface AnalyticsSettingsState {
+  enabled: boolean;
+  gtm_id: string;
+  tax_rate: number | null;
+  variant: string;
+  transaction_id_mode: 'order_ref' | 'reservation';
+  transaction_prefix: string;
+  item_prefix_movie: string;
+  item_prefix_show: string;
+  send_postal_code: boolean;
+  active: boolean;
+}
+
 export interface SimplePaySettings {
   enabled: boolean;
   ready: boolean;
@@ -844,6 +857,15 @@ export class AdminService {
 
   saveMaintenance(maintenance: boolean, message: string): Observable<{ maintenance: boolean; message: string; default_message: string }> {
     return this.http.put<{ maintenance: boolean; message: string; default_message: string }>(`${this.apiUrl}/settings/maintenance`, { maintenance, message });
+  }
+
+  // Beállítások: webes mérés (Google Tag Manager)
+  getAnalytics(): Observable<AnalyticsSettingsState> {
+    return this.http.get<AnalyticsSettingsState>(`${this.apiUrl}/settings/analytics`);
+  }
+
+  saveAnalytics(payload: Omit<AnalyticsSettingsState, 'active'>): Observable<AnalyticsSettingsState> {
+    return this.http.put<AnalyticsSettingsState>(`${this.apiUrl}/settings/analytics`, payload);
   }
 
   // Beállítások: OTP SimplePay

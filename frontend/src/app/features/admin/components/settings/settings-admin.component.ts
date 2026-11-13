@@ -10,13 +10,14 @@ import { SzamlazzPanelComponent } from './szamlazz-panel.component';
 import { ExtraServicesPanelComponent } from './extra-services-panel.component';
 import { TestModePanelComponent } from './test-mode-panel.component';
 import { MaintenancePanelComponent } from './maintenance-panel.component';
+import { AnalyticsPanelComponent } from './analytics-panel.component';
 
-type Section = 'testmode' | 'maintenance' | 'numbering' | 'catalog-reset' | 'services' | 'simplepay' | 'szamlazz' | 'nav' | 'backups';
+type Section = 'testmode' | 'maintenance' | 'numbering' | 'catalog-reset' | 'services' | 'simplepay' | 'analytics' | 'szamlazz' | 'nav' | 'backups';
 
 @Component({
   selector: 'app-settings-admin',
   standalone: true,
-  imports: [CommonModule, FormsModule, BackupsPanelComponent, SimplePayPanelComponent, SzamlazzPanelComponent, NavPanelComponent, ExtraServicesPanelComponent, TestModePanelComponent, MaintenancePanelComponent],
+  imports: [CommonModule, FormsModule, BackupsPanelComponent, SimplePayPanelComponent, SzamlazzPanelComponent, NavPanelComponent, ExtraServicesPanelComponent, TestModePanelComponent, MaintenancePanelComponent, AnalyticsPanelComponent],
   templateUrl: './settings-admin.component.html',
   styleUrls: ['./settings-admin.component.css']
 })

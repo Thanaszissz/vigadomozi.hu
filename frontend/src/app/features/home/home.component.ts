@@ -3,6 +3,7 @@ import { RouterLink } from "@angular/router";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { ApiService } from "../../core/api/api.service";
+import { AnalyticsService, ShowtimeLike } from "../../core/analytics/analytics.service";
 import { MovieBadgesComponent, showCategoryLabel } from "../../shared/movie-badges.component";
 import { youtubeId } from "../../core/util/html";
 import { DomSanitizer, SafeResourceUrl } from "@angular/platform-browser";
@@ -69,8 +70,31 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   constructor(
     private apiService: ApiService,
-    private sanitizer: DomSanitizer
+    private sanitizer: DomSanitizer,
+    private analytics: AnalyticsService
   ) {}
+
+  /** Mérés: a műsorlista megjelenése (programonként egy tétel, a legközelebbi időponttal). */
+  private trackList(showtimes: ShowtimeWithMovie[]): void {
+    const now = Date.now();
+    const upcoming = showtimes
+      .filter(st => new Date(st.starts_at).getTime() > now)
+      .sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime());
+    this.analytics.viewItemList('musor', 'Műsor', upcoming as unknown as ShowtimeLike[]);
+  }
+
+  trackPoster(poster: SliderItem): void {
+    const showtime = this.allShowtimes
+      .filter(st => st.movie.id === poster.id && !!st.is_theater === poster.theater && new Date(st.starts_at).getTime() > Date.now())
+      .sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime())[0];
+    if (showtime) {
+      this.analytics.selectItem('musor', 'Műsor', showtime as unknown as ShowtimeLike, this.posters.indexOf(poster));
+    }
+  }
+
+  trackShowtime(showtime: ShowtimeWithMovie): void {
+    this.analytics.selectItem('musor', 'Műsor', showtime as unknown as ShowtimeLike, this.selectedDayShowtimes.indexOf(showtime));
+  }
 
   ngOnInit(): void {
     this.timer = window.setInterval(() => this.nextSlide(), 4000);
@@ -125,6 +149,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.apiService.getShowtimes().subscribe({
       next: (showtimes: ShowtimeWithMovie[]) => {
         this.allShowtimes = showtimes;
+        this.trackList(showtimes);
 
         this.weekDays.forEach(day => {
           if (day.isAll) {

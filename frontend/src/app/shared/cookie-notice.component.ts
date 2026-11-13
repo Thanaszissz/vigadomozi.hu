@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { AnalyticsService } from '../core/analytics/analytics.service';
 
 const STORAGE_KEY = 'vigado_cookie_consent';
 
@@ -11,12 +12,20 @@ const STORAGE_KEY = 'vigado_cookie_consent';
   imports: [CommonModule, RouterLink],
   template: `
     <div class="cookie-notice" *ngIf="visible" role="dialog" aria-label="Süti tájékoztató">
-      <p>
+      <p *ngIf="!measuring">
         🍪 Az oldal a működéséhez szükséges technikai sütiket használ, a beágyazott YouTube előzetesek pedig saját sütiket helyezhetnek el.
         Marketing vagy nyomkövető sütiket nem használunk.
         <a routerLink="/adatkezelesi-tajekoztato">Adatkezelési tájékoztató</a>
       </p>
-      <button type="button" (click)="accept()">Rendben, elfogadom</button>
+      <p *ngIf="measuring">
+        🍪 Az oldal a működéséhez szükséges technikai sütiket használ. Hozzájárulásoddal statisztikai és hirdetési sütiket is (Google Analytics, Meta),
+        hogy mérni és fejleszteni tudjuk az oldalt. A beágyazott YouTube előzetesek saját sütiket helyezhetnek el.
+        <a routerLink="/adatkezelesi-tajekoztato">Adatkezelési tájékoztató</a>
+      </p>
+      <div class="buttons">
+        <button type="button" class="secondary" *ngIf="measuring" (click)="choose(false)">Csak a szükségesek</button>
+        <button type="button" (click)="choose(true)">{{ measuring ? 'Mindet elfogadom' : 'Rendben, elfogadom' }}</button>
+      </div>
     </div>
   `,
   styles: [`
@@ -57,6 +66,16 @@ const STORAGE_KEY = 'vigado_cookie_consent';
 
     button:hover { background: #e6bd89; }
 
+    .buttons { display: flex; gap: 8px; flex-shrink: 0; }
+
+    button.secondary {
+      background: transparent;
+      color: #e8d5b7;
+      border: 1px solid #8b6f47;
+    }
+
+    button.secondary:hover { background: rgba(212, 165, 116, 0.15); }
+
     @media (max-width: 600px) {
       .cookie-notice {
         left: 8px;
@@ -67,26 +86,49 @@ const STORAGE_KEY = 'vigado_cookie_consent';
         align-items: stretch;
         text-align: left;
       }
+
+      .buttons { flex-direction: column; }
     }
   `]
 })
 export class CookieNoticeComponent implements OnInit {
   visible = false;
+  measuring = false;
+
+  constructor(private analytics: AnalyticsService) {}
 
   ngOnInit(): void {
-    try {
-      this.visible = localStorage.getItem(STORAGE_KEY) === null;
-    } catch {
-      this.visible = true;
-    }
+    this.visible = this.stored() === null;
+
+    // Ha a webes mérés be van kapcsolva, a korábban csak tájékoztatóval elfogadó látogatótól is hozzájárulást kérünk
+    this.analytics.config$.subscribe(config => {
+      this.measuring = config.enabled;
+      if (config.enabled && !this.hasChoice()) {
+        this.visible = true;
+      }
+    });
   }
 
-  accept(): void {
+  choose(all: boolean): void {
     try {
-      localStorage.setItem(STORAGE_KEY, new Date().toISOString());
+      localStorage.setItem(STORAGE_KEY, all ? 'all' : 'necessary');
     } catch {
       // a böngésző nem engedi a tárolást: az üzenet ekkor is eltűnik az oldal megtekintésének idejére
     }
+    this.analytics.setConsent(all);
     this.visible = false;
+  }
+
+  private stored(): string | null {
+    try {
+      return localStorage.getItem(STORAGE_KEY);
+    } catch {
+      return null;
+    }
+  }
+
+  private hasChoice(): boolean {
+    const value = this.stored();
+    return value === 'all' || value === 'necessary';
   }
 }

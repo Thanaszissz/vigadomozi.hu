@@ -25,6 +25,7 @@ use App\Http\Controllers\Admin\InvoiceController;
 use App\Http\Controllers\Admin\ExtraServiceController;
 use App\Http\Controllers\Admin\TestModeController;
 use App\Http\Controllers\Admin\MaintenanceController;
+use App\Http\Controllers\Admin\AnalyticsSettingsController;
 use App\Http\Controllers\Admin\CatalogResetController;
 
 // A jogosultságokat a szerepkörök adják (App\Support\Roles); minden csoport a megfelelő jogot követeli meg.
@@ -116,6 +117,10 @@ Route::middleware('permission:settings.manage')->group(function () {
     // Karbantartás mód: a nyilvános oldal elérhetetlenné tétele rendszerfrissítéskor
     Route::get('settings/maintenance', [MaintenanceController::class, 'show']);
     Route::put('settings/maintenance', [MaintenanceController::class, 'update']);
+
+    // Webes mérés (Google Tag Manager, GA4, Meta): a dataLayer események paraméterei
+    Route::get('settings/analytics', [AnalyticsSettingsController::class, 'show']);
+    Route::put('settings/analytics', [AnalyticsSettingsController::class, 'update'])->middleware('throttle:20,1');
 
     Route::get('settings/ticket-numbering', [SettingsController::class, 'ticketNumbering']);
     Route::post('settings/ticket-numbering/prepare', [SettingsController::class, 'prepareTicketNumbering'])->middleware('throttle:10,1');

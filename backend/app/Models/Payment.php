@@ -17,11 +17,13 @@ class Payment extends Model
         'environment',
         'last_event',
         'completed_at',
+        'analytics_sent_at',
         'details',
     ];
 
     protected $casts = [
         'completed_at' => 'datetime',
+        'analytics_sent_at' => 'datetime',
         'details' => 'array',
     ];
 

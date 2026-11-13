@@ -3,7 +3,7 @@
     <div class="slider-window">
       <div class="slides" [style.transform]="'translateX(' + (-activeSlide * 100) + '%)'"><!-- slider -->
         <div class="slide" *ngFor="let slide of slideGroups">
-          <a *ngFor="let poster of slide" [routerLink]="poster.link" class="poster-link">
+          <a *ngFor="let poster of slide" [routerLink]="poster.link" class="poster-link" (click)="trackPoster(poster)">
             <img [src]="poster.image" [alt]="poster.title" />
             <div class="poster-showtime" *ngIf="poster.startsAt">
               {{ formatShowtime(poster.startsAt) }}
@@ -52,7 +52,7 @@
 
     <div class="tab-content" *ngIf="selectedDayShowtimes.length > 0">
       <div class="showtime-card" *ngFor="let showtime of selectedDayShowtimes">
-        <a [routerLink]="programLink(showtime)" class="card-link">
+        <a [routerLink]="programLink(showtime)" class="card-link" (click)="trackShowtime(showtime)">
           <img [src]="showtime.movie.poster_path" [alt]="showtime.movie.title" class="poster" />
           <div class="card-info">
             <h3 class="movie-title">{{ showtime.movie.title }}</h3>

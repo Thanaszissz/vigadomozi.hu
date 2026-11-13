@@ -1,0 +1,77 @@
+<div class="card">
+  <h2>📊 Webes mérés (Tag Manager)</h2>
+  <p class="muted">
+    A jegyrendszer a vásárlási út eseményeit (műsorlista, adatlap, időpont, kosár, pénztár, fizetés, sikeres vásárlás) a <code>dataLayer</code>-be adja át.
+    A mérőkódokat (Google Analytics 4, Meta) a Google Tag Managerben kell beállítani, ide csak a tároló azonosítója és a leírásból ki nem olvasható paraméterek kellenek.
+  </p>
+
+  <div *ngIf="loading" class="muted">Betöltés...</div>
+  <div *ngIf="error" class="alert">{{ error }}</div>
+  <div *ngIf="notice" class="ok">✅ {{ notice }}</div>
+
+  <ng-container *ngIf="!loading">
+    <label class="switch">
+      <input type="checkbox" [(ngModel)]="form.enabled">
+      <span>Mérés bekapcsolva (a Tag Manager betöltődik a nyilvános oldalakon)</span>
+    </label>
+    <div class="warn" *ngIf="form.enabled">
+      A bekapcsolás után a süti-tájékoztató hozzájárulást kér a látogatóktól (csak a szükségesek / mindet elfogadom). A hozzájárulás nélküli látogatóknál a Tag Manager a Consent Mode (elutasított állapot) szerint dönti el, mely mérőkód futhat.
+    </div>
+
+    <div class="field">
+      <label for="gtm">Tag Manager tároló azonosító</label>
+      <input id="gtm" type="text" maxlength="20" [(ngModel)]="form.gtm_id" placeholder="GTM-ABC1234">
+      <span class="muted small">A mérés beállítója adja meg (GTM-…).</span>
+    </div>
+
+    <div class="grid">
+      <div class="field">
+        <label for="tax">ÁFA-kulcs (%)</label>
+        <input id="tax" type="number" min="0" max="100" [(ngModel)]="form.tax_rate" placeholder="pl. 27">
+        <span class="muted small">A sikeres vásárlás eseményben az ÁFA összege a bruttó végösszegből számolódik. Üresen hagyva az ÁFA nem kerül az eseménybe.</span>
+      </div>
+
+      <div class="field">
+        <label for="variant">Jegytípus (item_variant)</label>
+        <input id="variant" type="text" maxlength="60" [(ngModel)]="form.variant" placeholder="Felnőtt">
+        <span class="muted small">A rendszer nem különböztet meg jegytípusokat (felnőtt, diák…), ezért minden online jegy ezzel az értékkel megy ki.</span>
+      </div>
+
+      <div class="field">
+        <label for="mode">Rendelés azonosító (transaction_id)</label>
+        <select id="mode" [(ngModel)]="form.transaction_id_mode">
+          <option value="order_ref">SimplePay rendelésszám (pl. VIG-123-ABCD1234)</option>
+          <option value="reservation">Foglalás sorszáma (pl. VIG-2026-000123)</option>
+        </select>
+        <span class="muted small">Annak kell lennie, ami a számlán és a jegyrendszerben is szerepel.</span>
+      </div>
+
+      <div class="field" *ngIf="form.transaction_id_mode === 'reservation'">
+        <label for="tprefix">Sorszám előtag</label>
+        <input id="tprefix" type="text" maxlength="20" [(ngModel)]="form.transaction_prefix" placeholder="VIG">
+      </div>
+
+      <div class="field">
+        <label for="pmovie">Mozi tétel azonosító előtag</label>
+        <input id="pmovie" type="text" maxlength="10" [(ngModel)]="form.item_prefix_movie" placeholder="MO">
+      </div>
+
+      <div class="field">
+        <label for="pshow">Saját előadás tétel azonosító előtag</label>
+        <input id="pshow" type="text" maxlength="10" [(ngModel)]="form.item_prefix_show" placeholder="EL">
+        <span class="muted small">Az item_id alakja: előtag-ÉÉÉÉ-HHNN-ÓÓPP-azonosító (pl. EL-2026-1205-1900-12).</span>
+      </div>
+    </div>
+
+    <label class="switch">
+      <input type="checkbox" [(ngModel)]="form.send_postal_code">
+      <span>A megadott irányítószám átadása a sikeres vásárlás eseményben (vonzáskörzet-elemzéshez)</span>
+    </label>
+
+    <div class="row-actions">
+      <button type="button" class="btn" (click)="save()" [disabled]="saving">💾 Mentés</button>
+      <span class="muted" *ngIf="active">Állapot: aktív</span>
+      <span class="muted" *ngIf="!active">Állapot: nem aktív</span>
+    </div>
+  </ng-container>
+</div>

@@ -94,6 +94,7 @@ export interface Reservation {
   customer_email: string;
   customer_name: string;
   customer_phone: string;
+  customer_zip?: string | null;
   status: string;
   total_amount: number;
   currency: string;
@@ -112,6 +113,24 @@ export interface ReservationPayment {
   date: string | null;
 }
 
+export interface AnalyticsConfig {
+  enabled: boolean;
+  gtm_id?: string;
+  variant?: string;
+  item_prefix_movie?: string;
+  item_prefix_show?: string;
+}
+
+export interface PurchaseEventData {
+  first: boolean;
+  transaction_id?: string;
+  value?: number;
+  tax?: number | null;
+  fee?: number;
+  payment_type?: string;
+  postal_code?: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -126,6 +145,15 @@ export class ApiService {
 
   getSiteStatus(): Observable<{ test_mode: boolean; maintenance?: boolean; maintenance_message?: string | null }> {
     return this.http.get<{ test_mode: boolean; maintenance?: boolean; maintenance_message?: string | null }>(`${API_URL}/site-status`);
+  }
+
+  getAnalyticsConfig(): Observable<AnalyticsConfig> {
+    return this.http.get<AnalyticsConfig>(`${API_URL}/analytics-config`);
+  }
+
+  /** A purchase mérési esemény egyszeri jóváhagyása (rendelésenként csak az első hívás kap first: true választ). */
+  claimPurchaseEvent(reservationId: number, key: string): Observable<PurchaseEventData> {
+    return this.http.post<PurchaseEventData>(`${API_URL}/reservations/${reservationId}/analytics-purchase`, {}, { params: { k: key } });
   }
 
   getMovies(): Observable<Movie[]> {

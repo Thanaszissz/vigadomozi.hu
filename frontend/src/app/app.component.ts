@@ -10,6 +10,7 @@ import { SeoService } from './core/seo/seo.service';
 import { seoForPath } from './core/seo/seo-routes';
 import { ApiService } from './core/api/api.service';
 import { KioskService } from './core/kiosk/kiosk.service';
+import { AnalyticsService } from './core/analytics/analytics.service';
 
 @Component({
   selector: 'app-root',
@@ -77,12 +78,15 @@ export class AppComponent implements OnDestroy {
   private lastActivity = Date.now();
   private idleTimer?: ReturnType<typeof setInterval>;
 
-  constructor(private router: Router, private seo: SeoService, private api: ApiService, public kiosk: KioskService) {
+  constructor(private router: Router, private seo: SeoService, private api: ApiService, public kiosk: KioskService, private analytics: AnalyticsService) {
     this.applyUrl(router.url);
     router.events.subscribe(event => {
       if (event instanceof NavigationEnd) {
         this.currentUrl = event.urlAfterRedirects;
         this.applyUrl(this.currentUrl);
+        if (!this.isAdmin) {
+          this.analytics.start();
+        }
         this.updateSeo(this.currentUrl);
         this.checkStatus();
       }

@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Payment;
 use App\Models\Reservation;
 use App\Models\Ticket;
+use App\Services\AnalyticsSettings;
 use App\Services\SeatClaimService;
 use App\Services\TicketAccess;
 use App\Services\SimplePayService;
@@ -106,6 +107,45 @@ class ReservationController extends Controller
             'price_amount' => $t->price_amount,
             'sold_at' => $t->sold_at,
         ])->values());
+    }
+
+    /**
+     * A purchase mérési esemény egyszeri jóváhagyása: a rendelésenként csak az első hívás kap "first: true" választ, így az
+     * oldal frissítésekor vagy a visszaigazoló link újbóli megnyitásakor az esemény nem megy ki újra.
+     */
+    public function analyticsPurchase(Reservation $reservation, Request $request, AnalyticsSettings $analytics)
+    {
+        if (!$analytics->isActive() || !TicketAccess::check($reservation->id, $request->query('k'))) {
+            return response()->json(['first' => false]);
+        }
+
+        $payment = Payment::where('reservation_id', $reservation->id)
+            ->where('provider', SimplePayService::PROVIDER)
+            ->where('status', 'SUCCESS')
+            ->latest('id')
+            ->first();
+
+        if (!$payment || $reservation->status !== 'PAID') {
+            return response()->json(['first' => false]);
+        }
+
+        $first = Payment::where('id', $payment->id)->whereNull('analytics_sent_at')->update(['analytics_sent_at' => now()]) === 1;
+        if (!$first) {
+            return response()->json(['first' => false]);
+        }
+
+        $value = (int) $reservation->total_amount;
+        $config = $analytics->config();
+
+        return response()->json([
+            'first' => true,
+            'transaction_id' => $analytics->transactionId($payment),
+            'value' => $value,
+            'tax' => $analytics->tax($value),
+            'fee' => 0,
+            'payment_type' => 'bankkártya',
+            'postal_code' => $config['send_postal_code'] ? (string) ($reservation->customer_zip ?? '') : '',
+        ]);
     }
 
     public function pay(Reservation $reservation, Request $request)

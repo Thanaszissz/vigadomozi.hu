@@ -5,6 +5,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ApiService, Movie, Showtime } from '../../core/api/api.service';
 import { MovieBadgesComponent } from '../../shared/movie-badges.component';
 import { SeoService } from '../../core/seo/seo.service';
+import { AnalyticsService } from '../../core/analytics/analytics.service';
 import { youtubeId } from '../../core/util/html';
 
 @Component({
@@ -20,6 +21,7 @@ export class MovieDetailComponent implements OnInit, OnDestroy {
   loading = false;
   error: string | null = null;
   movieId: number = 0;
+  private viewTracked = 0;
 
   // További ajánló: a még várható előadásokkal rendelkező filmek (dinamikusan töltve)
   posters: Array<{ id: number; title: string; image: string }> = [];
@@ -40,7 +42,8 @@ export class MovieDetailComponent implements OnInit, OnDestroy {
     private apiService: ApiService,
     private route: ActivatedRoute,
     private sanitizer: DomSanitizer,
-    private seo: SeoService
+    private seo: SeoService,
+    private analytics: AnalyticsService
   ) {}
 
   ngOnInit() {
@@ -151,6 +154,7 @@ export class MovieDetailComponent implements OnInit, OnDestroy {
     this.apiService.getShowtimes({ movie_id: this.movieId }).subscribe({
       next: (data) => {
         this.showtimes = data;
+        this.trackView(data);
         if (this.movie && this.movie.id === this.movieId) {
           this.seo.setMovie(this.movie, data);
         }
@@ -159,6 +163,18 @@ export class MovieDetailComponent implements OnInit, OnDestroy {
         console.error('Showtimes betöltése sikertelen:', err);
       },
     });
+  }
+
+  /** view_item: a film legközelebbi időpontjával (egy megnyitásra egyszer). */
+  private trackView(showtimes: Showtime[]): void {
+    if (this.viewTracked === this.movieId) return;
+    const next = showtimes
+      .filter(st => new Date(st.starts_at).getTime() > Date.now())
+      .sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime())[0];
+    if (next) {
+      this.viewTracked = this.movieId;
+      this.analytics.viewItem(next);
+    }
   }
 
   /** A még várható előadások egyedi filmjei időrendben, az éppen megnyitott film nélkül. */

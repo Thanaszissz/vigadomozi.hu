@@ -6,6 +6,7 @@ import { ApiService, Reservation } from '../../core/api/api.service';
 import { TICKET_CSS, ticketMarkup, waitForImages } from '../../core/ticket/ticket-template';
 import { placeLabel } from '../../core/util/seat';
 import { KioskService } from '../../core/kiosk/kiosk.service';
+import { AnalyticsService } from '../../core/analytics/analytics.service';
 
 @Component({
   selector: 'app-success',
@@ -22,6 +23,7 @@ export class SuccessComponent implements OnInit {
   accessKey = '';
   downloading = false;
   downloadError: string | null = null;
+  private purchaseChecked = false;
   readonly placeLabel = placeLabel;
 
   paymentResult(status: string): string {
@@ -36,7 +38,8 @@ export class SuccessComponent implements OnInit {
   constructor(
     private apiService: ApiService,
     private route: ActivatedRoute,
-    public kiosk: KioskService
+    public kiosk: KioskService,
+    private analytics: AnalyticsService
   ) {}
 
   ngOnInit() {
@@ -55,12 +58,24 @@ export class SuccessComponent implements OnInit {
       next: (data) => {
         this.reservation = data;
         this.loading = false;
+        this.trackPurchase(data);
       },
       error: (err) => {
         this.error = 'Foglalás adatai nem találhatók.';
         console.error(err);
         this.loading = false;
       },
+    });
+  }
+
+  /** A purchase mérési esemény csak sikeres fizetés után, rendelésenként egyszer megy ki (a szerver jelzi, hogy ez az első megnyitás-e). */
+  private trackPurchase(reservation: Reservation): void {
+    if (this.purchaseChecked || reservation.status !== 'PAID' || !this.accessKey) return;
+    this.purchaseChecked = true;
+
+    this.apiService.claimPurchaseEvent(reservation.id, this.accessKey).subscribe({
+      next: (data) => this.analytics.purchase(reservation, data),
+      error: () => {}
     });
   }
 

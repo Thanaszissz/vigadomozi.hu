@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ApiService, Showtime } from '../../core/api/api.service';
+import { AnalyticsService } from '../../core/analytics/analytics.service';
 import { MovieBadgesComponent, showCategoryLabel } from '../../shared/movie-badges.component';
 
 interface ShowtimeGroup {
@@ -23,7 +24,11 @@ export class ScheduleComponent implements OnInit {
   error: string | null = null;
   groups: ShowtimeGroup[] = [];
 
-  constructor(private apiService: ApiService) {}
+  constructor(private apiService: ApiService, private analytics: AnalyticsService) {}
+
+  trackSelect(showtime: Showtime, index: number): void {
+    this.analytics.selectItem('musorlista', 'Műsorlista', showtime, index);
+  }
 
   /** Film esetén a film oldalára, előadás / program esetén a program oldalára mutat. */
   programLink(showtime: Showtime): string {
@@ -65,6 +70,7 @@ export class ScheduleComponent implements OnInit {
 
         this.groups = Array.from(map.values());
         this.loading = false;
+        this.analytics.viewItemList('musorlista', 'Műsorlista', sorted);
       },
       error: () => {
         this.error = 'A műsorlista betöltése sikertelen.';

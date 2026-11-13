@@ -24,6 +24,9 @@
       <button type="button" class="menu-item" [class.active]="section === 'simplepay'" (click)="section = 'simplepay'">
         💳 OTP SimplePay
       </button>
+      <button type="button" class="menu-item" [class.active]="section === 'analytics'" (click)="section = 'analytics'">
+        📊 Webes mérés
+      </button>
       <button type="button" class="menu-item" [class.active]="section === 'szamlazz'" (click)="section = 'szamlazz'">
         🧾 Számlázz.hu
       </button>
@@ -222,6 +225,10 @@
 
     <main class="content" *ngIf="section === 'simplepay'">
       <app-simplepay-panel></app-simplepay-panel>
+    </main>
+
+    <main class="content" *ngIf="section === 'analytics'">
+      <app-analytics-panel></app-analytics-panel>
     </main>
 
     <main class="content" *ngIf="section === 'szamlazz'">

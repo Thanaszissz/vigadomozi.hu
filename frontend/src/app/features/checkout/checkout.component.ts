@@ -5,6 +5,7 @@ import { ApiService, Reservation } from '../../core/api/api.service';
 import { placeLabel } from '../../core/util/seat';
 import { SimplePayConsentComponent } from '../../shared/simplepay-consent.component';
 import { KioskService } from '../../core/kiosk/kiosk.service';
+import { AnalyticsService } from '../../core/analytics/analytics.service';
 
 @Component({
   selector: 'app-checkout',
@@ -20,6 +21,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   reservationId: number = 0;
   accessKey = '';
   consentAccepted = false;
+  private checkoutTracked = false;
   readonly placeLabel = placeLabel;
   isProcessing = false;
   isProcessingPayment = false;
@@ -33,7 +35,8 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     private apiService: ApiService,
     private route: ActivatedRoute,
     private router: Router,
-    public kiosk: KioskService
+    public kiosk: KioskService,
+    private analytics: AnalyticsService
   ) {}
 
   ngOnDestroy() {
@@ -85,6 +88,10 @@ export class CheckoutComponent implements OnInit, OnDestroy {
         this.reservation = data;
         this.loading = false;
         this.startCountdown();
+        if (!this.checkoutTracked && data.status === 'PENDING') {
+          this.checkoutTracked = true;
+          this.analytics.beginCheckout(data);
+        }
       },
       error: (err) => {
         this.error = 'Foglalás betöltése sikertelen.';
@@ -99,6 +106,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
 
     this.isProcessingPayment = true;
     this.paymentError = null;
+    this.analytics.addPaymentInfo(this.reservation);
 
     this.apiService.initiatePayment(this.reservation.id).subscribe({
       next: (response) => {
