@@ -33,6 +33,7 @@ export class SeatSelectComponent implements OnInit {
   // a székek mérete a kijelzőhöz igazodik, hogy a legszélesebb sor is elférjen
   seatSize = 28;
   seatHeight = 28;
+  private titleScrolled = false;
   seatGap = 6;
   seatAisle = 26;
   seatFont = 10;
@@ -64,7 +65,10 @@ export class SeatSelectComponent implements OnInit {
         }
         this.showtime = data;
         this.loading = false;
-        setTimeout(() => this.fitSeats());
+        setTimeout(() => {
+          this.fitSeats();
+          this.scrollToTitle();
+        });
       },
       error: (err) => {
         this.error = 'Előadás betöltése sikertelen. Próbálja később.';
@@ -72,6 +76,15 @@ export class SeatSelectComponent implements OnInit {
         this.loading = false;
       },
     });
+  }
+
+  /** Telefonon a székválasztó megnyitásakor az előadás címére ugrik az oldal (ne a lap alján, a láblécnél maradjon). */
+  private scrollToTitle(): void {
+    if (this.titleScrolled || window.innerWidth > 768) return;
+    this.titleScrolled = true;
+
+    const header = this.host.nativeElement.querySelector('.header') as HTMLElement | null;
+    header?.scrollIntoView({ block: 'start' });
   }
 
   @HostListener('window:resize')
