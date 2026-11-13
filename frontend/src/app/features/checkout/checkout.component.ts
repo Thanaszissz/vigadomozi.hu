@@ -26,7 +26,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   isProcessing = false;
   isProcessingPayment = false;
   paymentError: string | null = null;
-  paymentNotice: string | null = null;
+  paymentNotice: { title: string; text: string } | null = null;
   remaining = '';
   remainingSeconds: number | null = null;
   private timer: ReturnType<typeof setInterval> | null = null;
@@ -64,13 +64,17 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     // Visszatérés a fizetési oldalról: a sikertelen fizetésről tájékoztatjuk a vásárlót (először, hogy a kulcs már megvan a betöltéskor)
     this.route.queryParams.subscribe(params => {
       this.accessKey = params['k'] ?? '';
-      this.paymentNotice = ({
-        fail: 'Sikertelen tranzakció. A bankkártyás fizetés nem sikerült. Kérjük, próbálja meg újra, vagy használjon másik kártyát.',
-        cancel: 'Megszakított tranzakció. A fizetést megszakította. A foglalása még él, a fizetést bármikor újra elindíthatja.',
-        timeout: 'Időtúllépés. A fizetési idő lejárt. Kérjük, indítsa újra a fizetést.',
-        unknown: 'A fizetés eredménye nem állapítható meg. Kérjük, ellenőrizze a bankkártya-egyenlegét, és szükség esetén vegye fel velünk a kapcsolatot.',
-        conflict: 'A fizetés megtörtént, de a kiválasztott székek időközben mások számára lettek lefoglalva, ezért a foglalás nem véglegesíthető. A kifizetett összeget visszatérítjük, kérjük, vegye fel velünk a kapcsolatot.'
-      } as Record<string, string>)[params['payment']] ?? null;
+      const notices: Record<string, { title: string; text: string }> = {
+        fail: {
+          title: 'Sikertelen tranzakció.',
+          text: 'Kérjük, ellenőrizze a tranzakció során megadott adatok helyességét. Amennyiben minden adatot helyesen adott meg, a visszautasítás okának kivizsgálása kapcsán kérjük, szíveskedjen kapcsolatba lépni kártyakibocsátó bankjával.'
+        },
+        cancel: { title: 'Megszakított tranzakció.', text: 'A fizetést megszakította. A foglalása még él, a fizetést bármikor újra elindíthatja.' },
+        timeout: { title: 'Időtúllépés.', text: 'A fizetési idő lejárt. Kérjük, indítsa újra a fizetést.' },
+        unknown: { title: 'A fizetés eredménye nem állapítható meg.', text: 'Kérjük, ellenőrizze a bankkártya-egyenlegét, és szükség esetén vegye fel velünk a kapcsolatot.' },
+        conflict: { title: 'A kiválasztott székek időközben mások számára lettek lefoglalva.', text: 'A fizetés megtörtént, de a foglalás nem véglegesíthető. A kifizetett összeget visszatérítjük, kérjük, vegye fel velünk a kapcsolatot.' }
+      };
+      this.paymentNotice = notices[params['payment']] ?? null;
     });
 
     this.route.params.subscribe(params => {

@@ -370,7 +370,21 @@
   line-height: 1.5;
 }
 
+.payment-notice {
+  margin: 22px 22px 0;
+}
+
+.payment-notice .notice-text {
+  margin: 8px 0 0;
+  font-weight: 600;
+}
+
+.payment-notice .payment-ids {
+  margin-top: 6px;
+}
+
 @media (max-width: 560px) {
+  .payment-notice { margin-left: 14px; margin-right: 14px; }
   .reservation-summary { margin-left: 14px; margin-right: 14px; padding: 16px; }
   .pay-box { padding: 16px 14px 20px; }
 }

@@ -19,6 +19,16 @@
           </div>
         </div>
 
+        <div *ngIf="paymentNotice" class="error-message payment-notice">
+          <strong>{{ paymentNotice.title }}</strong>
+          <div class="payment-ids" *ngIf="reservation.payment as pay">
+            <ng-container *ngIf="pay.transaction_id">SimplePay tranzakció azonosító: <b>{{ pay.transaction_id }}</b><br></ng-container>
+            Rendelésszám: <b>{{ pay.order_ref }}</b>
+            <ng-container *ngIf="pay.date"><br>Időpont: <b>{{ pay.date | date: 'yyyy.MM.dd. HH:mm' }}</b></ng-container>
+          </div>
+          <p class="notice-text">{{ paymentNotice.text }}</p>
+        </div>
+
         <div class="reservation-summary">
           <h2>Foglalás adatai</h2>
 
@@ -50,14 +60,6 @@
         </div>
 
         <div class="pay-box">
-          <div *ngIf="paymentNotice" class="error-message">
-            {{ paymentNotice }}
-            <div class="payment-ids" *ngIf="reservation.payment as pay">
-              SimplePay tranzakcióazonosító: <b>{{ pay.transaction_id }}</b><br>
-              Rendelésszám: <b>{{ pay.order_ref }}</b>
-              <ng-container *ngIf="pay.date"><br>Időpont: <b>{{ pay.date | date: 'yyyy.MM.dd. HH:mm' }}</b></ng-container>
-            </div>
-          </div>
           <div *ngIf="paymentError" class="error-message">{{ paymentError }}</div>
 
           <app-simplepay-consent [(accepted)]="consentAccepted"></app-simplepay-consent>
