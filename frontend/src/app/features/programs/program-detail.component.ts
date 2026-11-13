@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ApiService, Movie, Showtime } from '../../core/api/api.service';
 import { MovieBadgesComponent, showCategoryLabel } from '../../shared/movie-badges.component';
+import { PosterPipe } from '../../shared/poster.pipe';
 import { SeoService } from '../../core/seo/seo.service';
 import { AnalyticsService } from '../../core/analytics/analytics.service';
 import { youtubeId } from '../../core/util/html';
@@ -12,7 +13,7 @@ import { youtubeId } from '../../core/util/html';
 @Component({
   selector: 'app-program-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, MovieBadgesComponent],
+  imports: [CommonModule, RouterLink, MovieBadgesComponent, PosterPipe],
   templateUrl: './program-detail.component.html',
   styleUrls: ['../movies/movie-detail.component.css', './program-detail.component.css']
 })

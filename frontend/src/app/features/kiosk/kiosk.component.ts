@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { ApiService, Movie, Showtime } from '../../core/api/api.service';
 import { AnalyticsService } from '../../core/analytics/analytics.service';
 import { MovieBadgesComponent, showCategoryLabel } from '../../shared/movie-badges.component';
+import { PosterPipe } from '../../shared/poster.pipe';
 
 interface KioskDay {
   label: string;
@@ -25,7 +26,7 @@ const REFRESH_MS = 5 * 60_000;
 @Component({
   selector: 'app-kiosk',
   standalone: true,
-  imports: [CommonModule, MovieBadgesComponent],
+  imports: [CommonModule, MovieBadgesComponent, PosterPipe],
   template: `
     <div class="kiosk">
       <header class="intro">
@@ -45,8 +46,7 @@ const REFRESH_MS = 5 * 60_000;
       <div class="grid" *ngIf="programs.length > 0">
         <button type="button" class="poster-card" *ngFor="let p of programs; trackBy: trackProgram" (click)="open(p)">
           <div class="poster">
-            <img *ngIf="p.movie.poster_path" [src]="p.movie.poster_path" [alt]="p.movie.title" loading="lazy">
-            <div *ngIf="!p.movie.poster_path" class="no-poster">{{ p.movie.title }}</div>
+            <img [src]="p.movie | poster:p.theater" [alt]="p.movie.title" loading="lazy">
           </div>
           <div class="card-info">
             <span class="card-title">{{ p.movie.title }}</span>
@@ -59,7 +59,7 @@ const REFRESH_MS = 5 * 60_000;
         <button type="button" class="close" (click)="close()" aria-label="Bezárás">✕</button>
         <div class="detail" (click)="$event.stopPropagation()">
           <div class="detail-poster">
-            <img *ngIf="selected.movie.poster_path" [src]="selected.movie.poster_path" [alt]="selected.movie.title">
+            <img [src]="selected.movie | poster:selected.theater" [alt]="selected.movie.title">
           </div>
 
           <div class="detail-body">

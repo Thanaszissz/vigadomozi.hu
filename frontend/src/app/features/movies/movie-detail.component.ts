@@ -4,6 +4,8 @@ import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ApiService, Movie, Showtime } from '../../core/api/api.service';
 import { MovieBadgesComponent } from '../../shared/movie-badges.component';
+import { PosterPipe } from '../../shared/poster.pipe';
+import { posterSrc } from '../../core/util/poster';
 import { SeoService } from '../../core/seo/seo.service';
 import { AnalyticsService } from '../../core/analytics/analytics.service';
 import { youtubeId } from '../../core/util/html';
@@ -11,7 +13,7 @@ import { youtubeId } from '../../core/util/html';
 @Component({
   selector: 'app-movie-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, MovieBadgesComponent],
+  imports: [CommonModule, RouterLink, MovieBadgesComponent, PosterPipe],
   templateUrl: './movie-detail.component.html',
   styleUrls: ['./movie-detail.component.css']
 })
@@ -192,9 +194,9 @@ export class MovieDetailComponent implements OnInit, OnDestroy {
         for (const st of upcoming) {
           const movie = st.movie;
           // az ajánló csak filmeket tartalmaz (az előadásoknak saját oldaluk van)
-          if (!movie || st.is_theater || seen.has(movie.id) || !movie.poster_path) continue;
+          if (!movie || st.is_theater || seen.has(movie.id)) continue;
           seen.add(movie.id);
-          items.push({ id: movie.id, title: movie.title, image: movie.poster_path });
+          items.push({ id: movie.id, title: movie.title, image: posterSrc(movie) });
           if (items.length >= 15) break;
         }
 

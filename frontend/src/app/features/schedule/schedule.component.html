@@ -22,7 +22,7 @@
 
       <div class="showtime-grid">
         <a class="showtime-card" *ngFor="let showtime of group.showtimes; let i = index" [routerLink]="programLink(showtime)" (click)="trackSelect(showtime, i)">
-          <img *ngIf="showtime.movie.poster_path" [src]="showtime.movie.poster_path" [alt]="showtime.movie.title" />
+          <img [src]="showtime.movie | poster:!!showtime.is_theater" [alt]="showtime.movie.title" />
           <div class="info">
             <div class="title">{{ showtime.movie.title }}</div>
             <div class="program-kind" *ngIf="showtime.is_theater">🎭 {{ programKind(showtime) }}</div>

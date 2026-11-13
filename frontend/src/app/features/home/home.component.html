@@ -53,7 +53,7 @@
     <div class="tab-content" *ngIf="selectedDayShowtimes.length > 0">
       <div class="showtime-card" *ngFor="let showtime of selectedDayShowtimes">
         <a [routerLink]="programLink(showtime)" class="card-link" (click)="trackShowtime(showtime)">
-          <img [src]="showtime.movie.poster_path" [alt]="showtime.movie.title" class="poster" />
+          <img [src]="showtime.movie | poster:!!showtime.is_theater" [alt]="showtime.movie.title" class="poster" />
           <div class="card-info">
             <h3 class="movie-title">{{ showtime.movie.title }}</h3>
             <p class="movie-kind" *ngIf="showtime.is_theater">🎭 {{ programKind(showtime) }}</p>

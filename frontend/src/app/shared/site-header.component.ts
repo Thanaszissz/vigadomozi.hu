@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { ApiService, Movie } from '../core/api/api.service';
+import { PosterPipe } from './poster.pipe';
 
 @Component({
   selector: 'app-site-header',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule],
+  imports: [CommonModule, RouterLink, FormsModule, PosterPipe],
   templateUrl: './site-header.component.html',
   styleUrls: ['./site-header.component.css']
 })

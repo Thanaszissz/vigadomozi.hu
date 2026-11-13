@@ -19,7 +19,7 @@
            [class.active]="i === highlightedIndex"
            [routerLink]="'/movies/' + m.id"
            (mousedown)="selectSuggestion(m)">
-          <img *ngIf="m.poster_path" [src]="m.poster_path" [alt]="m.title" />
+          <img [src]="m | poster" [alt]="m.title" />
           <div class="suggestion-text">
             <span class="suggestion-title">{{ m.title }}</span>
             <span class="suggestion-meta" *ngIf="m.duration_min">{{ m.duration_min }} perc</span>

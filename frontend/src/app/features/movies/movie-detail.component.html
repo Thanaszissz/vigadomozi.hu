@@ -11,14 +11,10 @@
     <div *ngIf="movie" class="movie-detail">
       <div class="movie-header">
         <img
-          *ngIf="movie.poster_path; else noPoster"
-          [src]="movie.poster_path"
+          [src]="movie | poster"
           [alt]="movie.title"
           class="poster-image"
         />
-        <ng-template #noPoster>
-          <div class="no-poster">Nincs plakát</div>
-        </ng-template>
 
         <div class="info-section">
           <h1>{{ movie.title }}</h1>

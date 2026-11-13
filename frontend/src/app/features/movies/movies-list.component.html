@@ -13,8 +13,7 @@
     <div *ngIf="!loading && filteredMovies.length > 0" class="movies-grid">
       <div *ngFor="let movie of filteredMovies" class="movie-card">
         <div class="movie-poster">
-          <img *ngIf="movie.poster_path" [src]="movie.poster_path" [alt]="movie.title">
-          <div *ngIf="!movie.poster_path" class="no-poster">Nincs poszter</div>
+          <img [src]="movie | poster" [alt]="movie.title">
         </div>
         <div class="movie-info">
           <h2>{{ movie.title }}</h2>

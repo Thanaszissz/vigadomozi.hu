@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { ApiService, Showtime } from '../../core/api/api.service';
 import { AnalyticsService } from '../../core/analytics/analytics.service';
 import { MovieBadgesComponent, showCategoryLabel } from '../../shared/movie-badges.component';
+import { PosterPipe } from '../../shared/poster.pipe';
 
 interface ShowtimeGroup {
   key: string;
@@ -15,7 +16,7 @@ interface ShowtimeGroup {
 @Component({
   selector: 'app-schedule',
   standalone: true,
-  imports: [CommonModule, RouterLink, MovieBadgesComponent],
+  imports: [CommonModule, RouterLink, MovieBadgesComponent, PosterPipe],
   templateUrl: './schedule.component.html',
   styleUrls: ['./schedule.component.css']
 })

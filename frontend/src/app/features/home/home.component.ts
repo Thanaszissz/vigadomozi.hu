@@ -5,6 +5,8 @@ import { FormsModule } from "@angular/forms";
 import { ApiService } from "../../core/api/api.service";
 import { AnalyticsService, ShowtimeLike } from "../../core/analytics/analytics.service";
 import { MovieBadgesComponent, showCategoryLabel } from "../../shared/movie-badges.component";
+import { PosterPipe } from "../../shared/poster.pipe";
+import { posterSrc } from "../../core/util/poster";
 import { youtubeId } from "../../core/util/html";
 import { DomSanitizer, SafeResourceUrl } from "@angular/platform-browser";
 
@@ -45,7 +47,7 @@ interface WeekDay {
 @Component({
   selector: "app-home",
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, MovieBadgesComponent],
+  imports: [CommonModule, RouterLink, FormsModule, MovieBadgesComponent, PosterPipe],
   templateUrl: "./home.component.html",
   styleUrls: ["./home.component.css"]
 })
@@ -184,12 +186,12 @@ export class HomeComponent implements OnInit, OnDestroy {
           const theater = !!st.is_theater;
           const key = `${theater ? 't' : 'm'}-${st.movie.id}`;
           if (seen.has(key)) continue;
-          if (!st.movie.poster_path) continue;
+          if (!st.movie) continue;
           seen.add(key);
           sliderItems.push({
             id: st.movie.id,
             title: st.movie.title,
-            image: st.movie.poster_path,
+            image: posterSrc({ ...st.movie, is_theater: theater }),
             startsAt: st.starts_at,
             link: this.programLink(st),
             theater

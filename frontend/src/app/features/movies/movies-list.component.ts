@@ -4,11 +4,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService, Movie } from '../../core/api/api.service';
 import { MovieBadgesComponent } from '../../shared/movie-badges.component';
+import { PosterPipe } from '../../shared/poster.pipe';
 
 @Component({
   selector: 'app-movies-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, MovieBadgesComponent],
+  imports: [CommonModule, RouterLink, FormsModule, MovieBadgesComponent, PosterPipe],
   templateUrl: './movies-list.component.html',
   styleUrls: ['./movies-list.component.css']
 })
