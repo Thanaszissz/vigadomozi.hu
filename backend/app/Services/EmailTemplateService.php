@@ -240,7 +240,7 @@ HTML,
   <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;border-radius:12px;overflow:hidden;background:#ffffff;box-shadow:0 6px 24px rgba(44,24,16,0.18);">
     <tr><td align="center" bgcolor="#2c1810" style="background:#2c1810;padding:34px 24px 26px;">
       <a href="{$site}/" style="text-decoration:none;"><img src="{$logo}" width="150" alt="{$name} – Kisújszállás" style="display:block;margin:0 auto;width:150px;max-width:150px;height:auto;border:0;font-family:Georgia,'Times New Roman',serif;font-size:22px;color:#e8d5b7;text-align:center;"></a>
-      <div style="margin-top:14px;font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:4px;text-transform:uppercase;color:#d4a574;">Film &amp; Színház</div>
+      <div style="margin-top:14px;font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:4px;text-transform:uppercase;color:#d4a574;">Élményt adunk!</div>
     </td></tr>
     <tr><td height="4" bgcolor="#d4a574" style="background:#d4a574;font-size:0;line-height:0;height:4px;">&nbsp;</td></tr>
     <tr><td bgcolor="#ffffff" style="background:#ffffff;padding:36px 38px 30px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.6;color:#2b2018;">{$bodyHtml}</td></tr>

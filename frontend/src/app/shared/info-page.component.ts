@@ -115,6 +115,178 @@ import { SIMPLEPAY_INFO_PDF_URL, SIMPLEPAY_PRIVACY_URL } from './simplepay-conse
             </p>
           </article>
 
+          <article *ngSwitchCase="'hazirend'" class="doc">
+            <p class="org">
+              <b>Kisújszállási Művelődési Központ és Könyvtár</b><br>
+              <b>Vigadó Kulturális Központ</b><br>
+              5310 Kisújszállás, Szabadság tér 7.
+            </p>
+
+            <p>
+              Jelen házirend célja a Vigadó Kulturális Központ zavartalan működésének, a látogatók biztonságának, valamint az épület,
+              a berendezések és az eszközök megóvásának biztosítása.
+            </p>
+            <p>
+              A házirend Kisújszállás Város Önkormányzata Képviselő-testületének a helyi közművelődési tevékenység támogatásáról szóló
+              16/2012. (XII. 19.) számú rendeletének 4/a pontja alapján határozza meg az intézmény használatának szabályait.
+            </p>
+
+            <h2>1. A házirend hatálya</h2>
+            <p>A házirend betartása kötelező:</p>
+            <ul>
+              <li>az intézmény vezetője és valamennyi munkatársa;</li>
+              <li>az intézményben működő gazdasági egységek, szervezetek és közösségek;</li>
+              <li>a rendezvények szervezői és résztvevői;</li>
+              <li>az intézmény valamennyi látogatója és szolgáltatásainak igénybevevője számára.</li>
+            </ul>
+
+            <h2>2. Nyitvatartás</h2>
+            <h3>Vigadó Kulturális Központ</h3>
+            <table>
+              <thead><tr><th>Nap</th><th>Nyitvatartás</th></tr></thead>
+              <tbody>
+                <tr><td>Hétfő</td><td>Zárva</td></tr>
+                <tr><td>Kedd–csütörtök</td><td>10:00–21:00</td></tr>
+                <tr><td>Péntek</td><td>10:00–21:00, valamint a pénteki rendezvények időpontjaiban</td></tr>
+                <tr><td>Szombat</td><td>A rendezvények időpontjaiban</td></tr>
+                <tr><td>Vasárnap</td><td>Zárva</td></tr>
+              </tbody>
+            </table>
+
+            <h3>Vigadó Kávéház</h3>
+            <table>
+              <thead><tr><th>Nap</th><th>Nyitvatartás</th></tr></thead>
+              <tbody>
+                <tr><td>Hétfő–vasárnap</td><td>9:00–21:00</td></tr>
+              </tbody>
+            </table>
+
+            <h3>Büfé és bowlingpálya</h3>
+            <table>
+              <thead><tr><th>Nap</th><th>Nyitvatartás</th></tr></thead>
+              <tbody>
+                <tr><td>Hétfő</td><td>Szünnap</td></tr>
+                <tr><td>Kedd–csütörtök</td><td>14:00–22:00</td></tr>
+                <tr><td>Péntek–szombat</td><td>10:00–24:00</td></tr>
+                <tr><td>Vasárnap</td><td>14:00–21:00</td></tr>
+              </tbody>
+            </table>
+
+            <p>A nyitvatartás a rendezvények időpontjához igazodva változhat.</p>
+            <p>
+              Az intézmény és a vállalkozók által üzemeltetett egységek eltérő nyitvatartása miatt a mindenkori üzemeltetők külön
+              megállapodásban rögzítik a létesítmény vagyonvédelmét és biztonságát szolgáló feltételeket.
+            </p>
+
+            <h2>3. Az intézmény és a helyiségek használata</h2>
+            <p>
+              Az intézmény szolgáltatásait nyitvatartási időben bárki igénybe veheti, aki betartja a házirend előírásait. Az egyes
+              szolgáltatások a meghirdetett programoknak és a terembeosztásnak megfelelő időpontban és helyiségben érhetők el.
+            </p>
+            <h3>Folyamatos használat</h3>
+            <p>
+              A folyamatos használat keretében igénybe vehető szolgáltatásokat, valamint használatuk módját és feltételeit bérleti
+              szerződés rögzíti.
+            </p>
+            <h3>Eseti használat</h3>
+            <p>
+              A helyiségek eseti használatához előzetes időpont- és helyiségegyeztetés szükséges. Az egyeztetés az intézmény havi
+              terembeosztása alapján történik, és arra az intézmény közművelődési szakalkalmazottai jogosultak.
+            </p>
+
+            <h2>4. Térítésmentes és térítésköteles helyiséghasználat</h2>
+            <h3>Térítésmentes helyiséghasználat</h3>
+            <p>Nem az intézmény által szervezett programok esetében a helyiségek az alábbi célokra vehetők igénybe térítésmentesen:</p>
+            <ul>
+              <li>
+                A településen működő nevelési-oktatási intézmények közművelődési célú programjaihoz, kivéve, ha a rendezvény esetében
+                lehetőség van teremhasználati díj megállapítására, például pályázati vagy haszonszerzési célú programoknál.
+              </li>
+              <li>Az önkormányzat közcélú programjainak lebonyolításához.</li>
+              <li>
+                A kisújszállási székhelyű civil szervezetek és közösségek taggyűléseihez, vezetőségi értekezleteihez, kulturális és
+                közművelődési rendezvényeihez, amennyiben azok időtartama nem haladja meg a három órát.
+              </li>
+            </ul>
+            <p>
+              A három óránál hosszabb civil szervezeti rendezvények esetében a felek kölcsönös megállapodása alapján bérleti díj
+              állapítható meg.
+            </p>
+
+            <h3>Térítésköteles helyiséghasználat</h3>
+            <p>Nem az intézmény által szervezett programok esetében a helyiségek használata térítésköteles:</p>
+            <ul>
+              <li>gazdasági egységek és vállalkozók saját népszerűsítését szolgáló, illetve gazdasági tevékenységükhöz kapcsolódó rendezvényeihez;</li>
+              <li>civil szervezetek és magánszemélyek egyértelműen reklámcélú rendezvényeihez;</li>
+              <li>
+                civil szervezetek, magánszemélyek és egyéb szervezők olyan rendezvényeihez, amelyeken belépődíjat, részvételi díjat vagy
+                térítési díjat szednek, a jótékonysági célú rendezvények kivételével;
+              </li>
+              <li>vásárok, termékbemutatók és árusítások lebonyolításához;</li>
+              <li>politikai szervezetek politikai rendezvényeihez.</li>
+            </ul>
+
+            <h3>Technikai eszközök használata</h3>
+            <p>
+              Az intézmény technikai eszközei műszaki tartalmukra és magas értékükre tekintettel kizárólag térítési díj ellenében vehetők
+              igénybe. A térítési díj az eszköz bérleti díját és a kezelőszemélyzet bérköltségét tartalmazza.
+            </p>
+
+            <h2>5. Külső szervezésű rendezvények</h2>
+            <p>
+              Külső szervezők éjszakai rendezvényei esetében eseti szerződés rögzíti az intézmény és a rendezvényszervező jogait,
+              kötelezettségeit, valamint a szervezőre vonatkozó jogszabályi kötelezettségeket.
+            </p>
+            <p>A rendezvény típusától függően az intézmény a külső szervezőt a rend fenntartását biztosító szakemberek alkalmazására kötelezi.</p>
+            <p>A rendezvény szervezője teljes körű felelősséget vállal:</p>
+            <ul>
+              <li>a használt létesítmény és helyiségek rendeltetésszerű használatáért;</li>
+              <li>a technikai eszközök, berendezések és felszerelések rendeltetésszerű használatáért;</li>
+              <li>a rendezvény résztvevőinek biztonságáért.</li>
+            </ul>
+
+            <h2>6. Magatartási és biztonsági szabályok</h2>
+            <p>
+              Az intézmény valamennyi használója köteles betartani a tűzvédelmi, balesetvédelmi és egyéb biztonsági előírásokat, valamint
+              a közösségi együttélés általános szabályait.
+            </p>
+            <p>
+              Az intézmény munkatársai és használói kötelesek tiszteletben tartani egymás személyiségi jogait, vallási, világnézeti és
+              politikai meggyőződését, valamint ízlését.
+            </p>
+            <p>
+              Az épületben egyidejűleg zajló programok résztvevői magatartásukkal nem zavarhatják és nem akadályozhatják egymás
+              rendezvényeinek lebonyolítását.
+            </p>
+            <p>Minden látogató köteles:</p>
+            <ul>
+              <li>megóvni az épület, a berendezések és a felszerelések állapotát;</li>
+              <li>a helyiségeket és az eszközöket rendeltetésszerűen, anyagi felelőssége tudatában használni;</li>
+              <li>ügyelni a tisztaságra és a rendre;</li>
+              <li>tiszteletben tartani mások zavartalan intézményhasználatát.</li>
+            </ul>
+            <p>Az intézmény munkatársai a büntetőjogi védelem szempontjából közfeladatot ellátó személynek minősülnek.</p>
+
+            <h2>7. Károkozás és felelősség</h2>
+            <p>Az intézmény látogatói a szándékosan okozott károkért kártérítési kötelezettséggel tartoznak.</p>
+            <p>Az intézmény a területére behozott, magántulajdonban lévő tárgyakért és technikai berendezésekért felelősséget nem vállal.</p>
+            <p>
+              Az intézmény vezetője ideiglenesen megtagadhatja az intézmény használatát azoktól, akik magatartásukkal a többi használót
+              jogaik gyakorlásában tartósan akadályozzák.
+            </p>
+
+            <h2>8. Panaszok, észrevételek és javaslatok</h2>
+            <p>
+              A látogatók az intézmény munkatársainak intézkedéseivel kapcsolatos panaszaikkal, valamint a működési rendre vonatkozó
+              észrevételeikkel és javaslataikkal az intézmény igazgatójához fordulhatnak.
+            </p>
+
+            <p class="closing">
+              <b>Köszönjük, hogy a házirend betartásával hozzájárulnak a Vigadó Kulturális Központ rendezett működéséhez és a közösségi
+              programok zavartalanságához!</b>
+            </p>
+          </article>
+
           <ng-container *ngSwitchDefault></ng-container>
         </ng-container>
       </section>
@@ -159,6 +331,33 @@ import { SIMPLEPAY_INFO_PDF_URL, SIMPLEPAY_PRIVACY_URL } from './simplepay-conse
     .doc a {
       color: #f0c27a;
     }
+
+    .doc h3 {
+      margin: 20px 0 6px;
+      font-size: 16px;
+      color: #f0d9b5;
+    }
+
+    .doc ul { padding-left: 22px; }
+
+    .doc table {
+      width: 100%;
+      max-width: 620px;
+      border-collapse: collapse;
+      margin: 6px 0 14px;
+    }
+
+    .doc th, .doc td {
+      text-align: left;
+      padding: 8px 12px;
+      border-bottom: 1px solid #5c3d2e;
+      color: #dcc7a4;
+    }
+
+    .doc th { color: #f0d9b5; background: rgba(0, 0, 0, .18); }
+
+    .doc .org { font-size: 16px; }
+    .doc .closing { margin-top: 28px; padding-top: 16px; border-top: 1px solid #5c3d2e; }
 
     .logo {
       display: inline-block;
