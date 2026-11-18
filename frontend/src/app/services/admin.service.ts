@@ -114,6 +114,8 @@ export interface Ticket {
   owner_name?: string | null;
   owner_phone?: string | null;
   owner_email?: string | null;
+  /** Csak a napi zárásban: színházi / koncert előadásra szóló jegy. */
+  is_theater?: boolean;
 }
 
 export type TicketCategory = 'standard' | 'staff' | 'experience_card' | 'service';

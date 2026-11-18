@@ -7,7 +7,10 @@ import { AdminService, DailyClose, SalesLogEntry, Ticket, TicketCategory, catego
 import { AuthService } from '../../../../services/auth.service';
 import { paymentLabel, ticketPaymentLabel } from '../ticket-print/ticket-print.component';
 
-type Tab = 'close' | 'log';
+type Tab = 'close' | 'finance' | 'log';
+
+/** A pénzügyi kimutatás egy sora: jegytípusonkénti bevétel és darabszám. */
+interface FinanceRow { label: string; rank: number; tickets: number; amount: number }
 
 const PRINT_CSS = `
   @page { size: A4; margin: 12mm; }
@@ -36,6 +39,9 @@ const PRINT_CSS = `
   .grand tr.total td { border-top: 3px solid #000; border-bottom: none; padding: 10px 12px; font-size: 20px; font-weight: 700; background: #e4e4e4; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .sign { display: flex; gap: 40px; margin-top: 50px; page-break-inside: avoid; }
   .sign div { flex: 1; border-top: 1px solid #111; text-align: center; padding-top: 3px; }
+  .newpage { page-break-before: always; }
+  .finance table th, .finance table td { padding: 6px 10px; font-size: 13px; }
+  .finance h1 { font-size: 22px; }
 `;
 
 @Component({
@@ -147,8 +153,35 @@ export class DailyCloseAdminComponent implements OnInit {
     return this.categorySums(this.visibleSellers.flatMap(s => s.tickets));
   }
 
+  get dateLabel(): string {
+    return this.date.replace(/-/g, '.') + '.';
+  }
+
   isService(t: Ticket): boolean {
     return t.category === 'service';
+  }
+
+  /** A jegy típusa a pénzügyi kimutatáshoz (a rank a sorrendet adja: mozi, színház / koncert, szolgáltatás, kedvezményes, ingyenes). */
+  private ticketType(t: Ticket): { label: string; rank: number } {
+    if (Number(t.price_amount) === 0) return { label: 'Ingyenes jegy', rank: 5 };
+    if (t.category === 'service') return { label: t.movie_title, rank: 2 };
+    if (t.category === 'experience_card') return { label: 'Élménykártyás jegy', rank: 3 };
+    if (t.category === 'staff') return { label: 'Dolgozó jegy', rank: 4 };
+    if (t.is_theater) return { label: t.movie_title, rank: 1 };
+    return { label: t.section ? `Mozijegy – ${t.section}` : 'Mozijegy', rank: 0 };
+  }
+
+  /** Jegytípusonkénti bevétel és kiadott jegyek száma a látható eladók forgalmából. */
+  get financeRows(): FinanceRow[] {
+    const rows = new Map<string, FinanceRow>();
+    for (const t of this.visibleSellers.flatMap(s => s.tickets)) {
+      const { label, rank } = this.ticketType(t);
+      const row = rows.get(label) ?? { label, rank, tickets: 0, amount: 0 };
+      row.tickets += 1;
+      row.amount += Number(t.price_amount);
+      rows.set(label, row);
+    }
+    return [...rows.values()].sort((a, b) => a.rank - b.rank || a.label.localeCompare(b.label, 'hu'));
   }
 
   categoryTag(t: Ticket): string {
@@ -240,6 +273,12 @@ export class DailyCloseAdminComponent implements OnInit {
     lines.push(['Összesen', totals.tickets, totals.amount]);
     blank();
 
+    lines.push(['PÉNZÜGYI KIMUTATÁS', day]);
+    lines.push(['Jegytípus', 'Bevétel (Ft)', 'Jegyek (db)']);
+    for (const r of this.financeRows) lines.push([r.label, r.amount, r.tickets]);
+    lines.push(['Összesen', totals.amount, totals.tickets]);
+    blank();
+
     lines.push(['ELADÓNKÉNT']);
     lines.push(['Eladó', 'Jegyek / nyugták (db)', 'Készpénz (Ft)', 'Bankkártya (Ft)', 'SZÉP kártya (Ft)', 'Utalvány (Ft)', 'Élménykártya (Ft)', 'Online (Ft)', 'Összesen (Ft)']);
     for (const s of sellers) {
@@ -298,13 +337,30 @@ export class DailyCloseAdminComponent implements OnInit {
       { date: this.date, seller_filter: this.sellerFilter, tickets: this.visibleTotals.tickets, amount: this.visibleTotals.amount }
     );
 
+    this.printHtml(this.buildPrintHtml());
+  }
+
+  /** Csak a hivatalnak szánt pénzügyi kimutatás nyomtatása. */
+  printFinance(): void {
+    if (!this.close) return;
+
+    this.admin.logClientEvent(
+      'report.daily_close_print',
+      `Pénzügyi kimutatás nyomtatása: ${this.date}${this.sellerFilter === 'all' ? '' : ' (egy eladó)'}`,
+      { date: this.date, seller_filter: this.sellerFilter, tickets: this.visibleTotals.tickets, amount: this.visibleTotals.amount }
+    );
+
+    this.printHtml(`<!doctype html><html><head><meta charset="utf-8"><title>Pénzügyi kimutatás ${this.date}</title><style>${PRINT_CSS}</style></head><body>${this.financeHtml(false)}</body></html>`);
+  }
+
+  private printHtml(html: string): void {
     const frame = document.createElement('iframe');
     frame.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;';
     document.body.appendChild(frame);
 
     const doc = frame.contentDocument!;
     doc.open();
-    doc.write(this.buildPrintHtml());
+    doc.write(html);
     doc.close();
 
     setTimeout(() => {
@@ -312,6 +368,29 @@ export class DailyCloseAdminComponent implements OnInit {
       frame.contentWindow?.print();
       setTimeout(() => frame.remove(), 1000);
     }, 150);
+  }
+
+  /** A „Pénzügyi kimutatás” lap: jegytípus, bevétel, jegyek (db), a nap dátumával; a napi zárás végén külön oldalon. */
+  private financeHtml(newPage: boolean): string {
+    const esc = (v: unknown) => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
+    const ft = (n: number) => `${Math.round(n).toLocaleString('hu-HU')} Ft`;
+    const totals = this.visibleTotals;
+    const sellerNote = this.sellerFilter === 'all' ? '' : ` • Eladó: ${this.visibleSellers[0]?.user_name ?? ''}`;
+    const rows = this.financeRows.map(r =>
+      `<tr><td>${esc(r.label)}</td><td class="r">${esc(ft(r.amount))}</td><td class="r">${r.tickets} db</td></tr>`).join('');
+
+    return `<div class="${newPage ? 'finance newpage' : 'finance'}">
+      <h1>Pénzügyi kimutatás</h1>
+      <div class="sub">${esc(this.date.replace(/-/g, '.'))}.${esc(sellerNote)}</div>
+      <table>
+        <thead><tr><th>Jegytípus</th><th class="r">Bevétel</th><th class="r">Jegyek (db)</th></tr></thead>
+        <tbody>
+          ${rows || '<tr><td colspan="3">Ezen a napon nem volt jegyeladás.</td></tr>'}
+          <tr class="sub"><td>Összesen</td><td class="r">${esc(ft(totals.amount))}</td><td class="r">${totals.tickets} db</td></tr>
+        </tbody>
+      </table>
+      <div class="sign"><div>Pénztáros</div><div>Átvette</div></div>
+    </div>`;
   }
 
   private buildPrintHtml(): string {
@@ -380,10 +459,11 @@ export class DailyCloseAdminComponent implements OnInit {
       </div>
       ${sections || '<p>Ezen a napon nem volt jegyeladás.</p>'}
       <div class="grand">
-        <h3>Teljes összefoglaló</h3>
+        <h3>Napi elszámolás</h3>
         <table>${summaryRows(totals, this.visibleCategorySums)}</table>
       </div>
       <div class="sign"><div>Pénztáros</div><div>Átvette</div></div>
+      ${this.financeHtml(true)}
     </body></html>`;
   }
 

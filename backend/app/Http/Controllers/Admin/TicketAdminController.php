@@ -175,9 +175,15 @@ class TicketAdminController extends Controller
         $tickets = Ticket::query()
             ->whereBetween('sold_at', [$from, $to])
             ->when($scope === 'own', fn($q) => $q->where('sold_by_user_id', $request->user()->id))
+            ->with('showtime:id,theater_show_id')
             ->orderBy('sold_at')
             ->orderBy('id')
-            ->get();
+            ->get()
+            // A pénzügyi kimutatáshoz kell tudni, hogy színházi / koncert előadásra szól-e a jegy
+            ->each(function ($t) {
+                $t->setAttribute('is_theater', $t->showtime?->theater_show_id !== null);
+                $t->unsetRelation('showtime');
+            });
 
         $summarize = function ($rows) {
             $byMethod = collect(PaymentSplit::summary($rows))->values();
