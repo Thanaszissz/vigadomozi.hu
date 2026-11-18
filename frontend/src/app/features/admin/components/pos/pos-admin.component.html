@@ -290,7 +290,9 @@
           <ng-container *ngIf="mode === 'reservations' && selectedReservation">
             <li class="who">{{ selectedReservation.customer_name }} • {{ selectedReservation.customer_phone }}</li>
             <li *ngFor="let i of selectedReservation.items" [class.stays]="isPartialPayment && !isPayItem(i)">
-              <span>{{ seatLabel(i.seat_key) }} <small class="cat-tag" *ngIf="i.category && i.category !== 'standard'">{{ categoryLabel(i.category) }}</small>
+              <span><label class="pay-pick">
+                <input type="checkbox" *ngIf="canPickItems" [checked]="isPayItem(i)" [disabled]="processing" (change)="togglePayItem(i)" aria-label="Most kifizeti">
+                {{ seatLabel(i.seat_key) }}</label> <small class="cat-tag" *ngIf="i.category && i.category !== 'standard'">{{ categoryLabel(i.category) }}</small>
                 <small class="cat-tag" *ngIf="isPartialPayment && !isPayItem(i)">foglalt marad</small></span><b>{{ i.price_amount | number:'1.0-0' }} Ft</b>
             </li>
           </ng-container>
@@ -300,16 +302,14 @@
           🛒 Kosárba <small>(másik programra is vásárol)</small>
         </button>
 
-        <div class="pay-count" *ngIf="mode === 'reservations' && selectedReservation && !editing && reservationItems.length > 1">
-          <span>Most kifizetett jegyek száma</span>
+        <div class="pay-count" *ngIf="canPickItems">
+          <span>Most kifizetett jegyek: {{ payItems.length }} / {{ reservationItems.length }}</span>
           <div class="pay-count-ctl">
-            <button type="button" class="step-btn minus" aria-label="Kevesebb" [disabled]="processing || payCountValue <= 1" (click)="adjustPayCount(-1)"></button>
-            <input type="number" min="1" [max]="reservationItems.length" step="1" [disabled]="processing"
-                   [ngModel]="payCountValue" (ngModelChange)="setPayCount($event)" />
-            <button type="button" class="step-btn plus" aria-label="Több" [disabled]="processing || payCountValue >= reservationItems.length" (click)="adjustPayCount(1)"></button>
-            <small>/ {{ reservationItems.length }}</small>
+            <button type="button" class="btn-small" [disabled]="processing || payItems.length === reservationItems.length" (click)="selectAllPayItems()">Mind</button>
+            <button type="button" class="btn-small" [disabled]="processing || payItems.length === 0" (click)="selectNoPayItems()">Egyik sem</button>
           </div>
-          <div class="muted" *ngIf="isPartialPayment">A többi {{ reservationItems.length - payCountValue }} szék a foglalásban marad.</div>
+          <div class="muted" *ngIf="payItems.length === 0">Pipálja ki a fenti listában, melyik jegyeket fizeti most.</div>
+          <div class="muted" *ngIf="isPartialPayment && payItems.length > 0">A többi {{ reservationItems.length - payItems.length }} szék a foglalásban marad.</div>
         </div>
 
         <div class="total">

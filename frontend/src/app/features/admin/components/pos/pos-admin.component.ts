@@ -77,7 +77,7 @@ export class PosAdminComponent implements OnInit, OnDestroy, DoCheck {
   pendingReservations: any[] = [];
   reservationQuery = '';
   selectedReservation: any | null = null;
-  payCount: number | null = null;
+  payKeys: string[] | null = null;
   paymentMethod: PaymentMethod | null = null;
   cashGiven: number | null = null;
   // Részfizetés: a fizetendő összeg több fizetési mód között osztva
@@ -825,13 +825,13 @@ export class PosAdminComponent implements OnInit, OnDestroy, DoCheck {
     this.cancelEdit();
     this.selectedSeats = [];
     this.selectedReservation = null;
-    this.payCount = null;
+    this.payKeys = null;
     this.resetPayment();
   }
 
   selectReservation(reservation: any): void {
     this.selectedReservation = this.selectedReservation?.id === reservation.id ? null : reservation;
-    this.payCount = null;
+    this.payKeys = null;
     this.soldTickets = [];
     this.cancelEdit();
     this.resetPayment();
@@ -1100,33 +1100,44 @@ export class PosAdminComponent implements OnInit, OnDestroy, DoCheck {
     return this.selectedReservation?.items ?? [];
   }
 
-  /** Hány jegyet fizet most a vásárló (alapból a foglalás összes jegye). */
+  /** Több jegyes foglalásnál a pénztáros kipipálhatja, melyik jegyeket fizeti most. */
+  get canPickItems(): boolean {
+    return this.mode === 'reservations' && !!this.selectedReservation && !this.editing && this.reservationItems.length > 1;
+  }
+
+  /** A most kifizetendő jegyek száma. */
   get payCountValue(): number {
-    const n = this.reservationItems.length;
-    return Math.min(Math.max(this.payCount ?? n, 1), Math.max(n, 1));
+    return this.payItems.length;
   }
 
-  setPayCount(value: number | null): void {
-    const n = Math.floor(Number(value));
-    this.payCount = Number.isFinite(n) ? n : null;
-    this.error = null;
-  }
-
-  adjustPayCount(delta: number): void {
-    this.setPayCount(this.payCountValue + delta);
-  }
-
-  /** A most kifizetendő tételek: a foglalás első N széke (a többi foglalt marad). */
+  /** A most kifizetendő tételek: a pénztáros által kipipált jegyek (a többi foglalt marad). */
   get payItems(): any[] {
-    return this.reservationItems.slice(0, this.payCountValue);
+    const items = this.reservationItems;
+    return this.payKeys === null ? items : items.filter((i: any) => this.payKeys!.includes(i.seat_key));
   }
 
   get isPartialPayment(): boolean {
-    return this.mode === 'reservations' && this.payCountValue < this.reservationItems.length;
+    return this.mode === 'reservations' && this.payItems.length < this.reservationItems.length;
   }
 
   isPayItem(item: any): boolean {
-    return this.payItems.includes(item);
+    return this.payKeys === null || this.payKeys.includes(item.seat_key);
+  }
+
+  togglePayItem(item: any): void {
+    const all = this.reservationItems.map((i: any) => i.seat_key as string);
+    const current = this.payKeys ?? all;
+    const next = current.includes(item.seat_key) ? current.filter(k => k !== item.seat_key) : [...current, item.seat_key];
+    this.payKeys = next.length === all.length ? null : next;
+    this.error = null;
+  }
+
+  selectAllPayItems(): void {
+    this.payKeys = null;
+  }
+
+  selectNoPayItems(): void {
+    this.payKeys = [];
   }
 
   // ---- Fizetés ----
@@ -1165,6 +1176,7 @@ export class PosAdminComponent implements OnInit, OnDestroy, DoCheck {
 
   get canConfirm(): boolean {
     if (!this.hasSelection || this.processing) return false;
+    if (this.mode === 'reservations' && this.payItems.length === 0) return false;
     // A kosaras (több tételes) eladás szerveroldali korlátja
     if (this.mode === 'seats' && this.cartHasItems && this.cartItemCount + this.selectedSeats.length > 50) return false;
     // Ha nincs fizetendő összeg (csak Dolgozó jegy / Élménykártya), a fizetési mód nem kötelező
@@ -1433,7 +1445,7 @@ export class PosAdminComponent implements OnInit, OnDestroy, DoCheck {
         this.cart = [];
         this.serviceCart = [];
         this.selectedReservation = null;
-        this.payCount = null;
+        this.payKeys = null;
         this.customerName = '';
         this.invoiceRequested = false;
         this.invoiceBuyer = { name: '', zip: '', city: '', address: '', tax_number: '', email: '' };
@@ -1561,7 +1573,7 @@ export class PosAdminComponent implements OnInit, OnDestroy, DoCheck {
     this.deleteConfirmOpen = false;
     this.selectedSeats = [];
     this.selectedReservation = null;
-    this.payCount = null;
+    this.payKeys = null;
     this.customerName = '';
     this.reserveOpen = false;
     this.heldNotice = null;
