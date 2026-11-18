@@ -1,7 +1,7 @@
 <div class="display">
   <header class="brand">
     <span class="brand-name">Vigadó</span>
-    <button type="button" class="fs-btn" *ngIf="!fullscreen" (click)="toggleFullscreen(); $event.stopPropagation()" (dblclick)="$event.stopPropagation()">⛶ Teljes képernyő</button>
+    <button type="button" class="fs-btn" *ngIf="!fullscreen" (pointerdown)="$event.stopPropagation()" (click)="enterFullscreen(); $event.stopPropagation()" (dblclick)="$event.stopPropagation()">⛶ Teljes képernyő</button>
   </header>
 
   <!-- Eladás után -->

@@ -109,11 +109,34 @@ export class PosDisplayService {
       if (other) {
         win.moveTo(other.availLeft, other.availTop);
         win.resizeTo(other.availWidth, other.availHeight);
+        this.fullscreenOn(win, other);
       }
     } catch {
       // Az engedély megtagadva vagy nem támogatott: az ablakot kézzel kell a másik monitorra húzni
     }
 
     return true;
+  }
+
+  /**
+   * A kiterjesztett asztal második monitorán teljes képernyőre kapcsolja a kijelzőt. Ha a böngésző a nyitó oldal
+   * műveletét nem fogadja el hozzá, a kijelző első kattintásra / érintésre vált teljes képernyőre.
+   */
+  private fullscreenOn(win: Window, screen: unknown): void {
+    const started = Date.now();
+    const attempt = () => {
+      if (win.closed || Date.now() - started > 8000) return;
+      const ready = win.location.pathname === POS_DISPLAY_PATH && win.document.readyState === 'complete';
+      if (!ready) {
+        setTimeout(attempt, 250);
+        return;
+      }
+      try {
+        (win.document.documentElement as any).requestFullscreen({ screen })?.catch?.(() => {});
+      } catch {
+        // a kijelző első kattintásra úgyis teljes képernyőre vált
+      }
+    };
+    attempt();
   }
 }

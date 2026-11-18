@@ -151,12 +151,21 @@ export class PosDisplayComponent implements OnInit, OnDestroy {
     this.fullscreen = !!document.fullscreenElement;
   }
 
+  private fsEnteredAt = 0;
+
+  /** A böngésző csak felhasználói művelet után enged teljes képernyőt, ezért a kijelzőn az első kattintás / érintés bekapcsolja. */
+  @HostListener('document:pointerdown')
+  enterFullscreen(): void {
+    if (document.fullscreenElement) return;
+    this.fsEnteredAt = Date.now();
+    void document.documentElement.requestFullscreen?.().catch(() => {});
+  }
+
+  /** Dupla kattintás kilép a teljes képernyőből (a belépést kiváltó kattintás dupla kattintása nem számít). */
   @HostListener('document:dblclick')
-  toggleFullscreen(): void {
-    if (document.fullscreenElement) {
+  exitFullscreen(): void {
+    if (document.fullscreenElement && Date.now() - this.fsEnteredAt > 800) {
       void document.exitFullscreen();
-    } else {
-      void document.documentElement.requestFullscreen?.().catch(() => {});
     }
   }
 }
