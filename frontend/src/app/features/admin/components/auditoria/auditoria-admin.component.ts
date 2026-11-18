@@ -479,6 +479,23 @@ export class AuditoriaAdminComponent implements OnInit {
     return this.seatLayout.filter(seat => seat.rowLabel === row.label && this.sameSection(seat.section, row.section));
   }
 
+  // A trackBy megakadályozza, hogy a nézőtér DOM-ja minden frissítésnél újraépüljön (különben elvész a székre kattintás)
+  trackByIndex(index: number): number {
+    return index;
+  }
+
+  trackByGroup(_: number, group: { name: string }): string {
+    return group.name;
+  }
+
+  trackByRow(_: number, row: RowConfig): string {
+    return `${row.section || ''}|${row.label}`;
+  }
+
+  trackBySeat(_: number, seat: Seat): string {
+    return `${seat.section || ''}|${seat.rowLabel}|${seat.column}`;
+  }
+
   /** Folyosó a sor közepén (soronként kapcsolható). */
   rowHasAisle(row: RowConfig): boolean {
     return !!row.aisle && row.columns >= 2;

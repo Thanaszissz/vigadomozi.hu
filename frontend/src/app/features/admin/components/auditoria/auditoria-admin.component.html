@@ -222,16 +222,16 @@
 
       <div class="screen">VÁSZON</div>
       
-      <div class="section-block" *ngFor="let block of getSectionBlocks()">
-      <div class="section-group" *ngFor="let group of block">
+      <div class="section-block" *ngFor="let block of getSectionBlocks(); trackBy: trackByIndex">
+      <div class="section-group" *ngFor="let group of block; trackBy: trackByGroup">
         <div class="section-title" [style.border-color]="group.color">
           <span class="section-dot" [style.background]="group.color"></span>
           {{ group.name }}
         </div>
-        <div class="row" *ngFor="let row of group.rows">
+        <div class="row" *ngFor="let row of group.rows; trackBy: trackByRow">
           <div class="row-label">{{ row.label }}</div>
           <div class="row-seats" [style.grid-template-columns]="rowGridColumns(row)">
-            <ng-container *ngFor="let seat of getSeatsForRow(row); let i = index">
+            <ng-container *ngFor="let seat of getSeatsForRow(row); let i = index; trackBy: trackBySeat">
               <div class="aisle-spacer" *ngIf="hasAisleBefore(row, i)" title="Folyosó"></div>
               <div
                 class="seat"
