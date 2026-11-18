@@ -3,7 +3,7 @@ import { CommonModule, formatDate } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DateInputComponent } from '../../../../shared/date-time-inputs.component';
 import { Router } from '@angular/router';
-import { AdminService, DailyClose, SalesLogEntry, Ticket, TicketCategory, categoryLabel } from '../../../../services/admin.service';
+import { AdminService, DailyClose, SalesLogEntry, Ticket, categoryLabel } from '../../../../services/admin.service';
 import { AuthService } from '../../../../services/auth.service';
 import { paymentLabel, ticketPaymentLabel } from '../ticket-print/ticket-print.component';
 
@@ -139,32 +139,13 @@ export class DailyCloseAdminComponent implements OnInit {
     return sums;
   }
 
-  /** Kategóriánkénti darabszám és összeg az elszámoláshoz (normál jegyek: a készpénz/kártya sorokban látszanak); az egyéb szolgáltatások szolgáltatásonként bontva. */
-  categorySums(tickets: Ticket[]): Array<{ category: TicketCategory; label: string; tickets: number; amount: number }> {
-    const special = (['staff', 'experience_card'] as TicketCategory[])
-      .map(category => {
-        const rows = tickets.filter(t => t.category === category);
-        return { category, label: categoryLabel(category), tickets: rows.length, amount: rows.reduce((s, t) => s + t.price_amount, 0) };
-      })
-      .filter(c => c.tickets > 0);
-
-    return [...special, ...this.serviceRows(tickets).map(s => ({ category: 'service' as TicketCategory, ...s }))];
+  /** Jegytípusonkénti darabszám és összeg (mint a pénzügyi kimutatásban): az összefoglalók „Ebből” sorai, a sorok együtt kiadják az összes jegyet. */
+  categorySums(tickets: Ticket[]): FinanceRow[] {
+    return this.typeRows(tickets);
   }
 
-  /** Az egyéb szolgáltatások szolgáltatásonként (név szerint rendezve). */
-  private serviceRows(tickets: Ticket[]): Array<{ label: string; tickets: number; amount: number }> {
-    const byName = new Map<string, { label: string; tickets: number; amount: number }>();
-    for (const t of tickets.filter(x => x.category === 'service')) {
-      const row = byName.get(t.movie_title) ?? { label: `Szolgáltatás: ${t.movie_title}`, tickets: 0, amount: 0 };
-      row.tickets += 1;
-      row.amount += t.price_amount;
-      byName.set(t.movie_title, row);
-    }
-    return [...byName.values()].sort((a, b) => a.label.localeCompare(b.label, 'hu'));
-  }
-
-  get visibleCategorySums(): Array<{ category: TicketCategory; label: string; tickets: number; amount: number }> {
-    return this.categorySums(this.visibleSellers.flatMap(s => s.tickets));
+  get visibleCategorySums(): FinanceRow[] {
+    return this.typeRows(this.visibleSellers.flatMap(s => s.tickets));
   }
 
   get dateLabel(): string {
@@ -175,7 +156,7 @@ export class DailyCloseAdminComponent implements OnInit {
     return t.category === 'service';
   }
 
-  /** A jegy típusa a pénzügyi kimutatáshoz (a rank a sorrendet adja: mozi, színház / koncert, szolgáltatás, kedvezményes, ingyenes). */
+  /** A jegy típusa (a rank a sorrendet adja: mozi, színház / koncert, szolgáltatás, kedvezményes, ingyenes). */
   private ticketType(t: Ticket): { label: string; rank: number } {
     if (Number(t.price_amount) === 0) return { label: 'Ingyenes jegy', rank: 5 };
     if (t.category === 'service') return { label: t.movie_title, rank: 2 };
@@ -185,10 +166,10 @@ export class DailyCloseAdminComponent implements OnInit {
     return { label: t.section ? `Mozijegy – ${t.section}` : 'Mozijegy', rank: 0 };
   }
 
-  /** Jegytípusonkénti bevétel és kiadott jegyek száma a látható eladók forgalmából. */
-  get financeRows(): FinanceRow[] {
+  /** Jegytípusonkénti bevétel és kiadott jegyek száma a megadott jegyekből. */
+  private typeRows(tickets: Ticket[]): FinanceRow[] {
     const rows = new Map<string, FinanceRow>();
-    for (const t of this.visibleSellers.flatMap(s => s.tickets)) {
+    for (const t of tickets) {
       const { label, rank } = this.ticketType(t);
       const row = rows.get(label) ?? { label, rank, tickets: 0, amount: 0 };
       row.tickets += 1;
@@ -196,6 +177,10 @@ export class DailyCloseAdminComponent implements OnInit {
       rows.set(label, row);
     }
     return [...rows.values()].sort((a, b) => a.rank - b.rank || a.label.localeCompare(b.label, 'hu'));
+  }
+
+  get financeRows(): FinanceRow[] {
+    return this.typeRows(this.visibleSellers.flatMap(s => s.tickets));
   }
 
   categoryTag(t: Ticket): string {
@@ -232,22 +217,9 @@ export class DailyCloseAdminComponent implements OnInit {
     ].filter(r => r.always || r.amount > 0);
   }
 
-  /** A jegyek kategóriánként: a sorok együtt kiadják az összes jegyet és a mindösszesen összeget; az egyéb szolgáltatások szolgáltatásonként. */
-  get categoryRows(): Array<{ key: string; label: string; tickets: number; amount: number }> {
-    const tickets = this.visibleSellers.flatMap(s => s.tickets);
-    const labels: Record<string, string> = {
-      standard: 'Normál jegy',
-      staff: 'Dolgozó jegy',
-      experience_card: 'Élménykártyás jegy'
-    };
-    const regular = (['standard', 'staff', 'experience_card'] as TicketCategory[])
-      .map(key => {
-        const rows = tickets.filter(t => (t.category ?? 'standard') === key);
-        return { key: key as string, label: labels[key], tickets: rows.length, amount: rows.reduce((s, t) => s + t.price_amount, 0) };
-      })
-      .filter(c => c.tickets > 0);
-
-    return [...regular, ...this.serviceRows(tickets).map(s => ({ key: `service:${s.label}`, ...s }))];
+  /** A jegytípusok bontása (képernyős panel és CSV): a sorok együtt kiadják az összes jegyet és a mindösszesen összeget. */
+  get categoryRows(): FinanceRow[] {
+    return this.typeRows(this.visibleSellers.flatMap(s => s.tickets));
   }
 
   // ---- CSV export ----
@@ -282,8 +254,8 @@ export class DailyCloseAdminComponent implements OnInit {
     lines.push(['Mindösszesen', totals.amount]);
     blank();
 
-    lines.push(['JEGYKATEGÓRIÁK']);
-    lines.push(['Kategória', 'Darab', 'Összeg (Ft)']);
+    lines.push(['JEGYTÍPUSOK']);
+    lines.push(['Jegytípus', 'Darab', 'Összeg (Ft)']);
     for (const c of this.categoryRows) lines.push([c.label, c.tickets, c.amount]);
     lines.push(['Összesen', totals.tickets, totals.amount]);
     blank();
