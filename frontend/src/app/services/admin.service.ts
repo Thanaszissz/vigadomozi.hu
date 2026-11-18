@@ -731,8 +731,8 @@ export class AdminService {
     return this.http.post<{ voided: string; nav_correction_needed: boolean }>(`${this.apiUrl}/pos/tickets/${ticketId}/void`, { reason });
   }
 
-  posMoveTicket(ticketId: number, seatKey: string): Observable<{ moved: string; seat_key: string }> {
-    return this.http.post<{ moved: string; seat_key: string }>(`${this.apiUrl}/pos/tickets/${ticketId}/move`, { seat_key: seatKey });
+  posMoveTicket(ticketId: number, seatKey: string): Observable<{ moved: string; seat_key: string; ticket: Ticket }> {
+    return this.http.post<{ moved: string; seat_key: string; ticket: Ticket }>(`${this.apiUrl}/pos/tickets/${ticketId}/move`, { seat_key: seatKey });
   }
 
   posShowtimeTickets(showtimeId: number): Observable<Array<Ticket & { voidable: boolean }>> {

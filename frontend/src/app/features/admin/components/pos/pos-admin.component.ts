@@ -344,6 +344,8 @@ export class PosAdminComponent implements OnInit, OnDestroy, DoCheck {
     this.reservationQuery = '';
     this.reservationPage = 0;
     this.soldList = [];
+    this.movedTickets = [];
+    this.movePreview = null;
     this.requestedShowtimeId = showtime.id;
     this.loadShowtime(showtime.id);
   }
@@ -818,6 +820,8 @@ export class PosAdminComponent implements OnInit, OnDestroy, DoCheck {
     this.mode = mode;
     this.cancelMove();
     this.moveNotice = null;
+    this.movedTickets = [];
+    this.movePreview = null;
     this.cancelEdit();
     this.selectedSeats = [];
     this.selectedReservation = null;
@@ -900,7 +904,16 @@ export class PosAdminComponent implements OnInit, OnDestroy, DoCheck {
   moveTargetKey: string | null = null;
   moveError: string | null = null;
   moveNotice: string | null = null;
+  /** Az ebben a munkamenetben átmozgatott jegyek (az új székkel), nyomtatáshoz. */
+  movedTickets: Ticket[] = [];
+  movePreview: Ticket[] | null = null;
 
+  printTicketList(tickets: Ticket[]): void {
+    void printTickets(tickets, numbers =>
+      this.admin.logClientEvent('ticket.print', `Jegynyomtatás: ${numbers.join(', ')}`, { tickets: numbers }),
+      !this.preprintedStock
+    );
+  }
   /** A szék eladott jegye (az eladott jegyek listájából). */
   ticketAt(seatKey: string): (Ticket & { voidable: boolean }) | undefined {
     return this.soldList.find(t => t.seat_key === seatKey);
@@ -954,8 +967,9 @@ export class PosAdminComponent implements OnInit, OnDestroy, DoCheck {
     this.moveError = null;
 
     this.admin.posMoveTicket(ticket.id, target).subscribe({
-      next: () => {
+      next: (result) => {
         this.processing = false;
+        this.movedTickets = [...this.movedTickets.filter(t => t.id !== result.ticket.id), result.ticket];
         this.moveNotice = `↔️ A(z) ${ticket.ticket_number} jegy átkerült: ${seatLabel(ticket.seat_key)} → ${seatLabel(target)}.`;
         this.moveSource = null;
         this.moveTargetKey = null;

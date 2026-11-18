@@ -101,7 +101,11 @@ class TicketVoidController extends Controller
             return response()->json(['message' => $result['message']], $result['status']);
         }
 
-        return response()->json(['moved' => $result['ticket']->ticket_number, 'seat_key' => $result['ticket']->seat_key]);
+        return response()->json([
+            'moved' => $result['ticket']->ticket_number,
+            'seat_key' => $result['ticket']->seat_key,
+            'ticket' => $result['ticket']->fresh(),
+        ]);
     }
 
     public function void(Ticket $ticket, Request $request): JsonResponse

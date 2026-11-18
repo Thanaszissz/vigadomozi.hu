@@ -210,8 +210,24 @@
           <li><span>Eladó</span><b>{{ moveSource.sold_by_name || 'Online' }}</b></li>
         </ul>
         <p class="muted">Most kattintson egy szabad székre, ahová a jegyet át szeretné helyezni.</p>
-        <button type="button" class="btn-small" (click)="cancelMove()">Kijelölés törlése</button>
+        <div class="sold-actions">
+          <button type="button" class="btn-small" (click)="printTicketList([moveSource])">🖨️ Jegy nyomtatása</button>
+          <button type="button" class="btn-small" (click)="cancelMove()">Kijelölés törlése</button>
+        </div>
       </ng-container>
+
+      <div *ngIf="movedTickets.length > 0" class="sold-box">
+        <div><b>Átmozgatott jegyek ({{ movedTickets.length }})</b></div>
+        <ul class="item-list">
+          <li *ngFor="let t of movedTickets">
+            <span>{{ t.ticket_number }} – {{ t.owner_name || 'névtelen' }}</span><b>{{ seatLabel(t.seat_key) }}</b>
+          </li>
+        </ul>
+        <div class="sold-actions">
+          <button type="button" class="btn-small primary" (click)="printTicketList(movedTickets)">🖨️ Nyomtatás</button>
+          <button type="button" class="btn-small" (click)="movePreview = movedTickets">👁️ Előnézet</button>
+        </div>
+      </div>
     </section>
 
     <!-- 3. lépés: fizetés -->
@@ -507,6 +523,7 @@
   </div>
 
   <app-ticket-print *ngIf="printOpen" [tickets]="soldTickets" [withBackground]="!preprintedStock" (close)="closePrint()"></app-ticket-print>
+  <app-ticket-print *ngIf="movePreview" [tickets]="movePreview" [withBackground]="!preprintedStock" (close)="movePreview = null"></app-ticket-print>
   </ng-container>
 
   <div *ngIf="invoiceConfirmOpen" class="modal-backdrop" (click)="closeInvoiceConfirm()"></div>

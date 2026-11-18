@@ -62,7 +62,9 @@ class PosTicketMoveTest extends TestCase
 
         $this->postJson("/api/pos/tickets/{$ticket->id}/move", ['seat_key' => 'A-04'])
             ->assertOk()
-            ->assertJsonPath('seat_key', 'A-04');
+            ->assertJsonPath('seat_key', 'A-04')
+            ->assertJsonPath('ticket.seat_key', 'A-04')
+            ->assertJsonPath('ticket.row_label', 'A');
 
         $ticket->refresh();
         $this->assertSame('A-04', $ticket->seat_key);
