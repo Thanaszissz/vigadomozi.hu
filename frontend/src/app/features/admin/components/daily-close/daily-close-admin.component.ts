@@ -139,14 +139,28 @@ export class DailyCloseAdminComponent implements OnInit {
     return sums;
   }
 
-  /** Kategóriánkénti darabszám és összeg az elszámoláshoz (normál jegyek: a készpénz/kártya sorokban látszanak). */
+  /** Kategóriánkénti darabszám és összeg az elszámoláshoz (normál jegyek: a készpénz/kártya sorokban látszanak); az egyéb szolgáltatások szolgáltatásonként bontva. */
   categorySums(tickets: Ticket[]): Array<{ category: TicketCategory; label: string; tickets: number; amount: number }> {
-    return (['staff', 'experience_card', 'service'] as TicketCategory[])
+    const special = (['staff', 'experience_card'] as TicketCategory[])
       .map(category => {
         const rows = tickets.filter(t => t.category === category);
         return { category, label: categoryLabel(category), tickets: rows.length, amount: rows.reduce((s, t) => s + t.price_amount, 0) };
       })
       .filter(c => c.tickets > 0);
+
+    return [...special, ...this.serviceRows(tickets).map(s => ({ category: 'service' as TicketCategory, ...s }))];
+  }
+
+  /** Az egyéb szolgáltatások szolgáltatásonként (név szerint rendezve). */
+  private serviceRows(tickets: Ticket[]): Array<{ label: string; tickets: number; amount: number }> {
+    const byName = new Map<string, { label: string; tickets: number; amount: number }>();
+    for (const t of tickets.filter(x => x.category === 'service')) {
+      const row = byName.get(t.movie_title) ?? { label: `Szolgáltatás: ${t.movie_title}`, tickets: 0, amount: 0 };
+      row.tickets += 1;
+      row.amount += t.price_amount;
+      byName.set(t.movie_title, row);
+    }
+    return [...byName.values()].sort((a, b) => a.label.localeCompare(b.label, 'hu'));
   }
 
   get visibleCategorySums(): Array<{ category: TicketCategory; label: string; tickets: number; amount: number }> {
@@ -218,21 +232,22 @@ export class DailyCloseAdminComponent implements OnInit {
     ].filter(r => r.always || r.amount > 0);
   }
 
-  /** A jegyek kategóriánként: a sorok együtt kiadják az összes jegyet és a mindösszesen összeget. */
-  get categoryRows(): Array<{ key: TicketCategory; label: string; tickets: number; amount: number }> {
+  /** A jegyek kategóriánként: a sorok együtt kiadják az összes jegyet és a mindösszesen összeget; az egyéb szolgáltatások szolgáltatásonként. */
+  get categoryRows(): Array<{ key: string; label: string; tickets: number; amount: number }> {
     const tickets = this.visibleSellers.flatMap(s => s.tickets);
     const labels: Record<string, string> = {
       standard: 'Normál jegy',
       staff: 'Dolgozó jegy',
-      experience_card: 'Élménykártyás jegy',
-      service: 'Egyéb szolgáltatás (nyugta)'
+      experience_card: 'Élménykártyás jegy'
     };
-    return (['standard', 'staff', 'experience_card', 'service'] as TicketCategory[])
+    const regular = (['standard', 'staff', 'experience_card'] as TicketCategory[])
       .map(key => {
         const rows = tickets.filter(t => (t.category ?? 'standard') === key);
-        return { key, label: labels[key], tickets: rows.length, amount: rows.reduce((s, t) => s + t.price_amount, 0) };
+        return { key: key as string, label: labels[key], tickets: rows.length, amount: rows.reduce((s, t) => s + t.price_amount, 0) };
       })
       .filter(c => c.tickets > 0);
+
+    return [...regular, ...this.serviceRows(tickets).map(s => ({ key: `service:${s.label}`, ...s }))];
   }
 
   // ---- CSV export ----
