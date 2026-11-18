@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Auditorium;
+use App\Models\ReservationItem;
+use App\Support\SeatKey;
 use Illuminate\Http\Request;
 
 class AuditoriumController extends Controller
@@ -76,6 +78,56 @@ class AuditoriumController extends Controller
         ]);
     }
 
+    /** A szék kulcsa a mentett elrendezésben (régi, kulcs nélküli székeknél sor/oszlop alapján). */
+    private function layoutSeatKey(array $seat): ?string
+    {
+        if (!empty($seat['key'])) {
+            return (string) $seat['key'];
+        }
+        if (isset($seat['row'], $seat['column'])) {
+            return ($seat['rowLabel'] ?? chr(64 + (int) $seat['row'])) . '-' . str_pad((string) $seat['column'], 2, '0', STR_PAD_LEFT);
+        }
+
+        return null;
+    }
+
+    /**
+     * Az újonnan kizárt székek közül azok, amelyekre közelgő előadáson már van érvényes foglalás vagy eladott jegy.
+     *
+     * @return array<int,string>
+     */
+    private function soldSeatsAmongNewlyBlocked(Auditorium $auditorium, array $newSeats): array
+    {
+        $blockedBefore = collect($auditorium->layout_json['seats'] ?? [])
+            ->filter(fn ($s) => !empty($s['blocked']))
+            ->map(fn ($s) => $this->layoutSeatKey($s))
+            ->filter()
+            ->all();
+
+        $newlyBlocked = collect($newSeats)
+            ->filter(fn ($s) => !empty($s['blocked']))
+            ->map(fn ($s) => $this->layoutSeatKey($s))
+            ->filter()
+            ->diff($blockedBefore)
+            ->values()
+            ->all();
+
+        if (!$newlyBlocked) {
+            return [];
+        }
+
+        return ReservationItem::whereIn('seat_key', $newlyBlocked)
+            ->whereHas('reservation', fn ($q) => $q
+                ->whereIn('status', ['PENDING', 'PAID'])
+                ->where(fn ($e) => $e->whereNull('expires_at')->orWhere('expires_at', '>', now()))
+                ->whereHas('showtime', fn ($s) => $s->where('auditorium_id', $auditorium->id)->where('starts_at', '>=', now())))
+            ->pluck('seat_key')
+            ->unique()
+            ->map(fn ($key) => SeatKey::label($key))
+            ->values()
+            ->all();
+    }
+
     public function updateSeats(Auditorium $auditorium, Request $request)
     {
         // This could be expanded to store seat layout in database if needed
@@ -88,6 +140,13 @@ class AuditoriumController extends Controller
 
         $seats = $data['seats'];
         $rowConfigs = $data['rows'] ?? [];
+
+        if ($conflicts = $this->soldSeatsAmongNewlyBlocked($auditorium, $seats)) {
+            return response()->json([
+                'message' => 'Ezek a székek nem zárhatók ki, mert már van rájuk eladott vagy foglalt jegy egy közelgő előadásra: '
+                    . implode('; ', $conflicts) . '. Előbb sztornózd a jegyeket vagy töröld a foglalásokat.',
+            ], 422);
+        }
 
         $auditorium->layout_json = [
             'seats' => $seats,

@@ -219,10 +219,15 @@ export class AuditoriaAdminComponent implements OnInit {
         this.originalSeatLayout = JSON.parse(JSON.stringify(this.seatLayout));
       },
       error: (err) => {
-        this.error = 'Hiba történt a mentés során';
+        this.error = err?.error?.message || 'Hiba történt a mentés során';
         console.error('Error saving seat layout:', err);
+        alert(this.error);
       }
     });
+  }
+
+  get blockedSeatCount(): number {
+    return this.seatLayout.filter(seat => seat.blocked).length;
   }
 
   resetSeatLayout(): void {
@@ -549,7 +554,7 @@ export class AuditoriaAdminComponent implements OnInit {
   getSeatTitle(seat: Seat): string {
     const place = (seat.section ? seat.section + ' ' : '') + `${seat.rowLabel}-${seat.column}`;
     if (seat.blocked) {
-      return `${place} • tiltott`;
+      return `${place} • kizárva az árusításból`;
     }
     const sector = this.getSeatSector(seat);
     const price = this.getSeatPrice(seat);

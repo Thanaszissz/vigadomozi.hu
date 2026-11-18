@@ -96,10 +96,11 @@
 
         <div class="sector-actions">
           <div class="active-sector">
-            Aktív szektor:
-            <strong>{{ selectedSectorName || 'nincs kiválasztva' }}</strong>
+            Aktív eszköz:
+            <strong>{{ selectedSectorName ? 'szektor kiosztása – ' + selectedSectorName : '🚫 szék kizárása / visszaengedése (kattints a székre)' }}</strong>
+            <small *ngIf="blockedSeatCount > 0"> • kizárt székek: {{ blockedSeatCount }}</small>
           </div>
-          <button type="button" class="btn-clear-sector" (click)="clearSectorSelection()">Szektor kijelölés törlése</button>
+          <button type="button" class="btn-clear-sector" [disabled]="!selectedSectorName" (click)="clearSectorSelection()">🚫 Székek kizárása</button>
         </div>
       </div>
 
@@ -259,7 +260,7 @@
         </div>
         <div class="legend-item">
           <div class="seat blocked"></div>
-          <span>Tiltott</span>
+          <span>Kizárva az árusításból</span>
         </div>
       </div>
 
@@ -282,7 +283,7 @@
         <div class="form-group">
           <label>Terem neve</label>
           <input type="text" [(ngModel)]="editingAuditorium.name" name="name" class="form-input" required>
-          <small style="color: #888; font-size: 12px;">A sorokat, székeket és a férőhelyek számát a nézőtér elrendezésében lehet felvenni, az összes férőhely a székekből számolódik.</small>
+          <small style="color: #888; font-size: 12px;">A sorokat, székeket és a férőhelyek számát a nézőtér elrendezésében lehet felvenni, az összes férőhely a székekből számolódik. Egyes székeket (pl. kamera, technika, rossz rálátás) a terem nézőtér-elrendezésében, a „Székek kizárása" eszközzel zárhatsz ki az árusításból.</small>
         </div>
 
         <div class="modal-actions">
