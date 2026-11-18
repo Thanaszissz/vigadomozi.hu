@@ -110,6 +110,10 @@ export interface Ticket {
   category?: TicketCategory;
   sold_by_name: string | null;
   sold_at: string;
+  /** Csak a pénztári jegylistában (pos/showtimes/{id}/tickets): a foglalás nevén szereplő vásárló. */
+  owner_name?: string | null;
+  owner_phone?: string | null;
+  owner_email?: string | null;
 }
 
 export type TicketCategory = 'standard' | 'staff' | 'experience_card' | 'service';
@@ -725,6 +729,10 @@ export class AdminService {
 
   posVoidTicket(ticketId: number, reason?: string): Observable<{ voided: string; nav_correction_needed: boolean }> {
     return this.http.post<{ voided: string; nav_correction_needed: boolean }>(`${this.apiUrl}/pos/tickets/${ticketId}/void`, { reason });
+  }
+
+  posMoveTicket(ticketId: number, seatKey: string): Observable<{ moved: string; seat_key: string }> {
+    return this.http.post<{ moved: string; seat_key: string }>(`${this.apiUrl}/pos/tickets/${ticketId}/move`, { seat_key: seatKey });
   }
 
   posShowtimeTickets(showtimeId: number): Observable<Array<Ticket & { voidable: boolean }>> {

@@ -114,6 +114,45 @@ class SeatClaimService
     }
 
     /**
+     * Egy eladott szék áthelyezése egy szabad székre: a foglalási tétel és a (végleges) zárolás az új székre kerül,
+     * a tétel ára nem változik. Tranzakcióban hívandó.
+     *
+     * @throws SeatUnavailableException
+     */
+    public function moveSeat(Showtime $showtime, Reservation $reservation, string $fromKey, string $toKey): void
+    {
+        $this->releaseStale($showtime);
+
+        $seat = $this->flatSeatMap($showtime)[$toKey] ?? null;
+        if (!$seat || !$seat['bookable'] || $seat['type'] === 'aisle') {
+            throw new SeatUnavailableException('A(z) ' . SeatKey::label($toKey) . ' szék nem foglalható.', 422);
+        }
+        if ($seat['status'] !== 'available') {
+            throw new SeatUnavailableException('A(z) ' . SeatKey::label($toKey) . ' szék már foglalt vagy eladott.', 409);
+        }
+
+        $item = $reservation->items()->where('seat_key', $fromKey)->first();
+        $lock = SeatLock::where('showtime_id', $showtime->id)->where('reservation_id', $reservation->id)->where('seat_key', $fromKey)->first();
+        if (!$item || !$lock) {
+            throw new SeatUnavailableException('A jegy eredeti széke már nem tartozik a foglaláshoz.', 409);
+        }
+
+        $parsed = SeatKey::parse($toKey);
+
+        try {
+            $lock->update(['seat_key' => $toKey]);
+        } catch (QueryException $e) {
+            if (in_array((string) $e->getCode(), ['23000', '23505'], true)) {
+                throw new SeatUnavailableException('A(z) ' . SeatKey::label($toKey) . ' szék közben már foglalttá vált.', 409);
+            }
+
+            throw $e;
+        }
+
+        $item->update(['seat_key' => $toKey, 'row_label' => $parsed['row'], 'seat_number' => $parsed['number']]);
+    }
+
+    /**
      * Az online foglalás zárolásának lejáratát módosítja (fizetés indításakor kitolja, sikertelen fizetésnél rövidíti).
      * A lejárat nélküli (pénztári) foglalásokhoz nem nyúl. Tranzakción kívül is hívható.
      */

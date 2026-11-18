@@ -34,6 +34,7 @@ class ActivityLogger
 
         'ticket.sale' => ['ticket', 'Jegyeladás'],
         'ticket.void' => ['ticket', 'Jegy sztornózása'],
+        'ticket.move' => ['ticket', 'Jegy áthelyezése'],
         'ticket.print' => ['ticket', 'Jegynyomtatás'],
 
         'reservation.created' => ['reservation', 'Helyszíni foglalás rögzítése'],

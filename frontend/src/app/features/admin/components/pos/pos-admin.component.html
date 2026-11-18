@@ -95,6 +95,9 @@
         <button type="button" [class.active]="mode === 'void'" (click)="setMode('void')">
           Sztornó ({{ soldList.length }})
         </button>
+        <button type="button" [class.active]="mode === 'move'" (click)="setMode('move')">
+          Átmozgatás
+        </button>
         <div class="res-search" *ngIf="mode === 'reservations' && pendingReservations.length > 0">
           <input type="search" [ngModel]="reservationQuery" (ngModelChange)="setReservationQuery($event)" list="reservation-names" autocomplete="off"
                  placeholder="🔍 Keresés névre, telefonra, székre…" aria-label="Foglalás keresése">
@@ -166,7 +169,7 @@
               <div *ngFor="let seat of getSeatsInRow(row); let i = index" class="seat"
                    [class.aisle-gap]="hasAisleBefore(row, i)"
                    [ngClass]="seatClass(seat)" [class.aisle]="isAisle(seat)"
-                   [title]="seat.key + ' – ' + seat.price + ' Ft'"
+                   [title]="seatTitle(seat)"
                    (click)="toggleSeat(seat)">
                 <span *ngIf="!isAisle(seat)">{{ seatNumberOf(seat.key) }}</span>
               </div>
@@ -184,8 +187,35 @@
       </div>
     </section>
 
+    <!-- Átmozgatás: az eladott jegy gazdája és az új szék kiválasztása -->
+    <section class="panel summary" *ngIf="mode === 'move'">
+      <h2>Jegy átmozgatása</h2>
+      <div *ngIf="moveNotice" class="notice">{{ moveNotice }}</div>
+      <div *ngIf="moveError && !moveTargetKey" class="alert">{{ moveError }}</div>
+
+      <div *ngIf="!moveSource" class="muted">
+        Kattintson egy eladott (piros) székre: megmutatjuk, kié a jegy. Ezután egy szabad (zöld) székre kattintva áthelyezheti.
+      </div>
+
+      <ng-container *ngIf="moveSource">
+        <ul class="item-list owner-list">
+          <li><span>Jegy</span><b>{{ moveSource.ticket_number }}</b></li>
+          <li><span>Szék</span><b>{{ seatLabel(moveSource.seat_key) }}</b></li>
+          <li><span>Név</span><b>{{ moveSource.owner_name || (moveSource.channel === 'online' ? 'Online vásárló' : 'Névtelen') }}</b></li>
+          <li *ngIf="moveSource.owner_phone"><span>Telefon</span><b>{{ moveSource.owner_phone }}</b></li>
+          <li *ngIf="moveSource.owner_email"><span>E-mail</span><b>{{ moveSource.owner_email }}</b></li>
+          <li><span>Ár</span><b>{{ moveSource.price_amount | number:'1.0-0' }} Ft</b></li>
+          <li><span>Fizetés</span><b>{{ ticketPaymentLabel(moveSource) }}</b></li>
+          <li><span>Eladva</span><b>{{ moveSource.sold_at | date:'MM.dd. HH:mm' }}</b></li>
+          <li><span>Eladó</span><b>{{ moveSource.sold_by_name || 'Online' }}</b></li>
+        </ul>
+        <p class="muted">Most kattintson egy szabad székre, ahová a jegyet át szeretné helyezni.</p>
+        <button type="button" class="btn-small" (click)="cancelMove()">Kijelölés törlése</button>
+      </ng-container>
+    </section>
+
     <!-- 3. lépés: fizetés -->
-    <section class="panel summary" *ngIf="mode !== 'void'">
+    <section class="panel summary" *ngIf="mode !== 'void' && mode !== 'move'">
       <h2><span class="step">3</span> Fizetés</h2>
 
       <div *ngIf="!hasSelection" class="muted">
@@ -523,6 +553,26 @@
           {{ processing ? 'Sztornózás...' : 'Igen, sztornózom' }}
         </button>
         <button type="button" class="btn-small" [disabled]="processing" (click)="closeVoid()">Mégsem</button>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="moveSource && moveTargetKey" class="modal-backdrop" (click)="closeMoveConfirm()"></div>
+  <div *ngIf="moveSource && moveTargetKey" class="modal" role="dialog" aria-modal="true" (click)="closeMoveConfirm()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <h3>Jegy áthelyezése</h3>
+      <p>
+        A(z) <b>{{ moveSource.ticket_number }}</b> jegyet
+        ({{ moveSource.owner_name || 'névtelen' }}) áthelyezed:<br>
+        <b>{{ seatLabel(moveSource.seat_key) }}</b> → <b>{{ seatLabel(moveTargetKey) }}</b>.
+        A jegy ára és a fizetés nem változik; a már kinyomtatott jegy érvénytelen, újat kell nyomtatni.
+      </p>
+      <div *ngIf="moveError" class="alert">{{ moveError }}</div>
+      <div class="modal-actions">
+        <button type="button" class="btn-small primary" [disabled]="processing" (click)="confirmMove()">
+          {{ processing ? 'Áthelyezés...' : 'Igen, áthelyezem' }}
+        </button>
+        <button type="button" class="btn-small" [disabled]="processing" (click)="closeMoveConfirm()">Mégsem</button>
       </div>
     </div>
   </div>

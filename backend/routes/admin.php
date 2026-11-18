@@ -101,6 +101,7 @@ Route::middleware('permission:pos.sell')->group(function () {
     Route::put('pos/reservations/{reservation}', [PosController::class, 'updateReservation']);
     Route::delete('pos/reservations/{reservation}', [ReservationAdminController::class, 'destroy']);
     Route::get('pos/showtimes/{showtime}/tickets', [TicketVoidController::class, 'index']);
+    Route::post('pos/tickets/{ticket}/move', [TicketVoidController::class, 'move'])->whereNumber('ticket');
     Route::get('pos/reservations/{reservation}/tickets', [PosController::class, 'reservationTickets']);
 });
 

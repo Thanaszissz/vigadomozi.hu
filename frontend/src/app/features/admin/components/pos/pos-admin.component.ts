@@ -12,7 +12,7 @@ import { PosServicesComponent } from './pos-services.component';
 import { DisplayLine, DisplayState, EMPTY_DISPLAY_STATE, PosDisplayService } from './pos-display.service';
 import { rowLabelOf, seatNumberOf, seatLabel, seatPlaceLabel, sectionBlocks, newlyIsolatedSeats } from '../../../../core/util/seat';
 
-type SaleMode = 'seats' | 'reservations' | 'void';
+type SaleMode = 'seats' | 'reservations' | 'void' | 'move';
 
 /** A kosár egy előadásra kiválasztott székei (a helyszíni eladás több előadásra is szólhat egy tranzakcióban). */
 interface CartSeat { key: string; price: number; category: TicketCategory }
@@ -142,7 +142,7 @@ export class PosAdminComponent implements OnInit, OnDestroy, DoCheck {
 
   /** A vevő számára látszó tételek: kizárólag helyek, árak és összegek, személyes adat nélkül. */
   private buildDisplayState(): DisplayState {
-    if (this.mode === 'void') return EMPTY_DISPLAY_STATE;
+    if (this.mode === 'void' || this.mode === 'move') return EMPTY_DISPLAY_STATE;
 
     const when = (iso: string) => new Date(iso).toLocaleString('hu-HU', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
     const current = this.showtime;
@@ -275,6 +275,7 @@ export class PosAdminComponent implements OnInit, OnDestroy, DoCheck {
           this.error = 'A kijelölt székek közül néhányat időközben lefoglaltak vagy eladtak, ezért kikerült a kijelölésből.';
         }
         this.loadPendingReservations();
+        if (this.mode === 'move') this.loadSoldTickets();
       },
       error: () => { /* a következő ciklus újra próbálja */ }
     });
@@ -530,6 +531,10 @@ export class PosAdminComponent implements OnInit, OnDestroy, DoCheck {
     if (this.editing) {
       return this.editSeatKeys.includes(seat.key) ? 'selected' : seat.status;
     }
+    if (this.mode === 'move') {
+      if (this.moveSource?.seat_key === seat.key || this.moveTargetKey === seat.key) return 'selected';
+      return this.ticketAt(seat.key) ? 'booked movable' : seat.status;
+    }
     if (this.isSelected(seat)) return 'selected';
     if (this.mode === 'seats' && this.isInCart(seat)) return 'selected';
     if (this.reservationSeatKeys.has(seat.key)) return 'reserved-pick';
@@ -549,6 +554,10 @@ export class PosAdminComponent implements OnInit, OnDestroy, DoCheck {
         this.editSeatKeys = [...this.editSeatKeys, seat.key];
       }
       this.error = null;
+      return;
+    }
+    if (this.mode === 'move') {
+      this.onMoveSeatClick(seat);
       return;
     }
     if (this.mode !== 'seats' || this.isAisle(seat) || !seat.bookable) return;
@@ -807,6 +816,8 @@ export class PosAdminComponent implements OnInit, OnDestroy, DoCheck {
   setMode(mode: SaleMode): void {
     if (this.mode === mode) return;
     this.mode = mode;
+    this.cancelMove();
+    this.moveNotice = null;
     this.cancelEdit();
     this.selectedSeats = [];
     this.selectedReservation = null;
@@ -835,7 +846,13 @@ export class PosAdminComponent implements OnInit, OnDestroy, DoCheck {
     const showtimeId = this.showtime.id;
     this.admin.posShowtimeTickets(showtimeId).subscribe({
       next: (tickets) => {
-        if (this.showtime?.id === showtimeId) this.soldList = tickets;
+        if (this.showtime?.id !== showtimeId) return;
+        this.soldList = tickets;
+        // A kijelölt jegy közben sztornózva lett vagy másik székre került
+        if (this.moveSource && this.ticketAt(this.moveSource.seat_key)?.id !== this.moveSource.id) {
+          this.moveSource = null;
+          this.moveTargetKey = null;
+        }
       },
       error: () => { this.soldList = []; }
     });
@@ -873,6 +890,84 @@ export class PosAdminComponent implements OnInit, OnDestroy, DoCheck {
         this.processing = false;
         this.voidError = err?.error?.message || 'A sztornózás sikertelen. Próbálja újra.';
         if (err?.status === 409) this.refresh();
+      }
+    });
+  }
+
+  // ---- Átmozgatás ----
+
+  moveSource: (Ticket & { voidable: boolean }) | null = null;
+  moveTargetKey: string | null = null;
+  moveError: string | null = null;
+  moveNotice: string | null = null;
+
+  /** A szék eladott jegye (az eladott jegyek listájából). */
+  ticketAt(seatKey: string): (Ticket & { voidable: boolean }) | undefined {
+    return this.soldList.find(t => t.seat_key === seatKey);
+  }
+
+  seatTitle(seat: Seat): string {
+    if (this.mode === 'move') {
+      const ticket = this.ticketAt(seat.key);
+      if (ticket) {
+        return `${seatLabel(seat.key)} – ${ticket.owner_name || (ticket.channel === 'online' ? 'Online vásárló' : 'Névtelen')} (${ticket.ticket_number})`;
+      }
+    }
+    return seat.key + ' – ' + seat.price + ' Ft';
+  }
+
+  private onMoveSeatClick(seat: Seat): void {
+    if (this.isAisle(seat) || this.processing) return;
+    this.moveError = null;
+    this.moveNotice = null;
+
+    const ticket = this.ticketAt(seat.key);
+    if (ticket) {
+      this.moveSource = this.moveSource?.id === ticket.id ? null : ticket;
+      this.moveTargetKey = null;
+      return;
+    }
+    if (this.moveSource && seat.bookable && seat.status === 'available') {
+      this.moveTargetKey = seat.key;
+    }
+  }
+
+  cancelMove(): void {
+    if (this.processing) return;
+    this.moveSource = null;
+    this.moveTargetKey = null;
+    this.moveError = null;
+  }
+
+  closeMoveConfirm(): void {
+    if (this.processing) return;
+    this.moveTargetKey = null;
+    this.moveError = null;
+  }
+
+  confirmMove(): void {
+    const ticket = this.moveSource;
+    const target = this.moveTargetKey;
+    if (!ticket || !target || this.processing) return;
+
+    this.processing = true;
+    this.moveError = null;
+
+    this.admin.posMoveTicket(ticket.id, target).subscribe({
+      next: () => {
+        this.processing = false;
+        this.moveNotice = `↔️ A(z) ${ticket.ticket_number} jegy átkerült: ${seatLabel(ticket.seat_key)} → ${seatLabel(target)}.`;
+        this.moveSource = null;
+        this.moveTargetKey = null;
+        this.refresh();
+      },
+      error: (err) => {
+        this.processing = false;
+        this.moveError = err?.error?.message || 'Az átmozgatás sikertelen. Próbálja újra.';
+        if (err?.status === 409) {
+          this.moveTargetKey = null;
+          this.refresh();
+        }
       }
     });
   }
