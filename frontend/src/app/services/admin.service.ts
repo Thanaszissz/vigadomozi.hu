@@ -200,10 +200,13 @@ export interface ShowtimeDayTotals {
   online: number;
   staff: number;
   experience_tickets: number;
+  net: number;
+  vat: number;
 }
 
 export interface ShowtimeDay {
   date: string;
+  vat_rate: number;
   totals: ShowtimeDayTotals;
   shows: Array<ShowtimeDayTotals & {
     showtime_id: number | null;
@@ -1032,7 +1035,7 @@ export class AdminService {
   }
 
   // A nyomtatás csak a böngészőben látszik, ezért onnan jelentjük a szervernek
-  logClientEvent(action: 'ticket.print' | 'report.daily_close_print' | 'report.daily_close_export', description: string, details: object = {}): void {
+  logClientEvent(action: 'ticket.print' | 'report.daily_close_print' | 'report.daily_close_export' | 'report.showtime_day_print', description: string, details: object = {}): void {
     this.http.post(`${this.apiUrl}/activity-logs/event`, { action, description, details }).subscribe({ error: () => {} });
   }
 

@@ -118,6 +118,7 @@ class ActivityLogger
         'report.daily_report' => ['report', 'Napi riport megtekintése'],
         'report.showtime_day' => ['report', 'Előadások napi eladásának megtekintése'],
         'report.export_showtime_day' => ['report', 'Előadások napi eladásának exportálása'],
+        'report.showtime_day_print' => ['report', 'Előadások napi eladásának nyomtatása (PDF)'],
         'report.export_tickets' => ['report', 'Jegyek exportálása'],
         'report.export_tickets_pdf' => ['report', 'Jegyek exportálása (PDF)'],
         'report.export_reservations' => ['report', 'Foglalások exportálása'],

@@ -255,15 +255,31 @@ class TicketAdminController extends Controller
         $date = $request->query('date') ?: now()->timezone('Europe/Budapest')->toDateString();
 
         $tickets = $this->showtimeDayTickets($date)->get();
+        $shows = $this->showtimeShows($tickets);
 
         ActivityLogger::log('report.showtime_day', "Előadások eladása megtekintve: {$date}", null, ['date' => $date]);
 
         return response()->json([
             'date' => $date,
-            'totals' => $this->showtimeSums($tickets),
-            'shows' => $this->showtimeShows($tickets),
+            'vat_rate' => self::VAT_PERCENT,
+            'totals' => $this->showtimeSums($tickets) + [
+                'net' => (int) $shows->sum('net'),
+                'vat' => (int) $shows->sum('vat'),
+            ],
+            'shows' => $shows,
             'tickets' => $tickets->values(),
         ]);
+    }
+
+    /** A jegyárak bruttó értékek: az ÁFA-kulcs (%), amellyel a nettó bevételt és az ÁFA összegét számoljuk. */
+    private const VAT_PERCENT = 27;
+
+    /** Bruttó összegből nettó és ÁFA (a nettó kerekítve, az ÁFA a különbség, így a kettő összege mindig a bruttó). */
+    private function vatSplit(int $gross): array
+    {
+        $net = (int) round($gross / (1 + self::VAT_PERCENT / 100));
+
+        return ['net' => $net, 'vat' => $gross - $net];
     }
 
     /** Összesítés egy jegycsoportról: darabszám, bevétel és a fizetési módok / kategóriák szerinti bontás. */
@@ -295,7 +311,7 @@ class TicketAdminController extends Controller
                 'movie_title' => $rows->first()->movie_title,
                 'starts_at' => $rows->first()->starts_at,
                 'auditorium_name' => $rows->first()->auditorium_name,
-            ] + $this->showtimeSums($rows))
+            ] + $this->showtimeSums($rows) + $this->vatSplit((int) $rows->sum('price_amount')))
             ->values();
     }
 
@@ -330,7 +346,7 @@ class TicketAdminController extends Controller
             return response()->stream(function () use ($shows) {
                 $out = fopen('php://output', 'w');
                 fwrite($out, "\xEF\xBB\xBF");
-                fputcsv($out, ['Előadás kezdete', 'Film', 'Terem', 'Eladott jegyek (db)', 'Bevétel (Ft)', 'Készpénz (Ft)', 'Bankkártya (Ft)', 'SZÉP kártya (Ft)', 'Utalvány (Ft)', 'Online (Ft)', 'Élménykártya (Ft)', 'Élménykártyás jegyek (db)', 'Ingyenes jegyek (db)'], ';');
+                fputcsv($out, ['Előadás kezdete', 'Film', 'Terem', 'Eladott jegyek (db)', 'Bevétel (Ft)', 'Készpénz (Ft)', 'Bankkártya (Ft)', 'SZÉP kártya (Ft)', 'Utalvány (Ft)', 'Online (Ft)', 'Élménykártya (Ft)', 'Élménykártyás jegyek (db)', 'Ingyenes jegyek (db)', 'Nettó bevétel (Ft)', 'ÁFA ' . self::VAT_PERCENT . '% (Ft)'], ';');
                 foreach ($shows as $s) {
                     fputcsv($out, [
                         $s['starts_at']->copy()->timezone('Europe/Budapest')->format('Y-m-d H:i'),
@@ -346,6 +362,8 @@ class TicketAdminController extends Controller
                         $s['experience_card'],
                         $s['experience_tickets'],
                         $s['staff'],
+                        $s['net'],
+                        $s['vat'],
                     ], ';');
                 }
                 fclose($out);

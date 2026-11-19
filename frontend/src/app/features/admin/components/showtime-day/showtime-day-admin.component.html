@@ -13,7 +13,8 @@
     <button type="button" class="btn small" (click)="shiftDay(1)">›</button>
 
     <span class="spacer"></span>
-    <button type="button" class="btn primary" (click)="exportCsv('summary')" [disabled]="exporting || !data || data.totals.tickets === 0">
+    <button type="button" class="btn primary" (click)="print()" [disabled]="!data || data.totals.tickets === 0">🖨️ PDF / nyomtatás</button>
+    <button type="button" class="btn" (click)="exportCsv('summary')" [disabled]="exporting || !data || data.totals.tickets === 0">
       {{ exporting ? 'Exportálás...' : '⬇ CSV: előadásonként' }}
     </button>
     <button type="button" class="btn" (click)="exportCsv('tickets')" [disabled]="exporting || !data || data.totals.tickets === 0">
@@ -30,17 +31,33 @@
   <div *ngIf="error" class="alert">{{ error }}</div>
 
   <ng-container *ngIf="data && !loading">
-    <div class="summary">
-      <div class="card"><span>Előadások</span><b>{{ data.shows.length }} db</b></div>
-      <div class="card"><span>Összesen eladott jegy</span><b>{{ data.totals.tickets | number:'1.0-0' }} db</b></div>
-      <div class="card"><span>Készpénz</span><b>{{ data.totals.cash | number:'1.0-0' }} Ft</b></div>
-      <div class="card"><span>Bankkártya</span><b>{{ data.totals.card | number:'1.0-0' }} Ft</b></div>
-      <div class="card" *ngIf="data.totals.szep_card > 0"><span>SZÉP kártya</span><b>{{ data.totals.szep_card | number:'1.0-0' }} Ft</b></div>
-      <div class="card" *ngIf="data.totals.voucher > 0"><span>Utalvány</span><b>{{ data.totals.voucher | number:'1.0-0' }} Ft</b></div>
-      <div class="card" *ngIf="data.totals.online > 0"><span>Online</span><b>{{ data.totals.online | number:'1.0-0' }} Ft</b></div>
-      <div class="card" *ngIf="data.totals.experience_tickets > 0"><span>Élménykártya</span><b>{{ data.totals.experience_tickets }} db • {{ data.totals.experience_card | number:'1.0-0' }} Ft</b></div>
-      <div class="card" *ngIf="data.totals.staff > 0"><span>Ingyenes jegy</span><b>{{ data.totals.staff }} db</b></div>
-      <div class="card total"><span>Mindösszesen</span><b>{{ data.totals.amount | number:'1.0-0' }} Ft</b></div>
+    <!-- Bevétel: bruttó, nettó és ÁFA egy pillantásra -->
+    <div class="revenue">
+      <div class="rev-card gross">
+        <span>Bruttó bevétel</span>
+        <b>{{ data.totals.amount | number:'1.0-0' }} Ft</b>
+        <small>{{ data.totals.tickets | number:'1.0-0' }} eladott jegy • {{ data.shows.length }} előadás</small>
+      </div>
+      <div class="rev-card">
+        <span>Nettó bevétel</span>
+        <b>{{ data.totals.net | number:'1.0-0' }} Ft</b>
+        <small>ÁFA nélkül</small>
+      </div>
+      <div class="rev-card">
+        <span>ÁFA ({{ data.vat_rate }}%)</span>
+        <b>{{ data.totals.vat | number:'1.0-0' }} Ft</b>
+        <small>a bruttó összegben foglalt</small>
+      </div>
+    </div>
+
+    <div class="pay-strip">
+      <div class="chip"><span>Készpénz</span><b>{{ data.totals.cash | number:'1.0-0' }} Ft</b></div>
+      <div class="chip"><span>Bankkártya</span><b>{{ data.totals.card | number:'1.0-0' }} Ft</b></div>
+      <div class="chip" *ngIf="data.totals.szep_card > 0"><span>SZÉP kártya</span><b>{{ data.totals.szep_card | number:'1.0-0' }} Ft</b></div>
+      <div class="chip" *ngIf="data.totals.voucher > 0"><span>Utalvány</span><b>{{ data.totals.voucher | number:'1.0-0' }} Ft</b></div>
+      <div class="chip" *ngIf="data.totals.online > 0"><span>Online</span><b>{{ data.totals.online | number:'1.0-0' }} Ft</b></div>
+      <div class="chip" *ngIf="data.totals.experience_tickets > 0"><span>Élménykártya</span><b>{{ data.totals.experience_tickets }} db • {{ data.totals.experience_card | number:'1.0-0' }} Ft</b></div>
+      <div class="chip" *ngIf="data.totals.staff > 0"><span>Ingyenes jegy</span><b>{{ data.totals.staff }} db</b></div>
     </div>
 
     <div *ngIf="data.shows.length === 0" class="muted">Erre a napra egyetlen előadásra sincs eladott jegy.</div>
@@ -51,18 +68,25 @@
       <div class="table-wrap">
         <table class="overview">
           <thead>
+            <tr class="group">
+              <th colspan="4"></th>
+              <th colspan="3" class="r grp-rev">Bevétel</th>
+              <th colspan="6" class="r grp-pay">Fizetési mód szerint</th>
+            </tr>
             <tr>
               <th>Kezdés</th>
               <th>Film</th>
               <th>Terem</th>
-              <th class="r">Eladott jegy</th>
-              <th class="r">Bevétel</th>
-              <th class="r">Készpénz</th>
-              <th class="r">Kártya</th>
-              <th class="r">SZÉP kártya</th>
-              <th class="r">Utalvány</th>
-              <th class="r">Online</th>
-              <th class="r">Élménykártya</th>
+              <th class="r">Jegy</th>
+              <th class="r rev">Nettó</th>
+              <th class="r rev">ÁFA {{ data.vat_rate }}%</th>
+              <th class="r rev">Bruttó</th>
+              <th class="r pay first">Készpénz</th>
+              <th class="r pay">Kártya</th>
+              <th class="r pay">SZÉP kártya</th>
+              <th class="r pay">Utalvány</th>
+              <th class="r pay">Online</th>
+              <th class="r pay">Élménykártya</th>
             </tr>
           </thead>
           <tbody>
@@ -70,25 +94,29 @@
               <td>{{ s.starts_at | date:'HH:mm' }}</td>
               <td><b>{{ s.movie_title }}</b></td>
               <td>{{ s.auditorium_name || '—' }}</td>
-              <td class="r"><b>{{ s.tickets }} db</b></td>
-              <td class="r">{{ s.amount | number:'1.0-0' }} Ft</td>
-              <td class="r">{{ s.cash | number:'1.0-0' }} Ft</td>
-              <td class="r">{{ s.card | number:'1.0-0' }} Ft</td>
-              <td class="r">{{ s.szep_card | number:'1.0-0' }} Ft</td>
-              <td class="r">{{ s.voucher | number:'1.0-0' }} Ft</td>
-              <td class="r">{{ s.online | number:'1.0-0' }} Ft</td>
-              <td class="r">{{ s.experience_tickets }} db<span *ngIf="s.experience_card"> • {{ s.experience_card | number:'1.0-0' }} Ft</span></td>
+              <td class="r">{{ s.tickets }} db</td>
+              <td class="r rev">{{ s.net | number:'1.0-0' }} Ft</td>
+              <td class="r rev">{{ s.vat | number:'1.0-0' }} Ft</td>
+              <td class="r rev strong">{{ s.amount | number:'1.0-0' }} Ft</td>
+              <td class="r pay first">{{ s.cash | number:'1.0-0' }} Ft</td>
+              <td class="r pay">{{ s.card | number:'1.0-0' }} Ft</td>
+              <td class="r pay">{{ s.szep_card | number:'1.0-0' }} Ft</td>
+              <td class="r pay">{{ s.voucher | number:'1.0-0' }} Ft</td>
+              <td class="r pay">{{ s.online | number:'1.0-0' }} Ft</td>
+              <td class="r pay">{{ s.experience_tickets }} db<span *ngIf="s.experience_card"> • {{ s.experience_card | number:'1.0-0' }} Ft</span></td>
             </tr>
             <tr class="subtotal">
               <td colspan="3">Összesen</td>
               <td class="r">{{ data.totals.tickets }} db</td>
-              <td class="r">{{ data.totals.amount | number:'1.0-0' }} Ft</td>
-              <td class="r">{{ data.totals.cash | number:'1.0-0' }} Ft</td>
-              <td class="r">{{ data.totals.card | number:'1.0-0' }} Ft</td>
-              <td class="r">{{ data.totals.szep_card | number:'1.0-0' }} Ft</td>
-              <td class="r">{{ data.totals.voucher | number:'1.0-0' }} Ft</td>
-              <td class="r">{{ data.totals.online | number:'1.0-0' }} Ft</td>
-              <td class="r">{{ data.totals.experience_tickets }} db</td>
+              <td class="r rev">{{ data.totals.net | number:'1.0-0' }} Ft</td>
+              <td class="r rev">{{ data.totals.vat | number:'1.0-0' }} Ft</td>
+              <td class="r rev strong">{{ data.totals.amount | number:'1.0-0' }} Ft</td>
+              <td class="r pay first">{{ data.totals.cash | number:'1.0-0' }} Ft</td>
+              <td class="r pay">{{ data.totals.card | number:'1.0-0' }} Ft</td>
+              <td class="r pay">{{ data.totals.szep_card | number:'1.0-0' }} Ft</td>
+              <td class="r pay">{{ data.totals.voucher | number:'1.0-0' }} Ft</td>
+              <td class="r pay">{{ data.totals.online | number:'1.0-0' }} Ft</td>
+              <td class="r pay">{{ data.totals.experience_tickets }} db</td>
             </tr>
           </tbody>
         </table>

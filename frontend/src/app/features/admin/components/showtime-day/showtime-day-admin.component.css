@@ -40,6 +40,27 @@ h1 { margin: 0; color: #e8d5b7; }
 .card b { font-size: 18px; color: #d4a574; }
 .card.total { border-color: #d4a574; }
 
+.revenue { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+.rev-card { background: #2c1810; border: 1px solid #5c3d2e; border-radius: 12px; padding: 16px 18px; display: flex; flex-direction: column; gap: 4px; }
+.rev-card span { font-size: 13px; color: #a08060; text-transform: uppercase; letter-spacing: .5px; }
+.rev-card b { font-size: 26px; color: #fdf7ed; }
+.rev-card small { font-size: 12px; color: #a08060; }
+.rev-card.gross { border-color: #d4a574; background: #3a2214; }
+.rev-card.gross b { font-size: 32px; color: #d4a574; }
+@media (max-width: 800px) { .revenue { grid-template-columns: 1fr; } }
+
+.pay-strip { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+.chip { display: flex; gap: 8px; align-items: baseline; background: #2c1810; border: 1px solid #4a3425; border-radius: 999px; padding: 6px 14px; font-size: 13px; }
+.chip span { color: #a08060; }
+.chip b { color: #e8d5b7; }
+
+table.overview th.rev, table.overview td.rev { background: rgba(212, 165, 116, 0.07); }
+table.overview td.strong { font-weight: 700; color: #fdf7ed; }
+table.overview td.pay, table.overview th.pay { color: #b99a78; }
+table.overview .first { border-left: 2px solid #5c3d2e; }
+table.overview tr.group th { text-align: center; border-bottom: 1px solid #5c3d2e; font-size: 11px; letter-spacing: 1px; }
+table.overview tr.group th.grp-rev { color: #d4a574; }
+
 .show { margin-bottom: 22px; }
 .section-title { margin: 0 0 8px; font-size: 18px; color: #fdf7ed; }
 table.overview tr.clickable { cursor: pointer; }
