@@ -384,8 +384,6 @@ export class DailyCloseAdminComponent implements OnInit {
   private buildPrintHtml(): string {
     const esc = (v: unknown) => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
     const ft = (n: number) => `${Math.round(n).toLocaleString('hu-HU')} Ft`;
-    const dt = (v: string) => formatDate(v, 'yyyy.MM.dd. HH:mm', 'en-US');
-    const tm = (v: string) => formatDate(v, 'HH:mm', 'en-US');
 
     const current = this.auth.getCurrentUser();
     const sellers = this.visibleSellers;
@@ -409,32 +407,12 @@ export class DailyCloseAdminComponent implements OnInit {
 
     const sections = sellers.map(seller => {
       const sums = this.sellerSums(seller.tickets);
-      const rows = seller.tickets.map(t => `
-        <tr>
-          <td class="num">${esc(t.ticket_number)}</td>
-          <td>${esc(tm(t.sold_at))}</td>
-          <td>${esc(t.movie_title)}${this.categoryTag(t) ? ` <i>(${esc(this.categoryTag(t))})</i>` : ''}${this.isService(t) ? ' <i>(szolgáltatás)</i>' : ''}</td>
-          <td>${this.isService(t) ? '-' : esc(dt(t.starts_at))}</td>
-          <td>${this.isService(t) ? '-' : `${esc((t.section ? t.section + ' · ' : '') + t.row_label)} / ${esc(t.seat_number ?? '-')}`}</td>
-          <td>${esc(ticketPaymentLabel(t))}</td>
-          <td class="r">${esc(ft(t.price_amount))}</td>
-        </tr>`).join('');
 
+      // Jegyenkénti lista nincs a nyomtatásban: csak az eladónkénti összefoglaló
       return `
-        <div>
-          <h2>${esc(seller.user_name)}</h2>
-          <table>
-            <thead><tr>
-              <th>Jegyszám</th><th>Idő</th><th>Film</th><th>Előadás</th><th>Sor / szék</th><th>Fizetés</th><th class="r">Ár</th>
-            </tr></thead>
-            <tbody>
-              ${rows}
-            </tbody>
-          </table>
-          <div class="summary">
-            <h3>${esc(seller.user_name)} – összefoglaló</h3>
-            <table>${summaryRows({ tickets: seller.tickets.length, ...sums }, this.categorySums(seller.tickets))}</table>
-          </div>
+        <div class="summary">
+          <h3>${esc(seller.user_name)} – összefoglaló</h3>
+          <table>${summaryRows({ tickets: seller.tickets.length, ...sums }, this.categorySums(seller.tickets))}</table>
         </div>`;
     }).join('');
 
@@ -451,7 +429,6 @@ export class DailyCloseAdminComponent implements OnInit {
         <table>${summaryRows(totals, this.visibleCategorySums)}</table>
       </div>
       <div class="sign"><div>Pénztáros</div><div>Átvette</div></div>
-      ${this.financeHtml(true)}
     </body></html>`;
   }
 
