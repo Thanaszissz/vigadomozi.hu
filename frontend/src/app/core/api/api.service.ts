@@ -146,6 +146,10 @@ export class ApiService {
     return this.http.get<Movie>(`${API_URL}/theater-shows/${id}`);
   }
 
+  getTheaterShows(): Observable<Movie[]> {
+    return this.http.get<Movie[]>(`${API_URL}/theater-shows`);
+  }
+
   getSiteStatus(): Observable<{ test_mode: boolean; maintenance?: boolean; maintenance_message?: string | null }> {
     return this.http.get<{ test_mode: boolean; maintenance?: boolean; maintenance_message?: string | null }>(`${API_URL}/site-status`);
   }

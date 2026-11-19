@@ -14,6 +14,8 @@ import { PosterPipe } from './poster.pipe';
 })
 export class SiteHeaderComponent implements OnInit {
   allMovies: Movie[] = [];
+  private movies: Movie[] = [];
+  private shows: Movie[] = [];
   searchQuery = '';
   searchResults: Movie[] = [];
   showSuggestions = false;
@@ -30,10 +32,24 @@ export class SiteHeaderComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    // a filmek és a színházi előadások egy közös listában kereshetők
     this.apiService.getMovies().subscribe({
-      next: (movies) => { this.allMovies = movies; },
-      error: () => { this.allMovies = []; }
+      next: (movies) => { this.movies = movies.map(m => ({ ...m, is_theater: false })); this.mergeCatalog(); },
+      error: () => { this.movies = []; this.mergeCatalog(); }
     });
+    this.apiService.getTheaterShows().subscribe({
+      next: (shows) => { this.shows = shows.map(s => ({ ...s, is_theater: true })); this.mergeCatalog(); },
+      error: () => { this.shows = []; this.mergeCatalog(); }
+    });
+  }
+
+  private mergeCatalog(): void {
+    this.allMovies = [...this.movies, ...this.shows];
+  }
+
+  /** A találat oldala: film vagy színházi előadás. */
+  linkFor(item: Movie): string {
+    return (item.is_theater ? '/programs/' : '/movies/') + item.id;
   }
 
   get activeSection(): 'home' | 'schedule' | 'tickets' | 'prices' | 'media' | '' {
@@ -52,7 +68,7 @@ export class SiteHeaderComponent implements OnInit {
       this.searchResults = this.allMovies.slice(0, 6);
     } else {
       this.searchResults = this.allMovies
-        .filter(m => m.title.toLowerCase().includes(q))
+        .filter(m => m.title.toLowerCase().includes(q) || (m.performer ?? '').toLowerCase().includes(q))
         .slice(0, 8);
     }
     this.showSuggestions = true;
@@ -88,7 +104,7 @@ export class SiteHeaderComponent implements OnInit {
   selectSuggestion(movie: Movie): void {
     this.showSuggestions = false;
     this.searchQuery = '';
-    this.router.navigate(['/movies', movie.id]);
+    this.router.navigate([this.linkFor(movie)]);
   }
 
   submitSearch(): void {
