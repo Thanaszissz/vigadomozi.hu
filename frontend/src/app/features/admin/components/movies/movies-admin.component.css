@@ -342,6 +342,21 @@ h1 {
   color: #8b7355;
 }
 
+.sales-flags .flag-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.sales-flags .flag-option input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #d4a15a;
+}
+
 .form-group {
   margin-bottom: 16px;
 }

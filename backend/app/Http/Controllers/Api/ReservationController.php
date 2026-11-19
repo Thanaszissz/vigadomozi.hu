@@ -167,6 +167,11 @@ class ReservationController extends Controller
 
         $reservation->load('items');
 
+        // Ingyenes előadás foglalását nem lehet online kifizetni
+        if ($reservation->showtime?->isFree()) {
+            return response()->json(['message' => 'Erre az ingyenes előadásra nem vásárolható jegy.'], 422);
+        }
+
         // Ne indíthassunk fizetést olyan foglaláshoz, amelynek székei közben felszabadultak és másé lehettek
         try {
             app(SeatClaimService::class)->assertStillHeld($reservation);

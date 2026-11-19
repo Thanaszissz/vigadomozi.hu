@@ -89,11 +89,31 @@ class Showtime extends Model
                 'performer' => $show->performer,
                 'venue' => $show->venue,
                 'ticket_price' => $show->ticket_price,
+                'is_free' => (bool) $show->is_free,
+                'purchase_only' => (bool) $show->purchase_only,
                 'is_theater' => true,
             ];
         }
 
         return $array;
+    }
+
+    /** Az értékesítési mód a film / előadás jelölőiből jön. */
+    public function program(): Movie|TheaterShow|null
+    {
+        return $this->theater_show_id !== null ? $this->theaterShow : $this->movie;
+    }
+
+    /** Ingyenes előadás: csak foglalni lehet rá, online fizetni nem. */
+    public function isFree(): bool
+    {
+        return (bool) $this->program()?->is_free;
+    }
+
+    /** „Csak vásárlás”: a fizetés nélküli foglalás nem érhető el a nyilvános oldalon. */
+    public function isPurchaseOnly(): bool
+    {
+        return (bool) $this->program()?->purchase_only;
     }
 
     public function auditorium()

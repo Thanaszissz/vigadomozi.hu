@@ -13,6 +13,8 @@ export interface Movie {
   genre?: string;
   film_info?: string | null;
   ticket_price?: number | null;
+  is_free?: boolean;
+  purchase_only?: boolean;
   badges?: string[] | null;
   duration_min?: number;
   poster_path?: string;
@@ -60,6 +62,8 @@ export interface TheaterShow {
   venue?: string | null;
   show_info?: string | null;
   ticket_price?: number | null;
+  is_free?: boolean;
+  purchase_only?: boolean;
   badges?: string[] | null;
   description: string;
   duration_minutes: number;

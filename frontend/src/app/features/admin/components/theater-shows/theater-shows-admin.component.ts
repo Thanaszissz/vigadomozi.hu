@@ -68,6 +68,8 @@ export class TheaterShowsAdminComponent implements OnInit {
       venue: '',
       show_info: '',
       ticket_price: null,
+      is_free: false,
+      purchase_only: false,
       badges: [],
       description: '',
       duration_minutes: 0,
@@ -127,6 +129,8 @@ export class TheaterShowsAdminComponent implements OnInit {
     formData.append('performer', this.editingShow.performer || '');
     formData.append('venue', this.editingShow.venue || '');
     formData.append('show_info', this.editingShow.show_info || '');
+    formData.append('is_free', this.editingShow.is_free ? '1' : '0');
+    formData.append('purchase_only', this.editingShow.purchase_only ? '1' : '0');
     const price = this.editingShow.ticket_price;
     formData.append('ticket_price', price === null || price === undefined || (price as unknown) === '' ? '' : String(price));
 

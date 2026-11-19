@@ -29,6 +29,15 @@ export class SeatSelectComponent implements OnInit, OnDestroy {
   lockError: string | null = null;
   showtimeId: number = 0;
 
+  /** Ingyenes előadás: csak foglalás, a kártyás fizetés nem érhető el. */
+  get isFree(): boolean {
+    return !!this.showtime?.movie?.is_free;
+  }
+
+  /** „Csak vásárlás”: a fizetés nélküli foglalás nem érhető el. */
+  get purchaseOnly(): boolean {
+    return !!this.showtime?.movie?.purchase_only && !this.isFree;
+  }
   readonly rowLabelOf = rowLabelOf;
   readonly seatNumberOf = seatNumberOf;
   readonly seatLabel = seatLabel;

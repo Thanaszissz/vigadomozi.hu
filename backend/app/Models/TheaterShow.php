@@ -18,6 +18,8 @@ class TheaterShow extends Model
         'venue',
         'show_info',
         'ticket_price',
+        'is_free',
+        'purchase_only',
         'description',
         'poster_path',
         'trailer_youtube_url',
@@ -29,6 +31,8 @@ class TheaterShow extends Model
     protected $casts = [
         'badges' => 'array',
         'ticket_price' => 'integer',
+        'is_free' => 'boolean',
+        'purchase_only' => 'boolean',
     ];
 
     protected $appends = ['poster_url', 'duration_minutes'];

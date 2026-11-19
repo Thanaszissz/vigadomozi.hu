@@ -68,6 +68,8 @@ export class MoviesAdminComponent implements OnInit {
       rating: 'general',
       film_info: '',
       ticket_price: null,
+      is_free: false,
+      purchase_only: false,
       badges: [],
       trailer_youtube_url: ''
     } as Movie;
@@ -117,6 +119,8 @@ export class MoviesAdminComponent implements OnInit {
     formData.append('duration_min', String(this.editingMovie.duration_min || this.editingMovie.duration_minutes || 0));
     formData.append('rating', this.editingMovie.rating || 'general');
     formData.append('film_info', this.editingMovie.film_info || '');
+    formData.append('is_free', this.editingMovie.is_free ? '1' : '0');
+    formData.append('purchase_only', this.editingMovie.purchase_only ? '1' : '0');
     const price = this.editingMovie.ticket_price;
     formData.append('ticket_price', price === null || price === undefined || (price as unknown) === '' ? '' : String(price));
 

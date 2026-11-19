@@ -73,7 +73,7 @@
             </div>
           </div>
 
-          <div class="legend price-legend" *ngIf="priceGroups.length">
+          <div class="legend price-legend" *ngIf="priceGroups.length && !isFree">
             <div class="legend-item" *ngFor="let group of priceGroups">
               <div class="legend-square price-mark" [style.--price-color]="group.color"></div>
               <span>{{ group.price }} Ft</span>
@@ -91,12 +91,15 @@
 
             <div *ngIf="selectedSeats.length > 0" class="selected-seats-list">
               <div *ngFor="let seat of selectedSeats" class="seat-item">
-                <span>{{ seatPlaceLabel(seat.key) }} - {{ seat.price }} Ft</span>
+                <span>{{ seatPlaceLabel(seat.key) }}<ng-container *ngIf="!isFree"> - {{ seat.price }} Ft</ng-container></span>
               </div>
 
-              <div class="total">
+              <div class="total" *ngIf="!isFree">
                 <strong>Összesen:</strong>
                 <strong class="price">{{ totalPrice }} Ft</strong>
+              </div>
+              <div class="total" *ngIf="isFree">
+                <strong>Ingyenes előadás</strong>
               </div>
             </div>
 
@@ -149,6 +152,7 @@
             </div>
 
             <button
+              *ngIf="!isFree"
               (click)="reserve()"
               [disabled]="selectedSeats.length === 0 || !email || !name || !phone || !zipValid || isProcessing"
               class="btn btn-primary">
@@ -157,14 +161,15 @@
             </button>
 
             <button
+              *ngIf="!purchaseOnly"
               (click)="hold()"
               [disabled]="selectedSeats.length === 0 || !email || !name || !phone || !zipValid || isProcessing"
               class="btn btn-hold">
-              <span *ngIf="!isProcessing">Lefoglalva</span>
+              <span *ngIf="!isProcessing">{{ isFree ? 'Ingyenes jegy foglalása' : 'Lefoglalva' }}</span>
               <span *ngIf="isProcessing">Feldolgozás...</span>
             </button>
 
-            <div class="pay-logo">
+            <div class="pay-logo" *ngIf="!isFree">
               <img src="assets/simplepay-logo.webp" alt="SimplePay" width="692" height="209" loading="lazy">
             </div>
 

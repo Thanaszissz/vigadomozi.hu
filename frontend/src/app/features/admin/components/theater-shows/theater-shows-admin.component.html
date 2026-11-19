@@ -150,6 +150,19 @@
                   <small class="hint">Ez az ár érvényes minden székre, a terem szektorárai helyett. Üresen hagyva a terem árai számítanak.</small>
                 </div>
 
+                <div class="form-group span-2 sales-flags">
+                  <label class="flag-option">
+                    <input type="checkbox" [(ngModel)]="editingShow.is_free" (ngModelChange)="$event && (editingShow.purchase_only = false)" name="is_free">
+                    <span>Ingyenes előadás</span>
+                  </label>
+                  <small class="hint">Ingyenes jegy csak foglalással igényelhető, a jegyvásárlás (kártyás fizetés) nem érhető el.</small>
+                  <label class="flag-option">
+                    <input type="checkbox" [(ngModel)]="editingShow.purchase_only" (ngModelChange)="$event && (editingShow.is_free = false)" name="purchase_only">
+                    <span>Csak vásárlás</span>
+                  </label>
+                  <small class="hint">A publikus oldalon a foglalás le van tiltva, a jegyek csak megvásárolhatók.</small>
+                </div>
+
                 <div class="form-group span-2">
                   <label>Leírás</label>
                   <textarea [(ngModel)]="editingShow.description" name="description" class="form-textarea" rows="5" required></textarea>

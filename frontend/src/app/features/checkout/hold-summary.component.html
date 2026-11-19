@@ -61,23 +61,26 @@
           <div class="seats-list">
             <div *ngFor="let item of reservation.items" class="seat-item">
               <span>{{ item.section ? item.section + ' · ' : '' }}{{ item.row_label }}-{{ item.seat_number }} szék</span>
-              <span class="price">{{ item.price_amount }} Ft</span>
+              <span class="price" *ngIf="!reservation.showtime?.movie?.is_free">{{ item.price_amount }} Ft</span>
             </div>
           </div>
 
           <div class="divider"></div>
 
-          <div class="total-row">
+          <div class="total-row" *ngIf="!reservation.showtime?.movie?.is_free">
             <span>Összesen fizetendő:</span>
             <strong class="total-amount">{{ reservation.total_amount }} Ft</strong>
+          </div>
+          <div class="total-row" *ngIf="reservation.showtime?.movie?.is_free">
+            <strong>Ingyenes előadás, fizetni nem kell.</strong>
           </div>
         </div>
 
         <div class="info-box">
           <p><strong>📋 Fontos információk:</strong></p>
           <ul>
-            <li>A foglalás <strong>nincs lejárati idővel</strong> - amíg nem fizeti ki, a székek foglaltak maradnak</li>
-            <li>A fizetést az <strong>admin felületen</strong> lehet véglegesíteni készpénzzel vagy kártyával</li>
+            <li *ngIf="!reservation.showtime?.movie?.is_free">A foglalás <strong>nincs lejárati idővel</strong> - amíg nem fizeti ki, a székek foglaltak maradnak</li>
+            <li *ngIf="!reservation.showtime?.movie?.is_free">A fizetést az <strong>admin felületen</strong> lehet véglegesíteni készpénzzel vagy kártyával</li>
             <li>Visszaigazoló e-mailt küldtünk a megadott címre: <strong>{{ reservation.customer_email }}</strong></li>
             <li>Foglalási azonosító: <strong>#{{ reservation.id }}</strong></li>
           </ul>

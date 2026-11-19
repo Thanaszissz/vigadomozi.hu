@@ -20,12 +20,16 @@ class Movie extends Model
         'rating',
         'film_info',
         'ticket_price',
+        'is_free',
+        'purchase_only',
         'badges',
     ];
 
     protected $casts = [
         'badges' => 'array',
         'ticket_price' => 'integer',
+        'is_free' => 'boolean',
+        'purchase_only' => 'boolean',
     ];
 
     protected $appends = ['poster_url', 'duration_minutes'];

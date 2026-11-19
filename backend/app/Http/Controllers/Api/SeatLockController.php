@@ -26,6 +26,10 @@ class SeatLockController extends Controller
             return $this->externalOnly($showtime);
         }
 
+        if ($showtime->isFree()) {
+            return response()->json(['message' => 'Erre az ingyenes előadásra nem vásárolható jegy, csak foglalni lehet.'], 422);
+        }
+
         $data = $this->validated($request);
 
         try {
@@ -45,6 +49,10 @@ class SeatLockController extends Controller
     {
         if ($showtime->is_external) {
             return $this->externalOnly($showtime);
+        }
+
+        if ($showtime->isPurchaseOnly()) {
+            return response()->json(['message' => 'Erre az előadásra nem lehet foglalni, a jegyek csak megvásárolhatók.'], 422);
         }
 
         $data = $this->validated($request);

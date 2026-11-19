@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\TheaterShow;
+use App\Support\ProgramSales;
 use App\Support\ShowOptions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -23,7 +24,10 @@ class TheaterShowAdminController extends Controller
 
     public function store(Request $request)
     {
+        ProgramSales::assertConsistent($request);
+
         $data = $request->validate([
+            ...ProgramSales::RULES,
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'poster_path' => ['nullable', 'string'],
@@ -53,7 +57,10 @@ class TheaterShowAdminController extends Controller
 
     public function update(TheaterShow $theater_show, Request $request)
     {
+        ProgramSales::assertConsistent($request);
+
         $data = $request->validate([
+            ...ProgramSales::RULES,
             'title' => ['sometimes', 'string', 'max:255'],
             'description' => ['sometimes', 'string'],
             'poster_path' => ['sometimes', 'string'],

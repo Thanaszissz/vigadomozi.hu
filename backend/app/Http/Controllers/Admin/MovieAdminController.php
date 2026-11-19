@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Movie;
 use App\Support\MovieBadges;
+use App\Support\ProgramSales;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -22,7 +23,10 @@ class MovieAdminController extends Controller
 
     public function store(Request $request)
     {
+        ProgramSales::assertConsistent($request);
+
         $data = $request->validate([
+            ...ProgramSales::RULES,
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'poster_path' => ['nullable', 'string'],
@@ -49,7 +53,10 @@ class MovieAdminController extends Controller
 
     public function update(Movie $movie, Request $request)
     {
+        ProgramSales::assertConsistent($request);
+
         $data = $request->validate([
+            ...ProgramSales::RULES,
             'title' => ['sometimes', 'string', 'max:255'],
             'description' => ['sometimes', 'string'],
             'poster_path' => ['sometimes', 'string'],
@@ -89,7 +96,10 @@ class MovieAdminController extends Controller
 
     public function uploadPoster(Movie $movie, Request $request)
     {
+        ProgramSales::assertConsistent($request);
+
         $data = $request->validate([
+            ...ProgramSales::RULES,
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'poster_path' => ['nullable', 'string'],
