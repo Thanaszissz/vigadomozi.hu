@@ -129,24 +129,29 @@
       <div class="muted" *ngIf="financeRows.length === 0">Ezen a napon nem volt jegyeladás.</div>
       <div class="table-wrap" *ngIf="financeRows.length > 0">
         <table class="fixed">
-          <colgroup><col style="width: 56%"><col style="width: 26%"><col style="width: 18%"></colgroup>
+          <colgroup><col style="width: 34%"><col style="width: 12%"><col style="width: 18%"><col style="width: 16%"><col style="width: 20%"></colgroup>
           <thead>
-            <tr><th>Jegytípus</th><th class="r">Bevétel</th><th class="r">Jegyek (db)</th></tr>
+            <tr><th>Jegytípus</th><th class="r">Jegyek (db)</th><th class="r">Nettó</th><th class="r">ÁFA {{ vatRate }}%</th><th class="r">Bruttó</th></tr>
           </thead>
           <tbody>
             <tr *ngFor="let r of financeRows">
               <td>{{ r.label }}</td>
-              <td class="r">{{ ft(r.amount) }}</td>
               <td class="r">{{ r.tickets }} db</td>
+              <td class="r">{{ ft(vatSplit(r.amount).net) }}</td>
+              <td class="r">{{ ft(vatSplit(r.amount).vat) }}</td>
+              <td class="r"><b>{{ ft(r.amount) }}</b></td>
             </tr>
             <tr class="subtotal">
               <td>Összesen</td>
-              <td class="r">{{ ft(visibleTotals.amount) }}</td>
-              <td class="r">{{ visibleTotals.tickets }} db</td>
+              <td class="r">{{ financeTotals.tickets }} db</td>
+              <td class="r">{{ ft(financeTotals.net) }}</td>
+              <td class="r">{{ ft(financeTotals.vat) }}</td>
+              <td class="r">{{ ft(financeTotals.amount) }}</td>
             </tr>
           </tbody>
         </table>
       </div>
+      <p class="muted" *ngIf="financeRows.length > 0">A jegyárak bruttó értékek; a nettó összeg {{ vatRate }}% ÁFA-kulccsal számolt.</p>
     </section>
   </ng-container>
 

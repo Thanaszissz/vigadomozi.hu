@@ -43,6 +43,7 @@ const PRINT_CSS = `
   .newpage { page-break-before: always; }
   .finance table th, .finance table td { padding: 6px 10px; font-size: 13px; }
   .finance h1 { font-size: 22px; }
+  .finance-note { margin-top: 8px; color: #555; font-size: 10px; }
 `;
 
 @Component({
@@ -184,6 +185,27 @@ export class DailyCloseAdminComponent implements OnInit {
     return this.typeRows(this.visibleSellers.flatMap(s => s.tickets));
   }
 
+  /** A jegyárak bruttó értékek; az ÁFA-kulcs (%) a nettó bevétel és az ÁFA számolásához. */
+  readonly vatRate = 27;
+
+  /** Bruttó összegből nettó és ÁFA: a nettó kerekített, az ÁFA a különbség (a kettő összege mindig a bruttó). */
+  vatSplit(gross: number): { net: number; vat: number } {
+    const net = Math.round(gross / (1 + this.vatRate / 100));
+    return { net, vat: gross - net };
+  }
+
+  /** A pénzügyi kimutatás összesen sora: a nettó és az ÁFA a sorok értékeinek összege, így a tábla pontosan összeadódik. */
+  get financeTotals(): { tickets: number; amount: number; net: number; vat: number } {
+    const rows = this.financeRows;
+    const parts = rows.map(r => this.vatSplit(r.amount));
+    return {
+      tickets: rows.reduce((sum, r) => sum + r.tickets, 0),
+      amount: rows.reduce((sum, r) => sum + r.amount, 0),
+      net: parts.reduce((sum, p) => sum + p.net, 0),
+      vat: parts.reduce((sum, p) => sum + p.vat, 0),
+    };
+  }
+
   categoryTag(t: Ticket): string {
     return t.category && t.category !== 'standard' && t.category !== 'service' ? categoryLabel(t.category) : '';
   }
@@ -262,9 +284,13 @@ export class DailyCloseAdminComponent implements OnInit {
     blank();
 
     lines.push(['PÉNZÜGYI KIMUTATÁS', day]);
-    lines.push(['Jegytípus', 'Bevétel (Ft)', 'Jegyek (db)']);
-    for (const r of this.financeRows) lines.push([r.label, r.amount, r.tickets]);
-    lines.push(['Összesen', totals.amount, totals.tickets]);
+    lines.push(['Jegytípus', 'Jegyek (db)', 'Nettó (Ft)', `ÁFA ${this.vatRate}% (Ft)`, 'Bruttó (Ft)']);
+    for (const r of this.financeRows) {
+      const { net, vat } = this.vatSplit(r.amount);
+      lines.push([r.label, r.tickets, net, vat, r.amount]);
+    }
+    const fin = this.financeTotals;
+    lines.push(['Összesen', fin.tickets, fin.net, fin.vat, fin.amount]);
     blank();
 
     lines.push(['ELADÓNKÉNT']);
@@ -362,21 +388,24 @@ export class DailyCloseAdminComponent implements OnInit {
   private financeHtml(newPage: boolean): string {
     const esc = (v: unknown) => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
     const ft = (n: number) => `${Math.round(n).toLocaleString('hu-HU')} Ft`;
-    const totals = this.visibleTotals;
+    const totals = this.financeTotals;
     const sellerNote = this.sellerFilter === 'all' ? '' : ` • Eladó: ${this.visibleSellers[0]?.user_name ?? ''}`;
-    const rows = this.financeRows.map(r =>
-      `<tr><td>${esc(r.label)}</td><td class="r">${esc(ft(r.amount))}</td><td class="r">${r.tickets} db</td></tr>`).join('');
+    const rows = this.financeRows.map(r => {
+      const { net, vat } = this.vatSplit(r.amount);
+      return `<tr><td>${esc(r.label)}</td><td class="r">${r.tickets} db</td><td class="r">${esc(ft(net))}</td><td class="r">${esc(ft(vat))}</td><td class="r"><b>${esc(ft(r.amount))}</b></td></tr>`;
+    }).join('');
 
     return `<div class="${newPage ? 'finance newpage' : 'finance'}">
       <h1>Pénzügyi kimutatás</h1>
       <div class="sub">${esc(this.date.replace(/-/g, '.'))}.${esc(sellerNote)}</div>
       <table>
-        <thead><tr><th>Jegytípus</th><th class="r">Bevétel</th><th class="r">Jegyek (db)</th></tr></thead>
+        <thead><tr><th>Jegytípus</th><th class="r">Jegyek (db)</th><th class="r">Nettó</th><th class="r">ÁFA ${this.vatRate}%</th><th class="r">Bruttó</th></tr></thead>
         <tbody>
-          ${rows || '<tr><td colspan="3">Ezen a napon nem volt jegyeladás.</td></tr>'}
-          <tr class="sub"><td>Összesen</td><td class="r">${esc(ft(totals.amount))}</td><td class="r">${totals.tickets} db</td></tr>
+          ${rows || '<tr><td colspan="5">Ezen a napon nem volt jegyeladás.</td></tr>'}
+          <tr class="sub"><td>Összesen</td><td class="r">${totals.tickets} db</td><td class="r">${esc(ft(totals.net))}</td><td class="r">${esc(ft(totals.vat))}</td><td class="r">${esc(ft(totals.amount))}</td></tr>
         </tbody>
       </table>
+      <div class="finance-note">A jegyárak bruttó értékek, a nettó összeg ${this.vatRate}% ÁFA-kulccsal számolt, jegytípusonként kerekített érték.</div>
       <div class="sign"><div>Pénztáros</div><div>Átvette</div></div>
     </div>`;
   }
