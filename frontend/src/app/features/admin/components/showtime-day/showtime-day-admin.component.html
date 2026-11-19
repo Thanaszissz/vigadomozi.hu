@@ -5,12 +5,17 @@
   </div>
 
   <div class="filters">
-    <button type="button" class="btn small" (click)="shiftDay(-1)">‹</button>
+    <div class="period-switch" role="group" aria-label="Időszak">
+      <button type="button" *ngFor="let p of periods" [class.active]="period === p.key" (click)="setPeriod(p.key)">{{ p.label }}</button>
+    </div>
+
+    <button type="button" class="btn small" (click)="shift(-1)" title="Előző időszak">‹</button>
     <label>
-      <span>Előadások napja</span>
+      <span>{{ period === 'day' ? 'Előadások napja' : 'Egy nap az időszakból' }}</span>
       <app-date-input [(ngModel)]="date" (ngModelChange)="load()"></app-date-input>
     </label>
-    <button type="button" class="btn small" (click)="shiftDay(1)">›</button>
+    <button type="button" class="btn small" (click)="shift(1)" title="Következő időszak">›</button>
+    <span class="range" *ngIf="data">{{ rangeLabel }}</span>
 
     <span class="spacer"></span>
     <button type="button" class="btn primary" (click)="print()" [disabled]="!data || data.totals.tickets === 0">🖨️ PDF / nyomtatás</button>
@@ -23,8 +28,9 @@
   </div>
 
   <p class="muted">
-    Az adott napon tartott előadásokra <b>összesen eladott</b> jegyek: minden jegy benne van, amelyet az előadásra valaha eladtak
-    (nem csak az adott napon, hanem korábban is, pénztárban és online). A sztornózott jegyek nincsenek benne.
+    A kiválasztott időszakban tartott előadásokra <b>összesen eladott</b> jegyek: minden jegy benne van, amelyet az előadásra valaha eladtak
+    (nem csak az adott időszakban, hanem korábban is, pénztárban és online). A sztornózott jegyek nincsenek benne.
+    A hét hétfőtől vasárnapig tart.
   </p>
 
   <div *ngIf="loading" class="muted">Betöltés...</div>
@@ -36,7 +42,7 @@
       <div class="rev-card gross">
         <span>Bruttó bevétel</span>
         <b>{{ data.totals.amount | number:'1.0-0' }} Ft</b>
-        <small>{{ data.totals.tickets | number:'1.0-0' }} eladott jegy • {{ data.shows.length }} előadás</small>
+        <small>{{ data.totals.tickets | number:'1.0-0' }} eladott jegy • {{ showCount }} előadás</small>
       </div>
       <div class="rev-card">
         <span>Nettó bevétel</span>
@@ -60,10 +66,47 @@
       <div class="chip" *ngIf="data.totals.staff > 0"><span>Ingyenes jegy</span><b>{{ data.totals.staff }} db</b></div>
     </div>
 
-    <div *ngIf="data.shows.length === 0" class="muted">Erre a napra egyetlen előadásra sincs eladott jegy.</div>
+    <div *ngIf="data.totals.tickets === 0" class="muted">Erre az időszakra egyetlen előadásra sincs eladott jegy.</div>
 
-    <!-- Áttekintő lista: előadásonként egy sor -->
-    <section *ngIf="data.shows.length > 0">
+    <!-- Hét / hónap: napi, év: havi bontás -->
+    <section *ngIf="data.breakdown.length > 0">
+      <h2 class="section-title">{{ data.period === 'year' ? 'Havi bontás' : 'Napi bontás' }}</h2>
+      <div class="table-wrap">
+        <table class="overview">
+          <thead>
+            <tr>
+              <th>{{ data.period === 'year' ? 'Hónap' : 'Nap' }}</th>
+              <th class="r">Előadások</th>
+              <th class="r">Jegy</th>
+              <th class="r rev">Nettó</th>
+              <th class="r rev">ÁFA {{ data.vat_rate }}%</th>
+              <th class="r rev">Bruttó</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let b of data.breakdown">
+              <td><b>{{ breakdownLabel(b.key) }}</b></td>
+              <td class="r">{{ b.shows }}</td>
+              <td class="r">{{ b.tickets }} db</td>
+              <td class="r rev">{{ b.net | number:'1.0-0' }} Ft</td>
+              <td class="r rev">{{ b.vat | number:'1.0-0' }} Ft</td>
+              <td class="r rev strong">{{ b.amount | number:'1.0-0' }} Ft</td>
+            </tr>
+            <tr class="subtotal">
+              <td>Összesen</td>
+              <td class="r">{{ showCount }}</td>
+              <td class="r">{{ data.totals.tickets }} db</td>
+              <td class="r rev">{{ data.totals.net | number:'1.0-0' }} Ft</td>
+              <td class="r rev">{{ data.totals.vat | number:'1.0-0' }} Ft</td>
+              <td class="r rev strong">{{ data.totals.amount | number:'1.0-0' }} Ft</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Áttekintő lista: előadásonként egy sor (napra és hétre) -->
+    <section *ngIf="data.detail && data.shows.length > 0">
       <h2 class="section-title">Előadások</h2>
       <div class="table-wrap">
         <table class="overview">
@@ -91,7 +134,7 @@
           </thead>
           <tbody>
             <tr *ngFor="let s of data.shows" class="clickable" [class.active]="showFilter === showKey(s)" (click)="pick(s)" title="Kattints a jegyek megtekintéséhez">
-              <td>{{ s.starts_at | date:'HH:mm' }}</td>
+              <td>{{ startLabel(s.starts_at) }}</td>
               <td><b>{{ s.movie_title }}</b></td>
               <td>{{ s.auditorium_name || '—' }}</td>
               <td class="r">{{ s.tickets }} db</td>
@@ -131,7 +174,7 @@
     <ng-container *ngIf="detailsVisible">
       <section class="show" *ngFor="let s of visibleShows">
         <h2>
-          {{ s.starts_at | date:'HH:mm' }} – {{ s.movie_title }}
+          {{ startLabel(s.starts_at) }} – {{ s.movie_title }}
           <small>{{ s.auditorium_name || '—' }} • {{ s.tickets }} jegy • {{ s.amount | number:'1.0-0' }} Ft</small>
         </h2>
         <div class="table-wrap">

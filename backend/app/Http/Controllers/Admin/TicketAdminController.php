@@ -246,29 +246,65 @@ class TicketAdminController extends Controller
     }
 
     /**
-     * Egy nap előadásainak teljes jegyeladása: minden olyan jegy, amelynek előadása az adott napon (budapesti idő) van,
-     * az eladás időpontjától, csatornájától és eladójától függetlenül, előadásonként csoportosítva. Sztornózott jegy nincs benne.
+     * A kiválasztott időszak (nap / hét / hónap / év) előadásainak teljes jegyeladása: minden olyan jegy, amelynek előadása az
+     * időszakba (budapesti idő) esik, az eladás időpontjától, csatornájától és eladójától függetlenül. Sztornózott jegy nincs benne.
+     * Az előadásonkénti lista és a jegyek csak napra és hétre kerülnek a válaszba (hosszabb időszaknál napi / havi bontás van).
      */
     public function showtimeDay(Request $request): JsonResponse
     {
-        $request->validate(['date' => ['nullable', 'date_format:Y-m-d']]);
+        $request->validate([
+            'date' => ['nullable', 'date_format:Y-m-d'],
+            'period' => ['nullable', 'in:day,week,month,year'],
+        ]);
         $date = $request->query('date') ?: now()->timezone('Europe/Budapest')->toDateString();
+        $period = $request->query('period') ?: 'day';
+        [$from, $to] = $this->periodRange($date, $period);
 
-        $tickets = $this->showtimeDayTickets($date)->get();
+        $tickets = $this->showtimeDayTickets($date, $period)->get();
         $shows = $this->showtimeShows($tickets);
+        $detail = in_array($period, ['day', 'week'], true);
 
-        ActivityLogger::log('report.showtime_day', "Előadások eladása megtekintve: {$date}", null, ['date' => $date]);
+        ActivityLogger::log('report.showtime_day', "Előadások eladása megtekintve: {$date} ({$period})", null, ['date' => $date, 'period' => $period]);
 
         return response()->json([
             'date' => $date,
+            'period' => $period,
+            'from' => $from->copy()->timezone('Europe/Budapest')->toDateString(),
+            'to' => $to->copy()->timezone('Europe/Budapest')->toDateString(),
             'vat_rate' => self::VAT_PERCENT,
             'totals' => $this->showtimeSums($tickets) + [
                 'net' => (int) $shows->sum('net'),
                 'vat' => (int) $shows->sum('vat'),
             ],
-            'shows' => $shows,
-            'tickets' => $tickets->values(),
+            'breakdown' => $this->periodBreakdown($shows, $period),
+            'detail' => $detail,
+            'shows' => $detail ? $shows : [],
+            'tickets' => $detail ? $tickets->values() : [],
         ]);
+    }
+
+    /** Hét / hónap: napi, év: havi összesítés (az előadások nettó és ÁFA értékeiből, hogy az összegek egyezzenek a végösszeggel). */
+    private function periodBreakdown($shows, string $period): array
+    {
+        if ($period === 'day') {
+            return [];
+        }
+
+        $format = $period === 'year' ? 'Y-m' : 'Y-m-d';
+
+        return $shows
+            ->groupBy(fn(array $s) => $s['starts_at']->copy()->timezone('Europe/Budapest')->format($format))
+            ->map(fn($rows, $key) => [
+                'key' => $key,
+                'tickets' => (int) $rows->sum('tickets'),
+                'shows' => $rows->count(),
+                'net' => (int) $rows->sum('net'),
+                'vat' => (int) $rows->sum('vat'),
+                'amount' => (int) $rows->sum('amount'),
+            ])
+            ->sortKeys()
+            ->values()
+            ->all();
     }
 
     /** A jegyárak bruttó értékek: az ÁFA-kulcs (%), amellyel a nettó bevételt és az ÁFA összegét számoljuk. */
@@ -323,25 +359,27 @@ class TicketAdminController extends Controller
     {
         $request->validate([
             'date' => ['required', 'date_format:Y-m-d'],
+            'period' => ['nullable', 'in:day,week,month,year'],
             'type' => ['nullable', 'in:summary,tickets'],
         ]);
         $date = (string) $request->query('date');
+        $period = $request->query('period') ?: 'day';
         $summary = $request->query('type') === 'summary';
 
         ActivityLogger::log(
             'report.export_showtime_day',
-            "Előadások eladásának exportálása (CSV, " . ($summary ? 'összesítő' : 'jegyenként') . "): {$date}",
+            "Előadások eladásának exportálása (CSV, " . ($summary ? 'összesítő' : 'jegyenként') . "): {$date} ({$period})",
             null,
-            ['date' => $date, 'type' => $summary ? 'summary' : 'tickets']
+            ['date' => $date, 'period' => $period, 'type' => $summary ? 'summary' : 'tickets']
         );
 
         $headers = [
             'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="elo_adasok_' . ($summary ? 'osszesito_' : '') . $date . '.csv"',
+            'Content-Disposition' => 'attachment; filename="elo_adasok_' . ($summary ? 'osszesito_' : '') . $date . ($period === 'day' ? '' : '_' . $period) . '.csv"',
         ];
 
         if ($summary) {
-            $shows = $this->showtimeShows($this->showtimeDayTickets($date)->get());
+            $shows = $this->showtimeShows($this->showtimeDayTickets($date, $period)->get());
 
             return response()->stream(function () use ($shows) {
                 $out = fopen('php://output', 'w');
@@ -371,7 +409,7 @@ class TicketAdminController extends Controller
         }
 
         $channels = ['pos' => 'Pénztár', 'admin' => 'Admin', 'online' => 'Online'];
-        $query = $this->showtimeDayTickets($date);
+        $query = $this->showtimeDayTickets($date, $period);
 
         return response()->stream(function () use ($query, $channels) {
             $out = fopen('php://output', 'w');
@@ -401,9 +439,9 @@ class TicketAdminController extends Controller
         }, 200, $headers);
     }
 
-    private function showtimeDayTickets(string $date): Builder
+    private function showtimeDayTickets(string $date, string $period = 'day'): Builder
     {
-        [$from, $to] = $this->dayRange($date);
+        [$from, $to] = $this->periodRange($date, $period);
 
         return Ticket::query()
             ->where('category', '!=', TicketCategory::SERVICE)
@@ -413,6 +451,21 @@ class TicketAdminController extends Controller
             ->orderBy('row_label')
             ->orderBy('seat_number')
             ->orderBy('id');
+    }
+
+    /** A megadott naphoz tartozó időszak (nap / hét hétfőtől vasárnapig / hónap / év) határai, UTC-ben (budapesti idő szerint számolva). */
+    private function periodRange(string $date, string $period): array
+    {
+        $day = Carbon::createFromFormat('Y-m-d', $date, 'Europe/Budapest')->startOfDay();
+
+        [$start, $end] = match ($period) {
+            'week' => [$day->copy()->startOfWeek(Carbon::MONDAY), $day->copy()->endOfWeek(Carbon::SUNDAY)],
+            'month' => [$day->copy()->startOfMonth(), $day->copy()->endOfMonth()],
+            'year' => [$day->copy()->startOfYear(), $day->copy()->endOfYear()],
+            default => [$day->copy(), $day->copy()->endOfDay()],
+        };
+
+        return [$start->utc(), $end->utc()];
     }
 
     private function dayRange(string $date): array

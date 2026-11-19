@@ -204,8 +204,24 @@ export interface ShowtimeDayTotals {
   vat: number;
 }
 
+export type ShowtimePeriod = 'day' | 'week' | 'month' | 'year';
+
+export interface ShowtimeDayBreakdownRow {
+  key: string;
+  tickets: number;
+  shows: number;
+  net: number;
+  vat: number;
+  amount: number;
+}
+
 export interface ShowtimeDay {
   date: string;
+  period: ShowtimePeriod;
+  from: string;
+  to: string;
+  detail: boolean;
+  breakdown: ShowtimeDayBreakdownRow[];
   vat_rate: number;
   totals: ShowtimeDayTotals;
   shows: Array<ShowtimeDayTotals & {
@@ -796,12 +812,12 @@ export class AdminService {
   }
 
   // Egy nap előadásainak teljes jegyeladása
-  getShowtimeDay(date: string): Observable<ShowtimeDay> {
-    return this.http.get<ShowtimeDay>(`${this.apiUrl}/tickets/showtime-day`, { params: { date } });
+  getShowtimeDay(date: string, period: ShowtimePeriod = 'day'): Observable<ShowtimeDay> {
+    return this.http.get<ShowtimeDay>(`${this.apiUrl}/tickets/showtime-day`, { params: { date, period } });
   }
 
-  exportShowtimeDay(date: string, type: 'summary' | 'tickets' = 'tickets'): Observable<Blob> {
-    return this.http.get(`${this.apiUrl}/tickets/showtime-day/export`, { params: { date, type }, responseType: 'blob' });
+  exportShowtimeDay(date: string, type: 'summary' | 'tickets' = 'tickets', period: ShowtimePeriod = 'day'): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/tickets/showtime-day/export`, { params: { date, type, period }, responseType: 'blob' });
   }
 
   getDailyClose(date: string): Observable<DailyClose> {

@@ -3,10 +3,13 @@ import { CommonModule, formatDate } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DateInputComponent } from '../../../../shared/date-time-inputs.component';
 import { Router } from '@angular/router';
-import { AdminService, ShowtimeDay, Ticket, categoryLabel } from '../../../../services/admin.service';
+import { AdminService, ShowtimeDay, ShowtimePeriod, Ticket, categoryLabel } from '../../../../services/admin.service';
 import { paymentLabel, ticketPaymentLabel } from '../ticket-print/ticket-print.component';
 
-/** Egy nap előadásainak teljes jegyeladása (eladás időpontjától és eladójától függetlenül), listában és CSV exporttal. */
+const MONTHS = ['január', 'február', 'március', 'április', 'május', 'június', 'július', 'augusztus', 'szeptember', 'október', 'november', 'december'];
+const WEEKDAYS = ['vasárnap', 'hétfő', 'kedd', 'szerda', 'csütörtök', 'péntek', 'szombat'];
+
+/** Egy időszak (nap / hét / hónap / év) előadásainak teljes jegyeladása (eladás időpontjától és eladójától függetlenül), listában és CSV exporttal. */
 @Component({
   selector: 'app-showtime-day-admin',
   standalone: true,
@@ -16,6 +19,13 @@ import { paymentLabel, ticketPaymentLabel } from '../ticket-print/ticket-print.c
 })
 export class ShowtimeDayAdminComponent implements OnInit {
   date = this.keyOf(new Date());
+  period: ShowtimePeriod = 'day';
+  readonly periods: Array<{ key: ShowtimePeriod; label: string }> = [
+    { key: 'day', label: 'Nap' },
+    { key: 'week', label: 'Hét' },
+    { key: 'month', label: 'Hónap' },
+    { key: 'year', label: 'Év' },
+  ];
   data: ShowtimeDay | null = null;
   loading = false;
   error: string | null = null;
@@ -44,7 +54,7 @@ export class ShowtimeDayAdminComponent implements OnInit {
     this.error = null;
     this.showFilter = 'all';
 
-    this.admin.getShowtimeDay(this.date).subscribe({
+    this.admin.getShowtimeDay(this.date, this.period).subscribe({
       next: (data) => {
         this.data = data;
         this.loading = false;
@@ -56,10 +66,63 @@ export class ShowtimeDayAdminComponent implements OnInit {
     });
   }
 
-  shiftDay(delta: number): void {
-    const [y, m, d] = this.date.split('-').map(Number);
-    this.date = this.keyOf(new Date(y, m - 1, d + delta));
+  setPeriod(period: ShowtimePeriod): void {
+    if (this.period === period) return;
+    this.period = period;
     this.load();
+  }
+
+  /** Léptetés az aktuális időszak szerint: egy nap / hét / hónap / év előre vagy vissza. */
+  shift(delta: number): void {
+    const [y, m, d] = this.date.split('-').map(Number);
+    let next: Date;
+    if (this.period === 'day') {
+      next = new Date(y, m - 1, d + delta);
+    } else if (this.period === 'week') {
+      next = new Date(y, m - 1, d + delta * 7);
+    } else {
+      const months = this.period === 'month' ? delta : delta * 12;
+      const lastDay = new Date(y, m - 1 + months + 1, 0).getDate();
+      next = new Date(y, m - 1 + months, Math.min(d, lastDay));
+    }
+    this.date = this.keyOf(next);
+    this.load();
+  }
+
+  /** A kiválasztott időszak felirata (a szerver által számolt határokból). */
+  get rangeLabel(): string {
+    const data = this.data;
+    if (!data) return '';
+    const dot = (key: string) => key.replace(/-/g, '.') + '.';
+    const [y, m] = data.from.split('-').map(Number);
+    switch (data.period) {
+      case 'year': return `${y}.`;
+      case 'month': return `${y}. ${MONTHS[m - 1]}`;
+      case 'week': return `${dot(data.from)} – ${dot(data.to)}`;
+      default: return dot(data.from);
+    }
+  }
+
+  /** Az összesítő bontás sorának felirata: nap (hét / hónap) vagy hónap (év). */
+  breakdownLabel(key: string): string {
+    const [y, m, d] = key.split('-').map(Number);
+    if (d === undefined) return `${y}. ${MONTHS[m - 1]}`;
+    return `${String(m).padStart(2, '0')}.${String(d).padStart(2, '0')}. (${WEEKDAYS[new Date(y, m - 1, d).getDay()]})`;
+  }
+
+  /** Egy előadás kezdése: egy napnál hosszabb időszaknál a dátummal együtt. */
+  startLabel(iso: string): string {
+    return formatDate(iso, this.data?.period === 'day' ? 'HH:mm' : 'MM.dd. HH:mm', 'en-US');
+  }
+
+  /** Az időszak előadásainak száma (hosszabb időszaknál a bontás soraiból). */
+  get showCount(): number {
+    if (!this.data) return 0;
+    return this.data.detail ? this.data.shows.length : this.data.breakdown.reduce((sum, b) => sum + b.shows, 0);
+  }
+
+  get periodTitle(): string {
+    return ({ day: 'napi', week: 'heti', month: 'havi', year: 'éves' } as Record<ShowtimePeriod, string>)[this.data?.period ?? this.period];
   }
 
   /** Az előadás azonosítója a szűrőhöz és a csoportosításhoz. */
@@ -79,12 +142,12 @@ export class ShowtimeDayAdminComponent implements OnInit {
 
   exportCsv(type: 'summary' | 'tickets'): void {
     this.exporting = true;
-    this.admin.exportShowtimeDay(this.date, type).subscribe({
+    this.admin.exportShowtimeDay(this.date, type, this.period).subscribe({
       next: (blob) => {
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `elo_adasok_${type === 'summary' ? 'osszesito_' : ''}${this.date}.csv`;
+        link.download = `elo_adasok_${type === 'summary' ? 'osszesito_' : ''}${this.date}${this.period === 'day' ? '' : '_' + this.period}.csv`;
         link.click();
         URL.revokeObjectURL(url);
         this.exporting = false;
@@ -112,8 +175,8 @@ export class ShowtimeDayAdminComponent implements OnInit {
 
     this.admin.logClientEvent(
       'report.showtime_day_print',
-      `Előadások eladásának nyomtatása (PDF): ${this.date}`,
-      { date: this.date, tickets: this.data.totals.tickets, amount: this.data.totals.amount }
+      `Előadások eladásának nyomtatása (PDF): ${this.date} (${this.period})`,
+      { date: this.date, period: this.period, tickets: this.data.totals.tickets, amount: this.data.totals.amount }
     );
 
     const frame = document.createElement('iframe');
@@ -135,13 +198,34 @@ export class ShowtimeDayAdminComponent implements OnInit {
   private buildPrintHtml(data: ShowtimeDay): string {
     const esc = (v: unknown) => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
     const ft = (n: number) => `${Math.round(n).toLocaleString('hu-HU')} Ft`;
-    const time = (iso: string) => formatDate(iso, 'HH:mm', 'en-US');
+    const time = (iso: string) => this.startLabel(iso);
     const t = data.totals;
     const vat = `${data.vat_rate}%`;
 
     const showRows = data.shows.map(s => `<tr>
       <td>${esc(time(s.starts_at))}</td><td><b>${esc(s.movie_title)}</b></td><td>${esc(s.auditorium_name || '—')}</td>
       <td class="r">${s.tickets} db</td><td class="r">${ft(s.net)}</td><td class="r">${ft(s.vat)}</td><td class="r"><b>${ft(s.amount)}</b></td></tr>`).join('');
+
+    const breakdownTitle = data.period === 'year' ? 'Havi bontás' : 'Napi bontás';
+    const breakdownRows = data.breakdown.map(b => `<tr>
+      <td><b>${esc(this.breakdownLabel(b.key))}</b></td><td class="r">${b.shows} előadás</td>
+      <td class="r">${b.tickets} db</td><td class="r">${ft(b.net)}</td><td class="r">${ft(b.vat)}</td><td class="r"><b>${ft(b.amount)}</b></td></tr>`).join('');
+    const breakdownHtml = data.breakdown.length ? `
+      <h2>${breakdownTitle}</h2>
+      <table>
+        <thead><tr><th>${data.period === 'year' ? 'Hónap' : 'Nap'}</th><th class="r">Előadások</th><th class="r">Jegy</th><th class="r">Nettó</th><th class="r">ÁFA ${vat}</th><th class="r">Bruttó</th></tr></thead>
+        <tbody>${breakdownRows}
+          <tr class="total"><td>Összesen</td><td class="r">${data.breakdown.reduce((a, b) => a + b.shows, 0)} előadás</td><td class="r">${t.tickets} db</td><td class="r">${ft(t.net)}</td><td class="r">${ft(t.vat)}</td><td class="r">${ft(t.amount)}</td></tr>
+        </tbody>
+      </table>` : '';
+    const showsHtml = data.detail ? `
+      <h2>Előadásonként</h2>
+      <table>
+        <thead><tr><th>Kezdés</th><th>Film</th><th>Terem</th><th class="r">Jegy</th><th class="r">Nettó</th><th class="r">ÁFA ${vat}</th><th class="r">Bruttó</th></tr></thead>
+        <tbody>${showRows}
+          <tr class="total"><td colspan="3">Összesen</td><td class="r">${t.tickets} db</td><td class="r">${ft(t.net)}</td><td class="r">${ft(t.vat)}</td><td class="r">${ft(t.amount)}</td></tr>
+        </tbody>
+      </table>` : '';
 
     const pay: Array<[string, string]> = [
       ['Készpénz', ft(t.cash)],
@@ -177,24 +261,17 @@ export class ShowtimeDayAdminComponent implements OnInit {
       .note { margin-top: 14px; color: #555; font-size: 10px; }
     `;
 
-    return `<!doctype html><html><head><meta charset="utf-8"><title>Előadások eladott jegyei ${esc(data.date)}</title><style>${css}</style></head><body>
-      <h1>Előadások eladott jegyei</h1>
-      <div class="sub">Az előadások napja: ${esc(data.date.replace(/-/g, '.'))}. • ${t.tickets} eladott jegy • ${data.shows.length} előadás</div>
+    return `<!doctype html><html><head><meta charset="utf-8"><title>Előadások eladott jegyei ${esc(this.rangeLabel)}</title><style>${css}</style></head><body>
+      <h1>Előadások eladott jegyei – ${esc(this.periodTitle)} összesítő</h1>
+      <div class="sub">${esc(this.rangeLabel)} • ${t.tickets} eladott jegy • ${data.shows.length || data.breakdown.reduce((a, b) => a + b.shows, 0)} előadás</div>
 
       <div class="kpi">
         <div class="gross"><span>Bruttó bevétel</span><b>${ft(t.amount)}</b></div>
         <div><span>Nettó bevétel</span><b>${ft(t.net)}</b></div>
         <div><span>ÁFA (${vat})</span><b>${ft(t.vat)}</b></div>
       </div>
-
-      <h2>Előadásonként</h2>
-      <table>
-        <thead><tr><th>Kezdés</th><th>Film</th><th>Terem</th><th class="r">Jegy</th><th class="r">Nettó</th><th class="r">ÁFA ${vat}</th><th class="r">Bruttó</th></tr></thead>
-        <tbody>${showRows}
-          <tr class="total"><td colspan="3">Összesen</td><td class="r">${t.tickets} db</td><td class="r">${ft(t.net)}</td><td class="r">${ft(t.vat)}</td><td class="r">${ft(t.amount)}</td></tr>
-        </tbody>
-      </table>
-
+      ${breakdownHtml}
+      ${showsHtml}
       <h2>Fizetési mód szerint</h2>
       <table class="pay"><tbody>${payRows}</tbody></table>
 
