@@ -31,6 +31,7 @@ class MovieAdminController extends Controller
             'duration_min' => ['nullable', 'integer'],
             'rating' => ['nullable', 'in:general,6,12,16,18'],
             'film_info' => ['nullable', 'string', 'max:255'],
+            'ticket_price' => ['nullable', 'integer', 'min:0', 'max:1000000'],
             'badges' => ['nullable', 'array'],
             'badges.*' => ['string', Rule::in(MovieBadges::keys())],
         ]);
@@ -57,6 +58,7 @@ class MovieAdminController extends Controller
             'duration_min' => ['sometimes', 'integer'],
             'rating' => ['sometimes', 'in:general,6,12,16,18'],
             'film_info' => ['nullable', 'string', 'max:255'],
+            'ticket_price' => ['nullable', 'integer', 'min:0', 'max:1000000'],
             'badges' => ['nullable', 'array'],
             'badges.*' => ['string', Rule::in(MovieBadges::keys())],
         ]);
@@ -96,6 +98,7 @@ class MovieAdminController extends Controller
             'duration_min' => ['nullable', 'integer'],
             'rating' => ['nullable', 'in:general,6,12,16,18'],
             'film_info' => ['nullable', 'string', 'max:255'],
+            'ticket_price' => ['nullable', 'integer', 'min:0', 'max:1000000'],
             'badges' => ['nullable', 'array'],
             'badges.*' => ['string', Rule::in(MovieBadges::keys())],
         ]);

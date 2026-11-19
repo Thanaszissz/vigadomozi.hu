@@ -184,6 +184,7 @@ class CatalogImportService
         return $common + [
             'badges.*' => ['string', Rule::in(MovieBadges::keys())],
             'film_info' => ['nullable', 'string', 'max:255'],
+            'ticket_price' => ['nullable', 'integer', 'min:0', 'max:1000000'],
         ];
     }
 

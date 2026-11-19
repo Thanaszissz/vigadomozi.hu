@@ -67,6 +67,7 @@ export class MoviesAdminComponent implements OnInit {
       duration_min: 0,
       rating: 'general',
       film_info: '',
+      ticket_price: null,
       badges: [],
       trailer_youtube_url: ''
     } as Movie;
@@ -116,6 +117,8 @@ export class MoviesAdminComponent implements OnInit {
     formData.append('duration_min', String(this.editingMovie.duration_min || this.editingMovie.duration_minutes || 0));
     formData.append('rating', this.editingMovie.rating || 'general');
     formData.append('film_info', this.editingMovie.film_info || '');
+    const price = this.editingMovie.ticket_price;
+    formData.append('ticket_price', price === null || price === undefined || (price as unknown) === '' ? '' : String(price));
 
     // a jelvények tömbként mennek; ha egy sincs kiválasztva, az üres érték törli a korábbiakat
     const badges = this.editingMovie.badges ?? [];

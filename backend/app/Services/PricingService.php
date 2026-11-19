@@ -12,7 +12,7 @@ class PricingService
      * 
      * Priority:
      * 1. Showtime pricing_override_json
-     * 1b. Theater show ticket_price
+     * 1b. Movie / theater show ticket_price
      * 2. Auditorium layout: seat.price
      * 3. Row basePrice
      * 4. Global default
@@ -35,9 +35,10 @@ class PricingService
             }
         }
 
-        // Előadás / program: saját jegyár, a terem szektorárai helyett
-        if ($showtime->theater_show_id !== null && $showtime->theaterShow?->ticket_price !== null) {
-            return (int) $showtime->theaterShow->ticket_price;
+        // Film / előadás / program: saját egységes jegyár, a terem szektorárai helyett
+        $program = $showtime->theater_show_id !== null ? $showtime->theaterShow : $showtime->movie;
+        if ($program?->ticket_price !== null) {
+            return (int) $program->ticket_price;
         }
 
         // 2. & 3. Auditorium layout

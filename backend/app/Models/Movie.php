@@ -19,11 +19,13 @@ class Movie extends Model
         'duration_min',
         'rating',
         'film_info',
+        'ticket_price',
         'badges',
     ];
 
     protected $casts = [
         'badges' => 'array',
+        'ticket_price' => 'integer',
     ];
 
     protected $appends = ['poster_url', 'duration_minutes'];
