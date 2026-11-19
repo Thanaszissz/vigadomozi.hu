@@ -73,7 +73,7 @@ export class TicketsAdminComponent implements OnInit {
   get categoryRows(): Array<{ key: string; label: string; tickets: number; amount: number }> {
     const labels: Record<string, string> = {
       standard: 'Normál jegy',
-      staff: 'Dolgozó jegy',
+      staff: 'Ingyenes jegy',
       experience_card: 'Élménykártyás jegy',
       service: 'Egyéb szolgáltatás (nyugta)'
     };

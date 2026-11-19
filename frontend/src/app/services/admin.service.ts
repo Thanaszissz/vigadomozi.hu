@@ -127,7 +127,7 @@ export type TicketCategory = 'standard' | 'staff' | 'experience_card' | 'service
 
 export const CATEGORY_LABELS: Record<TicketCategory, string> = {
   standard: 'Normál jegy',
-  staff: 'Dolgozó jegy',
+  staff: 'Ingyenes jegy',
   experience_card: 'Élménykártya',
   service: 'Egyéb szolgáltatás'
 };

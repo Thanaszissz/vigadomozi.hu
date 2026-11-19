@@ -281,7 +281,7 @@
               <span>{{ seatPlaceLabel(s.key) }}</span>
               <select class="cat-select" [ngModel]="categoryOf(s)" (ngModelChange)="setSeatCategory(s, $event)" [disabled]="processing" title="Jegykategória">
                 <option value="standard">Normál jegy</option>
-                <option value="staff">Dolgozó jegy</option>
+                <option value="staff">Ingyenes jegy</option>
                 <option value="experience_card">Élménykártya</option>
               </select>
               <b>{{ effectivePrice(s) | number:'1.0-0' }} Ft</b>

@@ -63,7 +63,7 @@ class TicketArchivePdfService
         foreach ($summary['by_category'] as $c) {
             $label = match ($c['category'] ?: TicketCategory::STANDARD) {
                 TicketCategory::STANDARD => 'Normál jegy',
-                TicketCategory::STAFF => 'Dolgozó jegy',
+                TicketCategory::STAFF => 'Ingyenes jegy',
                 TicketCategory::EXPERIENCE_CARD => 'Élménykártyás jegy',
                 TicketCategory::SERVICE => 'Egyéb szolgáltatás (nyugta)',
                 default => TicketCategory::label($c['category']),

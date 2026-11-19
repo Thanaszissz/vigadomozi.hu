@@ -161,7 +161,7 @@ export class DailyCloseAdminComponent implements OnInit {
     if (Number(t.price_amount) === 0) return { label: 'Ingyenes jegy', rank: 5 };
     if (t.category === 'service') return { label: t.movie_title, rank: 2 };
     if (t.category === 'experience_card') return { label: 'Élménykártyás jegy', rank: 3 };
-    if (t.category === 'staff') return { label: 'Dolgozó jegy', rank: 4 };
+    if (t.category === 'staff') return { label: 'Ingyenes jegy', rank: 4 };
     if (t.is_theater) return { label: t.movie_title, rank: 1 };
     return { label: t.section ? `Mozijegy – ${t.section}` : 'Mozijegy', rank: 0 };
   }

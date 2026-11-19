@@ -330,7 +330,7 @@ class TicketAdminController extends Controller
             return response()->stream(function () use ($shows) {
                 $out = fopen('php://output', 'w');
                 fwrite($out, "\xEF\xBB\xBF");
-                fputcsv($out, ['Előadás kezdete', 'Film', 'Terem', 'Eladott jegyek (db)', 'Bevétel (Ft)', 'Készpénz (Ft)', 'Bankkártya (Ft)', 'SZÉP kártya (Ft)', 'Utalvány (Ft)', 'Online (Ft)', 'Élménykártya (Ft)', 'Élménykártyás jegyek (db)', 'Dolgozó jegyek (db)'], ';');
+                fputcsv($out, ['Előadás kezdete', 'Film', 'Terem', 'Eladott jegyek (db)', 'Bevétel (Ft)', 'Készpénz (Ft)', 'Bankkártya (Ft)', 'SZÉP kártya (Ft)', 'Utalvány (Ft)', 'Online (Ft)', 'Élménykártya (Ft)', 'Élménykártyás jegyek (db)', 'Ingyenes jegyek (db)'], ';');
                 foreach ($shows as $s) {
                     fputcsv($out, [
                         $s['starts_at']->copy()->timezone('Europe/Budapest')->format('Y-m-d H:i'),

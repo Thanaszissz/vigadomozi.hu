@@ -39,7 +39,7 @@
       <div class="card" *ngIf="data.totals.voucher > 0"><span>Utalvány</span><b>{{ data.totals.voucher | number:'1.0-0' }} Ft</b></div>
       <div class="card" *ngIf="data.totals.online > 0"><span>Online</span><b>{{ data.totals.online | number:'1.0-0' }} Ft</b></div>
       <div class="card" *ngIf="data.totals.experience_tickets > 0"><span>Élménykártya</span><b>{{ data.totals.experience_tickets }} db • {{ data.totals.experience_card | number:'1.0-0' }} Ft</b></div>
-      <div class="card" *ngIf="data.totals.staff > 0"><span>Dolgozó jegy</span><b>{{ data.totals.staff }} db</b></div>
+      <div class="card" *ngIf="data.totals.staff > 0"><span>Ingyenes jegy</span><b>{{ data.totals.staff }} db</b></div>
       <div class="card total"><span>Mindösszesen</span><b>{{ data.totals.amount | number:'1.0-0' }} Ft</b></div>
     </div>
 

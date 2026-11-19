@@ -12,7 +12,7 @@ final class TicketCategory
 
     public const LABELS = [
         self::STANDARD => 'Normál jegy',
-        self::STAFF => 'Dolgozó jegy',
+        self::STAFF => 'Ingyenes jegy',
         self::EXPERIENCE_CARD => 'Élménykártya',
         self::SERVICE => 'Egyéb szolgáltatás',
     ];

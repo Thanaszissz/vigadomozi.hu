@@ -85,7 +85,7 @@ export function ticketBaseUrl(): string {
  */
 export function ticketMarkup(t: TicketView, scale = 1, withBackground = true): string {
   const service = t.category === 'service';
-  const tag = t.category === 'staff' ? 'Dolgozó jegy' : t.category === 'experience_card' ? 'Élménykártya' : '';
+  const tag = t.category === 'staff' ? 'Ingyenes jegy' : t.category === 'experience_card' ? 'Élménykártya' : '';
   // A szolgáltatás-nyugtának nincs előadása: az eladás időpontja szerepel rajta
   const when = formatWhen(service ? (t.sold_at ?? t.starts_at) : t.starts_at);
   const whenLine = tag ? `${when} • ${tag}` : when;

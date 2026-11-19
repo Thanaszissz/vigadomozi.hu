@@ -68,7 +68,7 @@ class TicketPdfService
 
         $category = (string) $get('category');
         $service = $category === 'service';
-        $tag = $category === 'staff' ? 'Dolgozó jegy' : ($category === 'experience_card' ? 'Élménykártya' : '');
+        $tag = $category === 'staff' ? 'Ingyenes jegy' : ($category === 'experience_card' ? 'Élménykártya' : '');
 
         // A szolgáltatás-nyugtának nincs előadása: az eladás időpontja szerepel rajta
         $when = $this->formatWhen($service ? ($get('sold_at') ?? $get('starts_at')) : $get('starts_at'));

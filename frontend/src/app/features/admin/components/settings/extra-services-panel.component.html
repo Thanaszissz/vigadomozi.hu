@@ -17,7 +17,7 @@
           <tr [class.dirty]="isDirty(r)">
             <td>
               <input type="text" [(ngModel)]="r.name" maxlength="120" (keyup.enter)="save(r)" />
-              <small class="kind" *ngIf="r.kind === 'staff_ticket'">🔒 Székhez kötött: a helyszíni jegyeladásnál a székválasztáskor adható („Dolgozó jegy" kategória), a székhez beállított ár helyett ezen az áron.</small>
+              <small class="kind" *ngIf="r.kind === 'staff_ticket'">🔒 Székhez kötött: a helyszíni jegyeladásnál a székválasztáskor adható („Ingyenes jegy" kategória), a székhez beállított ár helyett ezen az áron.</small>
             </td>
             <td class="price-col"><input type="number" min="0" step="50" [(ngModel)]="r.price" (keyup.enter)="save(r)" /></td>
             <td class="row-buttons">
