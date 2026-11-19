@@ -27,11 +27,12 @@ const PRINT_CSS = `
   td.num { font-family: 'Courier New', monospace; font-weight: 700; }
   tr.sub td { font-weight: 700; border-top: 1px solid #111; background: #f7f7f7; }
   tr { page-break-inside: avoid; }
-  .summary { margin: 8px 0 18px; border: 1px solid #111; page-break-inside: avoid; }
-  .summary h3 { margin: 0; padding: 4px 10px; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; background: #eee; border-bottom: 1px solid #111; }
+  .summary { margin: 10px 0 22px; border: 2px solid #111; page-break-inside: avoid; }
+  .summary h3 { margin: 0; padding: 6px 12px; font-size: 14px; text-transform: uppercase; letter-spacing: .5px; background: #eee; border-bottom: 2px solid #111; }
   .summary table { margin: 0; }
-  .summary td { border-bottom: 1px solid #ddd; padding: 3px 10px; font-size: 12px; }
-  .summary tr.total td { border-top: 2px solid #111; border-bottom: none; font-size: 13px; font-weight: 700; background: #f3f3f3; }
+  .summary td { border-bottom: 1px solid #ddd; padding: 6px 12px; font-size: 16px; }
+  .summary tr.total td { border-top: 2px solid #111; border-bottom: none; font-size: 18px; font-weight: 700; background: #f3f3f3; }
+  tr.count td { border-bottom: 3px solid #111; }
   .grand { margin-top: 26px; border: 4px double #000; page-break-inside: avoid; }
   .grand h3 { margin: 0; padding: 8px 12px; font-size: 16px; letter-spacing: 1px; text-align: center; text-transform: uppercase; background: #000; color: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .grand table { margin: 0; }
@@ -396,7 +397,7 @@ export class DailyCloseAdminComponent implements OnInit {
       x: { tickets: number; cash: number; card: number; szep: number; voucher: number; experience: number; other: number; amount: number },
       cats: Array<{ label: string; tickets: number; amount: number }>
     ) => `
-      <tr><td>Eladott jegyek / nyugták száma</td><td class="r"><b>${x.tickets} db</b></td></tr>
+      <tr class="count"><td>Eladott jegyek / nyugták száma</td><td class="r"><b>${x.tickets} db</b></td></tr>
       <tr><td>Készpénz</td><td class="r">${esc(ft(x.cash))}</td></tr>
       <tr><td>Bankkártya</td><td class="r">${esc(ft(x.card))}</td></tr>
       ${x.szep ? `<tr><td>SZÉP kártya</td><td class="r">${esc(ft(x.szep))}</td></tr>` : ''}
