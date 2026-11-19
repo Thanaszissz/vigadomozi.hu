@@ -10,7 +10,7 @@ import { TicketPrintComponent, preloadTicketBackground, printTickets, ticketPaym
 import { AuthService } from '../../../../services/auth.service';
 import { PosServicesComponent } from './pos-services.component';
 import { DisplayLine, DisplayState, EMPTY_DISPLAY_STATE, PosDisplayService } from './pos-display.service';
-import { rowLabelOf, seatNumberOf, seatLabel, seatPlaceLabel, sectionBlocks, newlyIsolatedSeats } from '../../../../core/util/seat';
+import { rowLabelOf, seatNumberOf, seatLabel, seatPlaceLabel, sectionBlocks, orderSectionGroups, newlyIsolatedSeats } from '../../../../core/util/seat';
 
 type SaleMode = 'seats' | 'reservations' | 'void' | 'move';
 
@@ -497,7 +497,10 @@ export class PosAdminComponent implements OnInit, OnDestroy, DoCheck {
       const section = seats.find(s => !!s.section)?.section || 'Nézőtér';
       groups.set(section, [...(groups.get(section) ?? []), row]);
     }
-    return Array.from(groups.entries()).map(([name, rows]) => ({ name, rows }));
+    return orderSectionGroups(
+      Array.from(groups.entries()).map(([name, rows]) => ({ name, rows })),
+      this.showtime.seatMap.layout?.sectionOrder
+    );
   }
 
   private blocksSource: unknown = null;

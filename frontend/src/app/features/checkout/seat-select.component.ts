@@ -3,7 +3,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService, ShowtimeDetail, Seat } from '../../core/api/api.service';
-import { rowLabelOf, seatNumberOf, seatLabel, seatPlaceLabel, sectionBlocks, newlyIsolatedSeats } from '../../core/util/seat';
+import { rowLabelOf, seatNumberOf, seatLabel, seatPlaceLabel, sectionBlocks, orderSectionGroups, newlyIsolatedSeats } from '../../core/util/seat';
 import { KioskService } from '../../core/kiosk/kiosk.service';
 import { AnalyticsService } from '../../core/analytics/analytics.service';
 import { BotGuardService } from '../../core/api/bot-guard.service';
@@ -216,13 +216,14 @@ export class SeatSelectComponent implements OnInit, OnDestroy {
     }
 
     const result = Array.from(groups.entries()).map(([name, rows]) => ({ name, rows }));
+    // a teremnél megadott szintsorrend az irányadó; a hiányzó beállításnál a régi (név szerinti) sorrend marad
     const priority = (name: string) => {
       if (name.startsWith('Földszint')) return 0;
       if (name.startsWith('Emelet')) return 1;
       if (name === 'Nincs szint') return 3;
       return 2;
     };
-    return result.sort((a, b) => priority(a.name) - priority(b.name));
+    return orderSectionGroups(result, this.showtime.seatMap.layout?.sectionOrder, priority);
   }
 
   getSeatsInRow(rowLabel: string): Seat[] {

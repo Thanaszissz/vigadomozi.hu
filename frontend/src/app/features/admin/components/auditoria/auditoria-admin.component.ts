@@ -448,11 +448,6 @@ export class AuditoriaAdminComponent implements OnInit {
     if (unassigned.length) {
       groups.push({ name: 'Nincs szint', rows: unassigned, color: '#3d2817' });
     }
-    const floorIndex = groups.findIndex(g => g.name === 'Földszint' || g.name === 'Földszinti emelvény');
-    if (floorIndex > 0) {
-      const [floorGroup] = groups.splice(floorIndex, 1);
-      groups.unshift(floorGroup);
-    }
     return groups;
   }
 

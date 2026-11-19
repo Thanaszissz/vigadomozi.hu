@@ -1,7 +1,7 @@
 import { ChangeDetectorRef, Component, HostListener, NgZone, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Seat } from '../../../../core/api/api.service';
-import { rowLabelOf, seatNumberOf, sectionBlocks } from '../../../../core/util/seat';
+import { rowLabelOf, seatNumberOf, sectionBlocks, orderSectionGroups } from '../../../../core/util/seat';
 import {
   DisplayLine, DisplayMessage, DisplaySale, DisplaySeatMap, DisplayState, EMPTY_DISPLAY_STATE, POS_DISPLAY_CHANNEL
 } from './pos-display.service';
@@ -125,7 +125,10 @@ export class PosDisplayComponent implements OnInit, OnDestroy {
       const section = seats.find(s => !!s.section)?.section || 'Nézőtér';
       groups.set(section, [...(groups.get(section) ?? []), row]);
     }
-    const sectionGroups: SectionGroup[] = Array.from(groups.entries()).map(([name, r]) => ({ name, rows: r }));
+    const sectionGroups: SectionGroup[] = orderSectionGroups(
+      Array.from(groups.entries()).map(([name, r]) => ({ name, rows: r })),
+      map.layout?.sectionOrder
+    );
     this.blocks = sectionBlocks(sectionGroups, map.layout?.inlineSections,
       g => Math.max(0, ...g.rows.map(row => this.getSeatsInRow(row).length)));
     this.fitSeats();

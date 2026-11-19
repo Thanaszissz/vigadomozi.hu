@@ -49,6 +49,24 @@ export function placeLabel(item: { section?: string | null; row_label?: string |
 export const INLINE_SECTION_MAX_SEATS = 5;
 
 /**
+ * A szintek sorrendje a teremnél megadott sorrend szerint (az admin felületen húzással / nyilakkal állítható).
+ * A listában nem szereplő szintek a végére kerülnek, egymás között a `fallback` (ha van) majd az eredeti sorrend szerint.
+ */
+export function orderSectionGroups<T extends { name: string }>(
+  groups: T[],
+  order: readonly string[] | null | undefined,
+  fallback?: (name: string) => number
+): T[] {
+  const known = order ?? [];
+  const position = (name: string) => {
+    const i = known.indexOf(name);
+    return i < 0 ? known.length : i;
+  };
+
+  return [...groups].sort((a, b) => position(a.name) - position(b.name) || (fallback ? fallback(a.name) - fallback(b.name) : 0));
+}
+
+/**
  * A szinteket megjelenítési blokkokba rendezi: az "inline" jelölésű szint az előző szinttel egy sorba kerül
  * (pl. Bal páholy + Jobb páholy), de csak ha mindkettő keskeny, azaz a leghosszabb sora 5 széknél rövidebb.
  * Egyébként minden szint külön blokk.
