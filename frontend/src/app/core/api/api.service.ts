@@ -37,6 +37,7 @@ export interface Movie {
   ticket_price?: number | null;
   is_free?: boolean;
   purchase_only?: boolean;
+  is_private?: boolean;
   created_at: string;
   updated_at: string;
 }

@@ -11,7 +11,14 @@ class ProgramSales
     public const RULES = [
         'is_free' => ['nullable', 'boolean'],
         'purchase_only' => ['nullable', 'boolean'],
+        'is_private' => ['nullable', 'boolean'],
     ];
+
+    /** A zártkörű előadások a nyilvános felületen rejtettek, a helyszíni jegyeladásban (pos.sell jogosultsággal) látszanak. */
+    public static function canSeePrivate(Request $request): bool
+    {
+        return (bool) $request->user('sanctum')?->hasPermission('pos.sell');
+    }
 
     /** Ingyenes előadás nem lehet "csak vásárlás": az ingyenes jegy kizárólag foglalással igényelhető. */
     public static function assertConsistent(Request $request): void

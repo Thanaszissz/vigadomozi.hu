@@ -313,7 +313,7 @@ export class PosAdminComponent implements OnInit, OnDestroy, DoCheck {
     this.loadingShowtimes = true;
     this.showtimesError = null;
 
-    this.api.getShowtimes().subscribe({
+    this.api.getShowtimes({ include_private: 1 }).subscribe({
       next: (showtimes) => {
         const limit = Date.now() - this.graceMinutes * 60000;
         const open = showtimes

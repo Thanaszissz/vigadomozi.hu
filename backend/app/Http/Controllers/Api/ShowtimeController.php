@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Showtime;
 use App\Services\SeatMapService;
 use App\Services\PricingService;
+use App\Support\ProgramSales;
 use Illuminate\Http\Request;
 
 class ShowtimeController extends Controller
@@ -14,6 +15,12 @@ class ShowtimeController extends Controller
     {
         // A terem teljes elrendezése (layout_json) a listához nem kell, csak a neve
         $query = Showtime::with(['movie', 'auditorium:id,name']);
+
+        // A zártkörű előadások csak a helyszíni jegyeladásban (include_private=1, pos.sell jogosultsággal) kérhetők le
+        $withPrivate = $request->boolean('include_private') && ProgramSales::canSeePrivate($request);
+        if (!$withPrivate) {
+            $query->publiclyVisible();
+        }
 
         // A műsorlista az aktuális naptól kezdve mutatja az előadásokat, a korábbi napok előadásai nem kellenek
         // (konkrét nap kérhető a date paraméterrel)
@@ -32,11 +39,13 @@ class ShowtimeController extends Controller
         }
 
         return response()->json($query->orderBy('starts_at')->get(), 200)
-            ->header('Cache-Control', 'public, max-age=30');
+            ->header('Cache-Control', $withPrivate ? 'private, no-store' : 'public, max-age=30');
     }
 
-    public function show(Showtime $showtime)
+    public function show(Showtime $showtime, Request $request)
     {
+        abort_if($showtime->isPrivate() && !ProgramSales::canSeePrivate($request), 404);
+
         // Külső jegyértékesítőnél nincs nézőtér: az oldal a megadott címre irányít
         if ($showtime->is_external) {
             return response()->json([

@@ -22,6 +22,14 @@ class Showtime extends Model
         return $query->where($query->getModel()->getTable() . '.starts_at', '>=', now()->subDays(self::EXPIRED_GRACE_DAYS));
     }
 
+    /** A nyilvános felületen látható előadások: a zártkörű filmek / programok időpontjai kimaradnak. */
+    public function scopePubliclyVisible(Builder $query): Builder
+    {
+        return $query
+            ->whereDoesntHave('movie', fn(Builder $q) => $q->where('is_private', true))
+            ->whereDoesntHave('theaterShow', fn(Builder $q) => $q->where('is_private', true));
+    }
+
     protected $fillable = [
         'movie_id',
         'theater_show_id',
@@ -91,6 +99,7 @@ class Showtime extends Model
                 'ticket_price' => $show->ticket_price,
                 'is_free' => (bool) $show->is_free,
                 'purchase_only' => (bool) $show->purchase_only,
+                'is_private' => (bool) $show->is_private,
                 'is_theater' => true,
             ];
         }
@@ -114,6 +123,12 @@ class Showtime extends Model
     public function isPurchaseOnly(): bool
     {
         return (bool) $this->program()?->purchase_only;
+    }
+
+    /** Zártkörű előadás: nem szerepel a nyilvános felületen, csak a helyszíni jegyeladásban érhető el. */
+    public function isPrivate(): bool
+    {
+        return (bool) $this->program()?->is_private;
     }
 
     public function auditorium()

@@ -22,6 +22,7 @@ class Movie extends Model
         'ticket_price',
         'is_free',
         'purchase_only',
+        'is_private',
         'badges',
     ];
 
@@ -30,6 +31,7 @@ class Movie extends Model
         'ticket_price' => 'integer',
         'is_free' => 'boolean',
         'purchase_only' => 'boolean',
+        'is_private' => 'boolean',
     ];
 
     protected $appends = ['poster_url', 'duration_minutes'];

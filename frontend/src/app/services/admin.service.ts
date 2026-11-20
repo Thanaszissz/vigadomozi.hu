@@ -15,6 +15,7 @@ export interface Movie {
   ticket_price?: number | null;
   is_free?: boolean;
   purchase_only?: boolean;
+  is_private?: boolean;
   badges?: string[] | null;
   duration_min?: number;
   poster_path?: string;
@@ -64,6 +65,7 @@ export interface TheaterShow {
   ticket_price?: number | null;
   is_free?: boolean;
   purchase_only?: boolean;
+  is_private?: boolean;
   badges?: string[] | null;
   description: string;
   duration_minutes: number;

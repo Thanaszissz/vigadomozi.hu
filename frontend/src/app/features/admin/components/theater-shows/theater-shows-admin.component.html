@@ -161,6 +161,11 @@
                     <span>Csak vásárlás</span>
                   </label>
                   <small class="hint">A publikus oldalon a foglalás le van tiltva, a jegyek csak megvásárolhatók.</small>
+                  <label class="flag-option">
+                    <input type="checkbox" [(ngModel)]="editingShow.is_private" name="is_private">
+                    <span>Zártkörű előadás</span>
+                  </label>
+                  <small class="hint">A publikus oldalon (listában, keresőben, műsorban) nem jelenik meg, csak a Helyszíni jegyeladásban érhető el.</small>
                 </div>
 
                 <div class="form-group span-2">
