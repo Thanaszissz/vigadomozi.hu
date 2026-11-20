@@ -107,8 +107,9 @@ class TicketPdfService
                 . '<div style="font-size:' . $this->f(24) . ';font-weight:bold;line-height:1.15;">' . $e($money) . '</div></div>';
         } else {
             // szint / sor / szék a cím alatt balra, ár és nyugtaszám jobbra
-            $line = fn(string $name, string $value, bool $first = false) => '<div style="text-align:left;line-height:1.2;' . ($first ? '' : 'margin-top:' . $this->px(2) . ';') . '">'
-                . $label($name, 10, 1, 'margin-right:' . $this->px(5) . ';') . '<b style="font-size:' . $this->f(17) . ';">' . $e($value) . '</b></div>';
+            // a hosszú szintnév kisebb betűvel kerül a jegyre, hogy a sor és a szék ne lógjon rá a jegy alsó díszítésére
+            $line = fn(string $name, string $value, bool $first = false) => '<div style="text-align:left;line-height:1.1;' . ($first ? '' : 'margin-top:' . $this->px(2) . ';') . '">'
+                . $label($name, 10, 1, 'margin-right:' . $this->px(5) . ';') . '<b style="font-size:' . $this->f($first && mb_strlen($value) > 9 ? 13 : 17) . ';">' . $e($value) . '</b></div>';
 
             $html .= '<div class="abs" style="left:' . $this->px(40) . ';top:' . $this->px(192) . ';width:' . $this->px(130) . ';text-align:left;">'
                 . $line($hallLabel, $hall, true) . $line('Sor', $row) . $line('Szék', $seat) . '</div>'

@@ -42,7 +42,8 @@ export const TICKET_CSS = `
   .tk-seatinfo { left: 40px; top: 192px; width: 130px; text-align: left; }
   .tk-seatinfo div + div { margin-top: 2px; }
   .tk-seatinfo span { display: inline; font-family: Arial, Helvetica, sans-serif; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: #555; margin-right: 5px; }
-  .tk-seatinfo b { display: inline; font-size: 17px; line-height: 1.2; }
+  .tk-seatinfo b { display: inline; font-size: 17px; line-height: 1.1; }
+  .tk-seatinfo b.tk-long { font-size: 13px; }
 
   .tk-stub { left: 626px; top: 190px; width: 204px; }
   .tk-stub-title { font-weight: 700; font-size: 14px; line-height: 1.15; max-height: 33px; overflow: hidden; }
@@ -103,7 +104,7 @@ export function ticketMarkup(t: TicketView, scale = 1, withBackground = true): s
         <div class="tk-fact"><span>Ár</span><b>${esc(formatMoney(t.price_amount))}</b></div>
       </div>`
     : `<div class="tk-abs tk-seatinfo">
-        <div><span>${hallLabel}</span><b>${esc(hall)}</b></div>
+        <div><span>${hallLabel}</span><b${hall.length > 9 ? ' class="tk-long"' : ''}>${esc(hall)}</b></div>
         <div><span>Sor</span><b>${esc(t.row_label)}</b></div>
         <div><span>Szék</span><b>${esc(seat)}</b></div>
       </div>
