@@ -419,10 +419,9 @@ export class DailyCloseAdminComponent implements OnInit {
     const totals = this.visibleTotals;
     const filterNote = this.sellerFilter === 'all' ? 'Minden eladó' : `Eladó: ${sellers[0]?.user_name ?? ''}`;
 
-    // Eladónkénti és teljes összefoglaló azonos felépítésű: fizetési módok, kategóriák, mindösszesen
+    // Eladónkénti és teljes összefoglaló azonos felépítésű: fizetési módok, mindösszesen
     const summaryRows = (
-      x: { tickets: number; cash: number; card: number; szep: number; voucher: number; experience: number; other: number; amount: number },
-      cats: Array<{ label: string; tickets: number; amount: number }>
+      x: { tickets: number; cash: number; card: number; szep: number; voucher: number; experience: number; other: number; amount: number }
     ) => `
       <tr class="count"><td>Eladott jegyek / nyugták száma</td><td class="r"><b>${x.tickets} db</b></td></tr>
       <tr><td>Készpénz</td><td class="r">${esc(ft(x.cash))}</td></tr>
@@ -431,7 +430,6 @@ export class DailyCloseAdminComponent implements OnInit {
       ${x.voucher ? `<tr><td>Utalvány</td><td class="r">${esc(ft(x.voucher))}</td></tr>` : ''}
       ${x.experience ? `<tr><td>Élménykártya (érték)</td><td class="r">${esc(ft(x.experience))}</td></tr>` : ''}
       ${x.other ? `<tr><td>Egyéb (online)</td><td class="r">${esc(ft(x.other))}</td></tr>` : ''}
-      ${cats.map(c => `<tr><td>Ebből: ${esc(c.label)}</td><td class="r">${c.tickets} db${c.amount ? ' • ' + esc(ft(c.amount)) : ''}</td></tr>`).join('')}
       <tr class="total"><td>Mindösszesen</td><td class="r">${esc(ft(x.amount))}</td></tr>`;
 
     const sections = sellers.map(seller => {
@@ -441,7 +439,7 @@ export class DailyCloseAdminComponent implements OnInit {
       return `
         <div class="summary">
           <h3>${esc(seller.user_name)} – összefoglaló</h3>
-          <table>${summaryRows({ tickets: seller.tickets.length, ...sums }, this.categorySums(seller.tickets))}</table>
+          <table>${summaryRows({ tickets: seller.tickets.length, ...sums })}</table>
         </div>`;
     }).join('');
 
@@ -455,7 +453,7 @@ export class DailyCloseAdminComponent implements OnInit {
       ${sections || '<p>Ezen a napon nem volt jegyeladás.</p>'}
       <div class="grand">
         <h3>Napi elszámolás</h3>
-        <table>${summaryRows(totals, this.visibleCategorySums)}</table>
+        <table>${summaryRows(totals)}</table>
       </div>
       <div class="sign"><div>Pénztáros</div><div>Átvette</div></div>
     </body></html>`;
