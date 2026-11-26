@@ -141,34 +141,34 @@ import { SIMPLEPAY_INFO_PDF_URL, SIMPLEPAY_PRIVACY_URL } from './simplepay-conse
             </ul>
 
             <h2>2. Nyitvatartás</h2>
-            <h3>Vigadó Kulturális Központ</h3>
-            <table>
+            <h3>Vigadó</h3>
+            <table class="hours">
               <thead><tr><th>Nap</th><th>Nyitvatartás</th></tr></thead>
               <tbody>
-                <tr><td>Hétfő</td><td>Zárva</td></tr>
-                <tr><td>Kedd–csütörtök</td><td>10:00–21:00</td></tr>
-                <tr><td>Péntek</td><td>10:00–21:00, valamint a pénteki rendezvények időpontjaiban</td></tr>
-                <tr><td>Szombat</td><td>A rendezvények időpontjaiban</td></tr>
-                <tr><td>Vasárnap</td><td>Zárva</td></tr>
+                <tr><td>Hétfő</td><td>15:00–19:00</td></tr>
+                <tr><td>Kedd</td><td>12:00–19:00, vagy a rendezvények, mozivetítések időpontjaihoz igazodva</td></tr>
+                <tr><td>Szerda–péntek</td><td>10:00–19:00, vagy a rendezvények, mozivetítések időpontjaihoz igazodva</td></tr>
+                <tr><td>Szombat</td><td>14:00–19:00, vagy a rendezvények, mozivetítések időpontjaiban</td></tr>
+                <tr class="closed"><td>Vasárnap</td><td>Zárva</td></tr>
               </tbody>
             </table>
 
-            <h3>Vigadó Kávéház</h3>
-            <table>
+            <h3>Vigadó Cukrászda, Kávéház</h3>
+            <table class="hours">
               <thead><tr><th>Nap</th><th>Nyitvatartás</th></tr></thead>
               <tbody>
-                <tr><td>Hétfő–vasárnap</td><td>9:00–21:00</td></tr>
+                <tr><td>Hétfő–vasárnap</td><td>9:00–19:00</td></tr>
               </tbody>
             </table>
 
             <h3>Büfé és bowlingpálya</h3>
-            <table>
+            <table class="hours">
               <thead><tr><th>Nap</th><th>Nyitvatartás</th></tr></thead>
               <tbody>
-                <tr><td>Hétfő</td><td>Szünnap</td></tr>
-                <tr><td>Kedd–csütörtök</td><td>14:00–22:00</td></tr>
-                <tr><td>Péntek–szombat</td><td>10:00–24:00</td></tr>
-                <tr><td>Vasárnap</td><td>14:00–21:00</td></tr>
+                <tr class="closed"><td>Hétfő–kedd</td><td>Szünnap</td></tr>
+                <tr><td>Szerda–péntek</td><td>13:00–20:00</td></tr>
+                <tr><td>Szombat</td><td>13:00–22:00</td></tr>
+                <tr><td>Vasárnap</td><td>Előzetes pályafoglalás időpontjaiban</td></tr>
               </tbody>
             </table>
 
@@ -355,6 +355,22 @@ import { SIMPLEPAY_INFO_PDF_URL, SIMPLEPAY_PRIVACY_URL } from './simplepay-conse
     }
 
     .doc th { color: #f0d9b5; background: rgba(0, 0, 0, .18); }
+
+    .doc table.hours {
+      max-width: 720px;
+      border: 1px solid #5c3d2e;
+      border-radius: 10px;
+      border-collapse: separate;
+      border-spacing: 0;
+      overflow: hidden;
+      background: rgba(0, 0, 0, .1);
+    }
+
+    .doc table.hours th { padding: 10px 14px; font-size: 13px; letter-spacing: .04em; text-transform: uppercase; }
+    .doc table.hours td { padding: 10px 14px; vertical-align: top; }
+    .doc table.hours td:first-child { width: 160px; white-space: nowrap; font-weight: 600; color: #f0d9b5; }
+    .doc table.hours tr:last-child td { border-bottom: 0; }
+    .doc table.hours tr.closed td:last-child { color: #c9a27a; font-style: italic; }
 
     .doc .org { font-size: 16px; }
     .doc .closing { margin-top: 28px; padding-top: 16px; border-top: 1px solid #5c3d2e; }
