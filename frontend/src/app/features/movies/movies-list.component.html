@@ -1,9 +1,9 @@
 <div class="page">
   <section class="content">
-    <h1>Filmek</h1>
+    <h1>Filmek és előadások</h1>
 
     <div *ngIf="loading" class="state loading">
-      <p>Filmek betöltése...</p>
+      <p>Műsor betöltése...</p>
     </div>
 
     <div *ngIf="error" class="state error">
@@ -17,19 +17,20 @@
         </div>
         <div class="movie-info">
           <h2>{{ movie.title }}</h2>
-          <app-movie-badges [badges]="movie.badges"></app-movie-badges>
+          <p class="film-info" *ngIf="movie.is_theater">🎭 {{ kindLabel(movie) }}<ng-container *ngIf="movie.performer"> – {{ movie.performer }}</ng-container></p>
+          <app-movie-badges [badges]="movie.badges" [kind]="movie.is_theater ? 'show' : 'movie'"></app-movie-badges>
           <p class="film-info" *ngIf="movie.film_info">{{ movie.film_info }}</p>
           <p class="duration" *ngIf="movie.duration_min">⏱️ {{ movie.duration_min }} perc</p>
-          <p class="description">{{ movie.description | slice:0:100 }}...</p>
+          <p class="description" *ngIf="movie.description">{{ movie.description | slice:0:100 }}...</p>
           <div class="actions">
-            <a [routerLink]="'/movies/' + movie.id" class="btn btn-primary">Részletek &amp; Jegyrendelés</a>
+            <a [routerLink]="detailLink(movie)" class="btn btn-primary">Részletek &amp; Jegyrendelés</a>
           </div>
         </div>
       </div>
     </div>
 
     <div *ngIf="!loading && movies.length === 0" class="state empty">
-      <p>Jelenleg nincs elérhető film.</p>
+      <p>Jelenleg nincs elérhető film vagy előadás.</p>
     </div>
 
     <div *ngIf="!loading && movies.length > 0 && filteredMovies.length === 0" class="state empty">

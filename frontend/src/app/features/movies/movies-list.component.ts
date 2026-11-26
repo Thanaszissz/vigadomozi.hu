@@ -3,7 +3,9 @@ import { RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService, Movie } from '../../core/api/api.service';
-import { MovieBadgesComponent } from '../../shared/movie-badges.component';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+import { MovieBadgesComponent, showCategoryLabel } from '../../shared/movie-badges.component';
 import { PosterPipe } from '../../shared/poster.pipe';
 
 @Component({
@@ -29,17 +31,32 @@ export class MoviesListComponent implements OnInit {
     this.loading = true;
     this.error = null;
 
-    this.apiService.getMovies().subscribe({
-      next: (data) => {
-        this.movies = data;
+    // A színházi előadások hibája nem akadályozhatja a filmek megjelenítését
+    forkJoin({
+      movies: this.apiService.getMovies(),
+      shows: this.apiService.getTheaterShows().pipe(catchError(() => of([] as Movie[]))),
+    }).subscribe({
+      next: ({ movies, shows }) => {
+        this.movies = [
+          ...movies.map(m => ({ ...m, is_theater: false })),
+          ...shows.map(s => ({ ...s, is_theater: true })),
+        ];
         this.loading = false;
       },
       error: (err) => {
-        this.error = 'Filmek betöltése sikertelen. Próbálja később.';
+        this.error = 'A műsor betöltése sikertelen. Próbálja később.';
         console.error(err);
         this.loading = false;
       },
     });
+  }
+
+  detailLink(item: Movie): string {
+    return (item.is_theater ? '/programs/' : '/movies/') + item.id;
+  }
+
+  kindLabel(item: Movie): string {
+    return showCategoryLabel(item.category) || 'Előadás';
   }
 
   get filteredMovies(): Movie[] {
