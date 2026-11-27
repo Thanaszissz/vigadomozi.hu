@@ -25,6 +25,7 @@ export const SHOW_BADGES: Array<{ key: string; label: string }> = [
 
 export const SHOW_CATEGORIES: Array<{ key: string; label: string }> = [
   { key: 'szinhaz', label: 'Színházi előadás' },
+  { key: 'eloadas', label: 'Előadás' },
   { key: 'gyerek', label: 'Gyerekelőadás' },
   { key: 'koncert', label: 'Koncert' },
   { key: 'tanc', label: 'Tánc' },

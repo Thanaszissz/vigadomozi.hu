@@ -25,6 +25,8 @@ export class MoviesAdminComponent implements OnInit {
   isCreating = false;
   selectedFile: File | null = null;
   previewUrl: string | null = null;
+  formErrors: string[] = [];
+  invalidFields: string[] = [];
 
   constructor(
     private adminService: AdminService,
@@ -51,6 +53,8 @@ export class MoviesAdminComponent implements OnInit {
   }
 
   editMovie(movie: Movie): void {
+    this.formErrors = [];
+    this.invalidFields = [];
     this.editingMovie = { ...movie, badges: [...(movie.badges ?? [])] };
     this.isCreating = false;
     this.showEditModal = true;
@@ -59,6 +63,8 @@ export class MoviesAdminComponent implements OnInit {
   }
 
   newMovie(): void {
+    this.formErrors = [];
+    this.invalidFields = [];
     this.editingMovie = {
       id: 0,
       title: '',
@@ -91,6 +97,8 @@ export class MoviesAdminComponent implements OnInit {
   }
 
   closeModal(): void {
+    this.formErrors = [];
+    this.invalidFields = [];
     this.showEditModal = false;
     this.editingMovie = null;
     this.isCreating = false;
@@ -111,8 +119,37 @@ export class MoviesAdminComponent implements OnInit {
     }
   }
 
+  isInvalid(field: string): boolean {
+    return this.invalidFields.includes(field);
+  }
+
+  /** A kötelező mezők ellenőrzése mentés előtt; a hiányzókat jelzi a felhasználónak. */
+  private validateForm(): boolean {
+    const movie = this.editingMovie;
+    if (!movie) return false;
+
+    const missing: Array<{ field: string; label: string }> = [];
+    if (!movie.title?.trim()) missing.push({ field: 'title', label: 'Film címe' });
+    if (!(Number(movie.duration_min || movie.duration_minutes) > 0)) missing.push({ field: 'duration_min', label: 'Időtartam (perc)' });
+    if (!movie.description?.trim()) missing.push({ field: 'description', label: 'Leírás' });
+
+    this.invalidFields = missing.map(m => m.field);
+    this.formErrors = missing.length
+      ? ['A mentéshez a következő kötelező mezők kitöltése szükséges: ' + missing.map(m => m.label).join(', ') + '.']
+      : [];
+    return missing.length === 0;
+  }
+
+  private showSaveError(err: any, fallback: string): void {
+    const validation = err?.error?.errors;
+    const messages: string[] = validation ? Object.values(validation).flat().map(String) : [];
+    this.invalidFields = validation ? Object.keys(validation) : [];
+    this.formErrors = messages.length ? messages : [err?.error?.message || fallback];
+  }
+
   saveMovie(): void {
     if (!this.editingMovie) return;
+    if (!this.validateForm()) return;
 
     const formData = new FormData();
     formData.append('title', this.editingMovie.title);
@@ -152,7 +189,7 @@ export class MoviesAdminComponent implements OnInit {
           this.closeModal();
         },
         error: (err) => {
-          this.error = 'Hiba történt a film létrehozása során';
+          this.showSaveError(err, 'Hiba történt a film létrehozása során');
           console.error('Error creating movie:', err);
           console.error('Error details:', err.error);
         }
@@ -167,7 +204,7 @@ export class MoviesAdminComponent implements OnInit {
           this.closeModal();
         },
         error: (err) => {
-          this.error = 'Hiba történt a mentés során';
+          this.showSaveError(err, 'Hiba történt a mentés során');
           console.error('Error updating movie:', err);
           console.error('Error details:', err.error);
         }

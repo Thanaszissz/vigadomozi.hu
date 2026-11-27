@@ -7,6 +7,7 @@ final class ShowOptions
 {
     public const CATEGORIES = [
         'szinhaz' => 'Színházi előadás',
+        'eloadas' => 'Előadás',
         'gyerek' => 'Gyerekelőadás',
         'koncert' => 'Koncert',
         'tanc' => 'Tánc',

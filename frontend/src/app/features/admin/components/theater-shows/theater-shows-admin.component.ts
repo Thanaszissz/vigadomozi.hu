@@ -26,6 +26,8 @@ export class TheaterShowsAdminComponent implements OnInit {
   isCreating = false;
   selectedFile: File | null = null;
   previewUrl: string | null = null;
+  formErrors: string[] = [];
+  invalidFields: string[] = [];
 
   constructor(
     private adminService: AdminService,
@@ -52,6 +54,8 @@ export class TheaterShowsAdminComponent implements OnInit {
   }
 
   editShow(show: TheaterShow): void {
+    this.formErrors = [];
+    this.invalidFields = [];
     this.editingShow = { ...show, badges: [...(show.badges ?? [])] };
     this.isCreating = false;
     this.showEditModal = true;
@@ -60,6 +64,8 @@ export class TheaterShowsAdminComponent implements OnInit {
   }
 
   newShow(): void {
+    this.formErrors = [];
+    this.invalidFields = [];
     this.editingShow = {
       id: 0,
       title: '',
@@ -99,6 +105,8 @@ export class TheaterShowsAdminComponent implements OnInit {
   }
 
   closeModal(): void {
+    this.formErrors = [];
+    this.invalidFields = [];
     this.showEditModal = false;
     this.editingShow = null;
     this.isCreating = false;
@@ -119,8 +127,37 @@ export class TheaterShowsAdminComponent implements OnInit {
     }
   }
 
+  isInvalid(field: string): boolean {
+    return this.invalidFields.includes(field);
+  }
+
+  /** A kötelező mezők ellenőrzése mentés előtt; a hiányzókat jelzi a felhasználónak. */
+  private validateForm(): boolean {
+    const show = this.editingShow;
+    if (!show) return false;
+
+    const missing: Array<{ field: string; label: string }> = [];
+    if (!show.title?.trim()) missing.push({ field: 'title', label: 'Előadás / program címe' });
+    if (!(Number(show.duration_min || show.duration_minutes) > 0)) missing.push({ field: 'duration_min', label: 'Időtartam (perc)' });
+    if (!show.description?.trim()) missing.push({ field: 'description', label: 'Leírás' });
+
+    this.invalidFields = missing.map(m => m.field);
+    this.formErrors = missing.length
+      ? ['A mentéshez a következő kötelező mezők kitöltése szükséges: ' + missing.map(m => m.label).join(', ') + '.']
+      : [];
+    return missing.length === 0;
+  }
+
+  private showSaveError(err: any, fallback: string): void {
+    const validation = err?.error?.errors;
+    const messages: string[] = validation ? Object.values(validation).flat().map(String) : [];
+    this.invalidFields = validation ? Object.keys(validation) : [];
+    this.formErrors = messages.length ? messages : [err?.error?.message || fallback];
+  }
+
   saveShow(): void {
     if (!this.editingShow) return;
+    if (!this.validateForm()) return;
 
     const formData = new FormData();
     formData.append('title', this.editingShow.title);
@@ -162,7 +199,7 @@ export class TheaterShowsAdminComponent implements OnInit {
           this.closeModal();
         },
         error: (err) => {
-          this.error = 'Hiba történt az előadás létrehozása során';
+          this.showSaveError(err, 'Hiba történt az előadás létrehozása során');
           console.error('Error creating theater show:', err);
         }
       });
@@ -176,7 +213,7 @@ export class TheaterShowsAdminComponent implements OnInit {
           this.closeModal();
         },
         error: (err) => {
-          this.error = 'Hiba történt a mentés során';
+          this.showSaveError(err, 'Hiba történt a mentés során');
           console.error('Error updating theater show:', err);
         }
       });

@@ -441,6 +441,25 @@ h1 {
   resize: vertical;
 }
 
+.form-error {
+  background: #5a2c2c;
+  color: #ffb3b3;
+  padding: 12px 15px;
+  border-radius: 6px;
+  margin-bottom: 15px;
+  font-weight: 600;
+}
+
+.form-error p {
+  margin: 0;
+}
+
+.form-input.invalid,
+.form-textarea.invalid {
+  border-color: #e53935;
+  box-shadow: 0 0 0 2px rgba(229, 57, 53, 0.35);
+}
+
 .form-actions {
   display: flex;
   gap: 10px;

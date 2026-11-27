@@ -87,6 +87,9 @@
       </div>
       
       <form *ngIf="editingMovie" (ngSubmit)="saveMovie()" class="edit-form">
+        <div class="form-error" *ngIf="formErrors.length" role="alert">
+          <p *ngFor="let message of formErrors">⚠️ {{ message }}</p>
+        </div>
         <div class="form-layout">
           <!-- Bal oldal: poszter -->
           <aside class="poster-column">
@@ -119,8 +122,8 @@
 
               <div class="form-grid">
                 <div class="form-group span-2">
-                  <label>Film címe</label>
-                  <input type="text" [(ngModel)]="editingMovie.title" name="title" class="form-input" required>
+                  <label>Film címe *</label>
+                  <input type="text" [(ngModel)]="editingMovie.title" name="title" class="form-input" [class.invalid]="isInvalid('title')" required>
                 </div>
 
                 <div class="form-group span-2">
@@ -129,8 +132,8 @@
                 </div>
 
                 <div class="form-group">
-                  <label>Időtartam (perc)</label>
-                  <input type="number" [(ngModel)]="editingMovie.duration_min" name="duration_min" class="form-input" required>
+                  <label>Időtartam (perc) *</label>
+                  <input type="number" [(ngModel)]="editingMovie.duration_min" name="duration_min" class="form-input" [class.invalid]="isInvalid('duration_min')" required>
                 </div>
 
                 <div class="form-group">
@@ -163,8 +166,8 @@
                 </div>
 
                 <div class="form-group span-2">
-                  <label>Leírás</label>
-                  <textarea [(ngModel)]="editingMovie.description" name="description" class="form-textarea" rows="5" required></textarea>
+                  <label>Leírás *</label>
+                  <textarea [(ngModel)]="editingMovie.description" name="description" class="form-textarea" [class.invalid]="isInvalid('description')" rows="5" required></textarea>
                 </div>
               </div>
             </section>
